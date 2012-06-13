@@ -1,0 +1,48 @@
+{
+   "name": "myna-js",
+   "version": "0.1",
+   "description": "Javascript client for Myna. See http://mynaweb.com/",
+   "homepage": "http://mynaweb.com/",
+   "keywords": [
+     "myna",
+     "bandit",
+     "a/b"
+   ],
+   "maintainers": [
+     {
+       "name": "Noel Welsh",
+       "email": "noel@untyped.com",
+       "web": "http://www.untyped.com"
+     }
+   ],
+   "contributors": [
+     {
+       "name": "Noel Welsh",
+       "email": "noel@untyped.com",
+       "web": "http://www.untyped.com"
+     },
+     {
+       "name": "Dave Gurnell",
+       "email": "dave@untyped.com",
+       "web": "http://www.untyped.com"
+     }
+   ],
+   "bugs": {
+       "mail": "noel@untyped.com",
+       "web": "https://github.com/myna/myna-js"
+   },
+   "licenses": [
+       {
+           "type": "BSD 2-Clause",
+           "url": "https://github.com/myna/myna-js/LICENSE.txt"
+       }
+   ],
+   "repositories": [
+       {
+           "type": "git",
+           "url": "https://github.com/myna/myna-js"
+       }
+   ],
+   "dependencies": {
+   }
+}
