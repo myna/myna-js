@@ -1,5 +1,5 @@
 /**
- * Myna Basic Javascript Client v0.1
+ * @preserve Myna Basic Javascript Client v0.1
  * Copyright 2011 Untyped Ltd
  */
 
@@ -9,7 +9,7 @@
  * var myna = Myna(agentUUID, [options])
  * myna.suggest(success, [error])
  */
-Myna = function(agent, options) {
+function Myna(agent, options) {
 
   /** @const */
   var defaults = {
@@ -34,7 +34,56 @@ Myna = function(agent, options) {
     DEBUG: 4
   };
 
-  // Utility functions ---------------------------------------
+  // Utilities -------------------------------------------
+
+  function extend(dest, src) {
+    for(name in src) {
+      if(src[name] && !dest[name]) {
+        dest[name] = src[name];
+      }
+    }
+    return dest;
+  }
+
+  function removeCallback(callbackName) {
+    if(this.readyState &&
+       this.readyState !== "complete" &&
+       this.readyState !== "loaded") {
+      return;
+    }
+
+    // Prevent memory leaks
+    this.onload = null;
+    try {
+      this.parentNode.removeChild(this);
+    } catch (e) {}
+    Myna.callbacks[callbackName] = null;
+  }
+
+  var callbackCounter = 0;
+  Myna.callbacks = []
+  function doJsonP(options) {
+    var callbackName = "callback" + (callbackCounter++);
+    Myna.callbacks[callbackName] = function(args) { options.success.apply(this, arguments) };
+
+    var url = options.url + "?";
+    for(key in options.data) {
+      value = options.data[key];
+
+      url += key + "=" + value + "&";
+    }
+    url += "callback=Myna.callbacks." + callbackName;
+
+    myna.log(LogLevel.DEBUG, "Sending JSON-P request to " + url);
+
+  var elem = document.createElement("script");
+  elem.setAttribute("type","text/javascript");
+    // onreadystatechange is for IE, onload for everyone else
+  elem.onload = elem.onreadystatechange =
+      function(){ removeCallback.call(elem, callbackName); };
+  elem.setAttribute("src", url);
+  document.getElementsByTagName("head")[0].appendChild(elem);
+  }
 
   /** @type { function(string): Object.<string> } **/
   function parseSuggestResponse(content) {
@@ -115,7 +164,7 @@ Myna = function(agent, options) {
 
     myna.log(LogLevel.DEBUG, ajaxOptions);
 
-    JsonP.doJsonP(ajaxOptions);
+    doJsonP(ajaxOptions);
   }
 
   /** @type { function(string, function(string), ?function(number, string)) } */

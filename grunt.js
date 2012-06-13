@@ -8,7 +8,7 @@ module.exports = function(grunt) {
       banner: '/*! <%= pkg.title || pkg.name %> - v<%= pkg.version %> - ' +
         '<%= grunt.template.today("yyyy-mm-dd") %>\n' +
         '<%= pkg.homepage ? "* " + pkg.homepage + "\n" : "" %>' +
-        '* Copyright (c) <%= grunt.template.today("yyyy") %> <%= pkg.author.name %>;' +
+        '* Copyright (c) <%= grunt.template.today("yyyy") %> <%= pkg.maintainers[0].name %>;' +
         ' Licensed <%= _.pluck(pkg.licenses, "type").join(", ") %> */'
     },
     lint: {
@@ -19,7 +19,10 @@ module.exports = function(grunt) {
     },
     concat: {
       dist: {
-        src: ['<banner:meta.banner>', '<file_strip_banner:lib/<%= pkg.name %>.js>'],
+        src: ['<banner:meta.banner>', 'lib/intro.js',
+              'lib/util.js', 'lib/jsonp.js',
+              'lib/basic.myna.js',
+              'lib/outro.js'],
         dest: 'dist/<%= pkg.name %>.js'
       }
     },
