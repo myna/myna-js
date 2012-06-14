@@ -8,7 +8,9 @@ Javascript client for Myna
 
 This project use [Grunt](https://github.com/cowboy/grunt) as its build tool. You should see the Grunt website for full install instructions. If you have Node.js and npm installed, you should be able to install grunt with `npm install -g grunt`.
 
-You also need to install [PhantomJS](http://code.google.com/p/phantomjs/downloads/list) to run the supplied tests.
+You also need [CoffeeScript](http://coffeescript.org/), which you can install with `npm install -g coffee-script`.
+
+To run the tests you will need to install [PhantomJS](http://code.google.com/p/phantomjs/downloads/list).
 
 ## Testing
 
