@@ -100,23 +100,21 @@ class Myna
 
 
       // xhr string string -> void
-      function errorWrapper(xhr, text, error) {
+      errorWrapper = (xhr, text, error) ->
         @log(LogLevel.DEBUG, "myna.suggest errorWrapper called")
 
-        var response = parseErrorResponse(xhr.responseText)
+        response = parseErrorResponse(xhr.responseText)
         @log(LogLevel.ERROR, xhr)
         @log(LogLevel.ERROR, text)
         @log(LogLevel.ERROR, error)
         @log(LogLevel.ERROR, response)
         @log(LogLevel.ERROR, "myna.suggest failed: error " + response.code + " " + response.message)
 
-        if(error) {
+        if error
           error(response.code, response.message)
-        }
-      }
 
     myna.doAjax("/suggest", data, successWrapper, errorWrapper)
-  }
+
 
   /** @type { function(number, function(), ?function(number, string)) } */
   myna.reward = function(amount, success, error) {
