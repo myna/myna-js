@@ -27,16 +27,13 @@ class Myna
 
   # Utility functions --------------------------------------
 
-  # String -> {token: String, choice: String}
+  # JSON -> {token: String, choice: String}
   parseSuggestResponse: (content) ->
     { token: content.token, choice: content.choice }
 
-  # String -> {code: Number, message: String}
+  # JSON -> {code: Number, message: String}
   parseErrorResponse: (content) ->
-    parts = content.split(/[\r\n]+/)
-    code = parseInt(parts[0].replace(/ERROR: /, ""))
-    message = parts[1]
-    { code: code, message: message }
+    { code: content.subtype, messages: content.messages }
 
 
 
