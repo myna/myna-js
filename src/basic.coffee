@@ -140,14 +140,14 @@ class Myna
         success()
 
     # xhr string string -> void
-    errorWrapper = (xhr, text, error) =>
+    errorWrapper = (response) =>
       @logger.log(LogLevel.DEBUG, "myna.reward errorWrapper called")
 
-      response = this.parseErrorResponse(xhr.responseText)
-      @logger.log(LogLevel.ERROR, "myna.reward failed: error #{response.code} #{response.message}")
+      message = this.parseErrorResponse(response)
+      @logger.log(LogLevel.ERROR, "myna.reward failed: error #{response}")
 
       if error
-        error(response.code, response.message)
+        error(message)
 
     this.doAjax("/v1/experiment/#{@experiment}/reward", data, successWrapper, errorWrapper)
 
