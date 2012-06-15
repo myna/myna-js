@@ -143,7 +143,7 @@ class Myna
     errorWrapper = (xhr, text, error) =>
       @logger.log(LogLevel.DEBUG, "myna.reward errorWrapper called")
 
-      response = parseErrorResponse(xhr.responseText)
+      response = this.parseErrorResponse(xhr.responseText)
       @logger.log(LogLevel.ERROR, "myna.reward failed: error #{response.code} #{response.message}")
 
       if error
