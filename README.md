@@ -3,6 +3,9 @@ myna-js
 
 Javascript client for Myna
 
+# TODO
+
+Change Myna server to respond to JSONP requests with a 200 OK on error. This will allow us to parse the error and fix the currently failing test.
 
 # Developing
 
@@ -12,10 +15,8 @@ You also need [CoffeeScript](http://coffeescript.org/), which you can install wi
 
 To run the tests you will need to install [PhantomJS](http://code.google.com/p/phantomjs/downloads/list).
 
-## Testing
+The main commands you'll want to use are:
 
-`grunt jasmine`
-
-## Building
-
-`grunt concat`
+- `grunt compile` to create `lib/myna.js`
+- `grunt test` to run the tests
+- `grunt package` to create the minified and unminified libraries in `dist`
