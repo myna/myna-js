@@ -32,5 +32,3 @@ task 'compile-lib', 'Build single application file from source files', ->
         fs.unlink 'lib/myna.coffee', (err) ->
           throw err if err
           console.log 'Done.'
-
-task "compile-lib", "Compile the Myna CS files into a single JS file"
