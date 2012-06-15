@@ -64,7 +64,7 @@ class Myna
   suggest: (success, error) ->
     @logger.log(LogLevel.DEBUG, "myna.suggest called")
 
-    data = { agent: @experiment }
+    data = { }
 
     # object string xhr -> void
     successWrapper = (data, msg, xhr) =>
@@ -91,7 +91,7 @@ class Myna
         @logger.log(LogLevel.ERROR, "Myna.suggest did something unexpected")
         @logger.log(LogLevel.ERROR, data)
         if error
-          error(400, "The Myna client didn't handle this data: " + data)
+          error(400, "The Myna client didn't handle this data: #{data}")
 
 
       # xhr string string -> void
@@ -103,12 +103,12 @@ class Myna
       @logger.log(LogLevel.ERROR, text)
       @logger.log(LogLevel.ERROR, error)
       @logger.log(LogLevel.ERROR, response)
-      @logger.log(LogLevel.ERROR, "myna.suggest failed: error " + response.code + " " + response.message)
+      @logger.log(LogLevel.ERROR, "myna.suggest failed: error #{response.code} #{response.message}")
 
       if error
         error(response.code, response.message)
 
-    this.doAjax("/suggest", data, successWrapper, errorWrapper)
+    this.doAjax("/v1/experiment/#{@experiment}/suggest", data, successWrapper, errorWrapper)
 
 
   # (Number, () -> Any, (Number, String) -> Any) -> Undefined
@@ -132,7 +132,6 @@ class Myna
       return
 
     data =
-      agent: @experiment
       token: myna.token
       amount: amount || 1.0
 
@@ -156,7 +155,7 @@ class Myna
       if error
         error(response.code, response.message)
 
-    myna.doAjax("/reward", data, successWrapper, errorWrapper)
+    myna.doAjax("/v1/experiment/#{@experiment}/reward", data, successWrapper, errorWrapper)
 
 
   saveToken: (token) ->
