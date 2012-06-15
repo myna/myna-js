@@ -47,13 +47,14 @@ JsonP =
       window.setTimeout( ->
                            if !returned
                              returned = true
+                             JsonP.removeCallback.call(elem, callbackName)
                              options.error({typename: 'problem', subtype: 500, messages: [{typename: "timeout", item: "The server took longer than #{options.timeout} ms to reply"}]})
         , options.timeout)
 
     elem = document.createElement("script")
     elem.setAttribute("type","text/javascript")
-    # onreadystatechange is for IE, onload for everyone else
-    elem.onload = elem.onreadystatechange =
-      () -> JsonP.removeCallback.call(elem, callbackName)
+    elem.setAttribute("async", "true")
+    # onreadystatechange is for IE, onload/onerror for everyone else
+    elem.onload = elem.onreadystatechange = -> JsonP.removeCallback.call(elem, callbackName)
     elem.setAttribute("src", url)
     document.getElementsByTagName("head")[0].appendChild(elem)
