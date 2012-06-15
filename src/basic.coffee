@@ -130,7 +130,7 @@ class Myna
       amount: amount || 1.0
 
     # string string xhr -> void
-    successWrapper = (data, msg, xhr) ->
+    successWrapper = (data, msg, xhr) =>
       @logger.log(LogLevel.DEBUG, "myna.reward successWrapper called")
 
       myna.token = null
@@ -140,7 +140,7 @@ class Myna
         success()
 
     # xhr string string -> void
-    errorWrapper = (xhr, text, error) ->
+    errorWrapper = (xhr, text, error) =>
       @logger.log(LogLevel.DEBUG, "myna.reward errorWrapper called")
 
       response = parseErrorResponse(xhr.responseText)
@@ -149,7 +149,7 @@ class Myna
       if error
         error(response.code, response.message)
 
-    myna.doAjax("/v1/experiment/#{@experiment}/reward", data, successWrapper, errorWrapper)
+    this.doAjax("/v1/experiment/#{@experiment}/reward", data, successWrapper, errorWrapper)
 
 
   saveToken: (token) ->
