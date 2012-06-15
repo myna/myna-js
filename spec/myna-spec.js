@@ -3,7 +3,7 @@ describe("Myna", function() {
   var experiment;
 
   beforeEach(function() {
-    experiment = Myna(testUuid);
+    experiment = new Myna(testUuid);
   })
 
   it("should return a suggestion when asked to", function() {

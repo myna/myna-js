@@ -1,18 +1,5 @@
 class Myna
 
-  defaults =
-    # number (lifespan of the cookie in days from now)
-    cookieLifespan: 365
-    # string
-    cookieName: "myna" + agent
-    # natural (ms)
-    timeout: 1000
-    # string (url)
-    baseurl: "http://api.mynaweb.com"
-    # natural: 0 = silent, 1 = error, 2 = warn, 3 = info, 4 = debug
-    loglevel: 1
-
-
   # (U null String)
   token: null
 
@@ -20,9 +7,23 @@ class Myna
   #
   # @experiment is the UUID of the experiment
   # @options is a hash of options, containing the same keys as defaults
-  constructor: (@experiment, @options) ->
+  constructor: (@experiment, @options = {}) ->
+    defaults =
+      # number (lifespan of the cookie in days from now)
+      cookieLifespan: 365
+      # string
+      cookieName: "myna" + @experiment
+      # natural (ms)
+      timeout: 1000
+      # string (url)
+      baseurl: "http://api.mynaweb.com"
+      # natural: 0 = silent, 1 = error, 2 = warn, 3 = info, 4 = debug
+      loglevel: 1
+
     @options = extend(extend({}, defaults), options)
-    @log = Log.Log(@options.loglevel)
+    @logger = new Log(@options.loglevel)
+
+
 
   # Utility functions --------------------------------------
 
@@ -45,7 +46,7 @@ class Myna
   #  (Any ...) -> Undefined,
   #  (Any ...) -> Undefined) -> Undefined
   doAjax: (path, data, success, error) ->
-    @log(LogLevel.DEBUG, "myna.doAjax called")
+    @logger.log(LogLevel.DEBUG, "myna.doAjax called")
 
     ajaxOptions = extend(extend({}, @options), {
       url: @options.baseurl + path
@@ -54,103 +55,103 @@ class Myna
       error: error
     })
 
-    @log(LogLevel.DEBUG, ajaxOptions)
+    @logger.log(LogLevel.DEBUG, ajaxOptions)
 
     JsonP.doJsonP(ajaxOptions)
 
   # (Any ...) -> Undefined,
   # (Any ...) -> Undefined) -> Undefined
   suggest: (success, error) ->
-    @log(LogLevel.DEBUG, "myna.suggest called")
+    @logger.log(LogLevel.DEBUG, "myna.suggest called")
 
-    data = { agent: myna.agent }
+    data = { agent: @experiment }
 
     # object string xhr -> void
-    successWrapper = (data, msg, xhr) ->
-      @log(LogLevel.DEBUG, "myna.suggest successWrapper called")
-      @log(LogLevel.DEBUG, data)
+    successWrapper = (data, msg, xhr) =>
+      @logger.log(LogLevel.DEBUG, "myna.suggest successWrapper called")
+      @logger.log(LogLevel.DEBUG, data)
 
       if data.typename == "suggestion"
-        response = parseSuggestResponse(data)
-        @log(LogLevel.INFO, "Myna suggested " + response.suggestion)
+        response = this.parseSuggestResponse(data)
+        @logger.log(LogLevel.INFO, "Myna suggested " + response.suggestion)
 
-        @log(LogLevel.DEBUG, "Response token stored " + response.token)
+        @logger.log(LogLevel.DEBUG, "Response token stored " + response.token)
         myna.token = response.token
 
         if success
           success(response)
         else
-          @log(LogLevel.WARN, "You should pass a success function to myna.suggest. See the docs for details.")
+          @logger.log(LogLevel.WARN, "You should pass a success function to myna.suggest. See the docs for details.")
       else if data.typename == "mynaapierror"
-        @log(LogLevel.ERROR, "Myna.suggest returned an API error: " + data.code + " " + data.message)
+        @logger.log(LogLevel.ERROR, "Myna.suggest returned an API error: " + data.code + " " + data.message)
 
         if error
           error(data.code, data.message)
       else
-        @log(LogLevel.ERROR, "Myna.suggest did something unexpected")
-        @log(LogLevel.ERROR, data)
+        @logger.log(LogLevel.ERROR, "Myna.suggest did something unexpected")
+        @logger.log(LogLevel.ERROR, data)
         if error
           error(400, "The Myna client didn't handle this data: " + data)
 
 
       # xhr string string -> void
-      errorWrapper = (xhr, text, error) ->
-        @log(LogLevel.DEBUG, "myna.suggest errorWrapper called")
+    errorWrapper = (xhr, text, error) =>
+      @logger.log(LogLevel.DEBUG, "myna.suggest errorWrapper called")
 
-        response = parseErrorResponse(xhr.responseText)
-        @log(LogLevel.ERROR, xhr)
-        @log(LogLevel.ERROR, text)
-        @log(LogLevel.ERROR, error)
-        @log(LogLevel.ERROR, response)
-        @log(LogLevel.ERROR, "myna.suggest failed: error " + response.code + " " + response.message)
+      response = this.parseErrorResponse(xhr.responseText)
+      @logger.log(LogLevel.ERROR, xhr)
+      @logger.log(LogLevel.ERROR, text)
+      @logger.log(LogLevel.ERROR, error)
+      @logger.log(LogLevel.ERROR, response)
+      @logger.log(LogLevel.ERROR, "myna.suggest failed: error " + response.code + " " + response.message)
 
-        if error
-          error(response.code, response.message)
+      if error
+        error(response.code, response.message)
 
     this.doAjax("/suggest", data, successWrapper, errorWrapper)
 
 
   # (Number, () -> Any, (Number, String) -> Any) -> Undefined
   reward: (amount, success, error) ->
-    @log(LogLevel.DEBUG, "myna.reward called")
+    @logger.log(LogLevel.DEBUG, "myna.reward called")
 
     # If this function is used directly as an event handler,
     # the first argument will be an event object.
     # In this case amount, success, and error will actually be undefined.
     if typeof(amount) == "object" and amount.target
-      @log(LogLevel.WARN, "You used myna.reward directly as an event handler, which is strictly speaking bad.")
-      @log(LogLevel.WARN, "To suppress this message, wrap the call to myna.reward in an anonymous function, e.g.:")
-      @log(LogLevel.WARN, "  $(\"foo\").click(function() { myna.reward() })")
+      @logger.log(LogLevel.WARN, "You used myna.reward directly as an event handler, which is strictly speaking bad.")
+      @logger.log(LogLevel.WARN, "To suppress this message, wrap the call to myna.reward in an anonymous function, e.g.:")
+      @logger.log(LogLevel.WARN, "  $(\"foo\").click(function() { myna.reward() })")
       amount = null
       success = null
       error = null
 
 
     if !myna.token
-      @log(LogLevel.ERROR, "You must call suggest before you call reward.")
+      @logger.log(LogLevel.ERROR, "You must call suggest before you call reward.")
       return
 
     data =
-      agent: agent
+      agent: @experiment
       token: myna.token
       amount: amount || 1.0
 
     # string string xhr -> void
     successWrapper = (data, msg, xhr) ->
-      @log(LogLevel.DEBUG, "myna.reward successWrapper called")
+      @logger.log(LogLevel.DEBUG, "myna.reward successWrapper called")
 
       myna.token = null
-      @log(LogLevel.INFO, "myna.reward succeeded")
+      @logger.log(LogLevel.INFO, "myna.reward succeeded")
 
       if success
         success()
 
     # xhr string string -> void
     errorWrapper = (xhr, text, error) ->
-      @log(LogLevel.DEBUG, "myna.reward errorWrapper called")
+      @logger.log(LogLevel.DEBUG, "myna.reward errorWrapper called")
 
       response = parseErrorResponse(xhr.responseText)
-      @log(LogLevel.ERROR, "myna.reward failed: error #{response.code} #{response.message}")
+      @logger.log(LogLevel.ERROR, "myna.reward failed: error #{response.code} #{response.message}")
 
       if error
         error(response.code, response.message)
@@ -159,19 +160,19 @@ class Myna
 
 
   saveToken: (token) ->
-    @log(LogLevel.DEBUG, "myna.saveToken called with token" + token)
+    @logger.log(LogLevel.DEBUG, "myna.saveToken called with token" + token)
     token = token || myna.token
 
     if token
       createCookie(myna.options.cookieName, token, myna.options.cookieLifespan)
     else
-      @log(LogLevel.WARN, "myna.saveToken called with empty token and myna.token also empty")
+      @logger.log(LogLevel.WARN, "myna.saveToken called with empty token and myna.token also empty")
 
   loadToken: () ->
     token = readCookie(myna.options.cookieName)
 
     if !token
-      @log(LogLevel.WARN, "myna.loadToken loaded empty token")
+      @logger.log(LogLevel.WARN, "myna.loadToken loaded empty token")
 
   clearToken: () ->
     clearCookie(myna.options.cookieName)
