@@ -22,21 +22,33 @@ JsonP =
         window.myna.callbacks[callbackName] = null
 
   # {success: (Any ...) -> Undefined,
-  #  error: (Any ...) -> Undefined,
+  #  error: (JSON) -> Undefined,
+  #  timeout: (U Number Undefined)
   #  url: String,
   #  data: Hash[String, String]} -> Undefined
   #
   # TODO: Handle errors and timeouts
   doJsonP: (options) ->
+    # Used to sync the callback and timeout handlers
+    returned = false
+
     callbackName = "callback" + (JsonP.callbackCounter++)
     window.myna.callbacks[callbackName] =
-      (args) -> options.success.apply(this, arguments)
+      (args) ->
+        if !returned
+          returned = true
+          options.success.apply(this, arguments)
 
     url = options.url + "?"
     url += "#{key}=#{value}&" for key, value of options.data
     url += "callback=window.myna.callbacks." + callbackName
 
-    #myna.log(LogLevel.DEBUG, "Sending JSON-P request to " + url);
+    if options.timeout > 0
+      window.setTimeout( ->
+                           if !returned
+                             returned = true
+                             options.error({typename: 'problem', subtype: 500, messages: [{typename: "timeout", item: "The server took longer than #{options.timeout} ms to reply"}]})
+        , options.timeout)
 
     elem = document.createElement("script")
     elem.setAttribute("type","text/javascript")

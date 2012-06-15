@@ -40,8 +40,8 @@ class Myna
   # Myna client --------------------------------------------
 
   # (String, Hash[String,String],
-  #  (Any ...) -> Undefined,
-  #  (Any ...) -> Undefined) -> Undefined
+  #  ({token: String, choice: String}) -> Undefined,
+  #  (JSON) -> Undefined) -> Undefined
   doAjax: (path, data, success, error) ->
     @logger.log(LogLevel.DEBUG, "myna.doAjax called")
 
@@ -56,8 +56,8 @@ class Myna
 
     JsonP.doJsonP(ajaxOptions)
 
-  # (Any ...) -> Undefined,
-  # (Any ...) -> Undefined) -> Undefined
+  # ({token: String, choice: String}) -> Undefined,
+  # ({code: Number, messages: JSON}) -> Undefined) -> Undefined
   suggest: (success, error) ->
     @logger.log(LogLevel.DEBUG, "myna.suggest called")
 
@@ -79,31 +79,28 @@ class Myna
           success(response)
         else
           @logger.log(LogLevel.WARN, "You should pass a success function to myna.suggest. See the docs for details.")
-      else if data.typename == "mynaapierror"
-        @logger.log(LogLevel.ERROR, "Myna.suggest returned an API error: " + data.code + " " + data.message)
+      else if data.typename == "problem"
+        @logger.log(LogLevel.ERROR, "Myna.suggest returned an API error: #{data.subtype} #{data.messages}")
 
         if error
-          error(data.code, data.message)
+          error(parseErrorResponse(data))
       else
         @logger.log(LogLevel.ERROR, "Myna.suggest did something unexpected")
         @logger.log(LogLevel.ERROR, data)
         if error
-          error(400, "The Myna client didn't handle this data: #{data}")
+          error(400, [{typename: "unexpected", item: data}])
 
 
-      # xhr string string -> void
-    errorWrapper = (xhr, text, error) =>
+      # JSON -> void
+    errorWrapper = (response) =>
       @logger.log(LogLevel.DEBUG, "myna.suggest errorWrapper called")
 
-      response = this.parseErrorResponse(xhr.responseText)
-      @logger.log(LogLevel.ERROR, xhr)
-      @logger.log(LogLevel.ERROR, text)
-      @logger.log(LogLevel.ERROR, error)
+      message = this.parseErrorResponse(response)
       @logger.log(LogLevel.ERROR, response)
-      @logger.log(LogLevel.ERROR, "myna.suggest failed: error #{response.code} #{response.message}")
+      @logger.log(LogLevel.ERROR, "myna.suggest failed: error #{message}")
 
       if error
-        error(response.code, response.message)
+        error(message)
 
     this.doAjax("/v1/experiment/#{@experiment}/suggest", data, successWrapper, errorWrapper)
 
