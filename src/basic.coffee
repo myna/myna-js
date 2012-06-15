@@ -169,3 +169,6 @@ class Myna
 
   clearToken: () ->
     clearCookie(myna.options.cookieName)
+
+
+window.Myna = Myna
