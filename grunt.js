@@ -1,3 +1,5 @@
+var exec = require('child_process').exec;
+
 /*global module:false*/
 module.exports = function(grunt) {
 
@@ -19,10 +21,7 @@ module.exports = function(grunt) {
     },
     concat: {
       dist: {
-        src: ['<banner:meta.banner>', 'lib/intro.js',
-              'lib/util.js', 'lib/jsonp.js',
-              'lib/basic.myna.js',
-              'lib/outro.js'],
+        src: ['<banner:meta.banner>', 'lib/myna.js'],
         dest: 'dist/<%= pkg.name %>.js'
       }
     },
@@ -55,9 +54,42 @@ module.exports = function(grunt) {
     uglify: {}
   });
 
-  // Default task.
-  grunt.registerTask('default', 'lint qunit concat min');
+  // Custom tasks
+  grunt.registerTask('compile', 'Compile Myna library', function() {
+    var done = this.async();
+    exec('cake compile-lib', function(err, stdout, stderr) {
+      grunt.log.writeln("Compiling Myna library")
+      if(err) {
+        grunt.log.error(err);
+        throw err;
+      } else {
+        grunt.log.writeln('Myna library compiled')
+        done();
+      }
+    })
+  })
 
-  // Load Jasmin integration
+
+  grunt.registerTask('test', 'Run tests', function() {
+    var done = this.async();
+    exec('cake compile-bare', function(err, stdout, stderr) {
+      grunt.log.writeln("Compiling bare Myna library")
+      if(err) {
+        grunt.log.error(err);
+        throw err;
+      } else {
+        grunt.log.writeln('Myna bare library compiled')
+        grunt.task.run('jasmine')
+        done();
+      }
+    })
+  })
+
+  grunt.registerTask('package', 'compile test concat min')
+
+  // Default task.
+  grunt.registerTask('default', 'package');
+
+  // Load Jasmine integration
   grunt.loadNpmTasks('grunt-jasmine-task');
 };
