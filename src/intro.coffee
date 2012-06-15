@@ -1,2 +1,4 @@
-// Myna Javascript Client
-// Copyright Untyped 2012
+###
+ Myna Javascript Client
+ Copyright Untyped 2012
+###

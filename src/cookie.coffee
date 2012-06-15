@@ -1,4 +1,4 @@
-// Cookie code adapted from quirksmode.org
+# Cookie code adapted from quirksmode.org
 
 Cookie =
   createCookie: (name, value, days) ->
