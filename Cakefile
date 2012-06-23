@@ -6,6 +6,7 @@ mynaFiles  = [
   'intro'
   'log'
   'util'
+  'config'
   'jsonp'
   'basic'
 ]

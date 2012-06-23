@@ -1,4 +1,4 @@
-describe("Myna", function() {
+describe("Myna.suggest", function() {
   var testUuid = "45923780-80ed-47c6-aa46-15e2ae7a0e8c";
   var experiment;
 

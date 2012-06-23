@@ -3,6 +3,7 @@
  * Copyright 2011 Untyped Ltd
  */
 
+var callbackCounter = 0;
 /*
  * Example usage:
  *
@@ -60,7 +61,6 @@ function Myna(agent, options) {
     Myna.callbacks[callbackName] = null;
   }
 
-  var callbackCounter = 0;
   Myna.callbacks = []
   function doJsonP(options) {
     var callbackName = "callback" + (callbackCounter++);
