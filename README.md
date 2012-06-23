@@ -9,7 +9,7 @@ Change Myna server to respond to JSONP requests with a 200 OK on error. This wil
 
 # Developing
 
-This project use [Grunt](https://github.com/cowboy/grunt) as its build tool. You should see the Grunt website for full install instructions. If you have Node.js and npm installed, you should be able to install grunt with `npm install -g grunt`.
+This project uses [Grunt](https://github.com/cowboy/grunt) as its build tool. You should see the Grunt website for full install instructions. If you have Node.js and npm installed, you should be able to install grunt with `npm install -g grunt`.
 
 You also need [CoffeeScript](http://coffeescript.org/), which you can install with `npm install -g coffee-script`.
 
