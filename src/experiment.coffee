@@ -51,4 +51,21 @@ class Experiment
       success: successWrapper
       error: errorWrapper
 
+  # -> (U Undefined Suggestion)
+  recall: ->
+    cookie = Cookie.readCookie(@config.cookieName)
+    if cookie
+      i = cookie.indexOf(':')
+      if i >= 0
+        token = cookie.substring(0,i)
+        choice = cookie.substring(i, cookie.length)
+        new Suggestion(this, choice, token)
+      else
+        undefined
+    else
+      undefined
+
+  # -> Undefined
+  forget: -> Cookie.eraseCookie(@config.cookieName)
+
 window.Experiment = Experiment

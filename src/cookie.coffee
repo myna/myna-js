@@ -18,7 +18,7 @@ Cookie =
       i >=0 and cookie.substring(0,i).match('\s*')
     cookieValue = (cookie) ->
       i = cookie.indexOf(nameEQ)
-      cookie.substring(i + nameEQ.length, str.length)
+      cookie.substring(i + nameEQ.length, cookie.length)
     cookies = document.cookie.split(';')
     cookieValue(cookie) for cookie in cookies when isNameEQCookie(cookie)
 
