@@ -1,10 +1,11 @@
 # Config holds general configuration, like the name suggests
 class Config
-  constructor: (experiment) ->
+  # String -> Config
+  constructor: (uuid) ->
     # number (lifespan of the cookie in days from now)
     @cookieLifespan = 365
     # string
-    @cookieName = "myna" + experiment
+    @cookieName = "myna" + uuid
     # natural (ms)
     @timeout = 1000
     # string (url)
