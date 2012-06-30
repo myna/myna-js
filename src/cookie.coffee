@@ -1,7 +1,7 @@
 # Cookie code adapted from quirksmode.org
 
 Cookie =
-  createCookie: (name, value, days) ->
+  create: (name, value, days) ->
     expires =
       if days
         date = new Date()
@@ -11,7 +11,7 @@ Cookie =
         ""
     document.cookie = "#{name}=#{value+expires}; path=/"
 
-  readCookie: (name) ->
+  read: (name) ->
     nameEQ = name + "="
     isNameEQCookie = (cookie) ->
       i = cookie.indexOf(nameEQ)
@@ -22,5 +22,5 @@ Cookie =
     cookies = document.cookie.split(';')
     cookieValue(cookie) for cookie in cookies when isNameEQCookie(cookie)
 
-  eraseCookie: (name) ->
-    createCookie(name, "", -1)
+  erase: (name) ->
+    Cookie.create(name, "", -1)
