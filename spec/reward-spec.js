@@ -16,7 +16,7 @@ describe("Suggestion.reward", function() {
         function(error) { flag = true; result = error})
     })
 
-    waitsFor(function() { return flag; }, "the suggestion to return", 5000)
+    waitsFor(function() { return flag; }, "the suggestion to return", 500)
 
     runs(function() {
       expect(result.choice).toBeTruthy();
@@ -31,7 +31,7 @@ describe("Suggestion.reward", function() {
       )
     })
 
-    waitsFor(function() { return flag; }, "the reward to return", 5000)
+    waitsFor(function() { return flag; }, "the reward to return", 500)
 
     runs(function() {
       expect(result.typename).toBe("ok");
@@ -48,7 +48,7 @@ describe("Suggestion.reward", function() {
         function(error) { flag = true; result = error})
     })
 
-    waitsFor(function() { return flag; }, "the suggestion to return", 5000)
+    waitsFor(function() { return flag; }, "the suggestion to return", 500)
 
     runs(function() {
       expect(result.choice).toBeTruthy();
@@ -64,7 +64,7 @@ describe("Suggestion.reward", function() {
       )
     })
 
-    waitsFor(function() { return flag; }, "the reward to return", 5000)
+    waitsFor(function() { return flag; }, "the reward to return", 500)
 
     runs(function() {
       expect(result.typename).toBe("ok");
@@ -81,7 +81,7 @@ describe("Suggestion.reward", function() {
         function(error) { flag = true; result = error})
     })
 
-    waitsFor(function() { return flag; }, "the suggestion to return", 5000)
+    waitsFor(function() { return flag; }, "the suggestion to return", 500)
 
     runs(function() {
       var suggestion = result;
@@ -94,7 +94,7 @@ describe("Suggestion.reward", function() {
       )
     })
 
-    waitsFor(function() { return flag; }, "the reward to return", 5000)
+    waitsFor(function() { return flag; }, "the reward to return", 500)
 
     runs(function() {
       expect(result.typename).toBe("problem");
@@ -112,7 +112,7 @@ describe("Suggestion.reward", function() {
         function(error) { flag = true; result = error})
     })
 
-    waitsFor(function() { return flag; }, "the suggestion to return", 5000)
+    waitsFor(function() { return flag; }, "the suggestion to return", 500)
 
     runs(function() {
       var suggestion = result;
@@ -125,7 +125,7 @@ describe("Suggestion.reward", function() {
       )
     })
 
-    waitsFor(function() { return flag; }, "the reward to return", 5000)
+    waitsFor(function() { return flag; }, "the reward to return", 500)
 
     runs(function() {
       expect(result.typename).toBe("problem");

@@ -16,7 +16,7 @@ describe("Experiment.suggest", function() {
         function(error) { flag = true; result = error})
     })
 
-    waitsFor(function() { return flag; }, "The suggestion should return", 5000)
+    waitsFor(function() { return flag; }, "The suggestion should return", 500)
 
     runs(function() {
       expect(result.choice).toBeTruthy();
@@ -34,7 +34,7 @@ describe("Experiment.suggest", function() {
         function(error) { flag = true; result = error})
     })
 
-    waitsFor(function() { return flag; }, "the suggestion to return", 5000)
+    waitsFor(function() { return flag; }, "the suggestion to return", 500)
 
     runs(function() {
       console.log(result)
@@ -54,7 +54,7 @@ describe("Experiment.suggest", function() {
         function(error) { flag = true; result = error})
     })
 
-    waitsFor(function() { return flag; }, "the suggestion to return", 5000)
+    waitsFor(function() { return flag; }, "the suggestion to return", 500)
 
     runs(function() {
       console.log(result)
