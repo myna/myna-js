@@ -53,12 +53,12 @@ class Experiment
 
   # -> (U Undefined Suggestion)
   recall: ->
-    cookie = Cookie.readCookie(@config.cookieName)
+    cookie = Cookie.read(@config.cookieName)
     if cookie
       i = cookie.indexOf(':')
       if i >= 0
         token = cookie.substring(0,i)
-        choice = cookie.substring(i, cookie.length)
+        choice = cookie.substring(i+1, cookie.length)
         new Suggestion(this, choice, token)
       else
         undefined
@@ -66,6 +66,6 @@ class Experiment
       undefined
 
   # -> Undefined
-  forget: -> Cookie.eraseCookie(@config.cookieName)
+  forget: -> Cookie.erase(@config.cookieName)
 
 window.Experiment = Experiment

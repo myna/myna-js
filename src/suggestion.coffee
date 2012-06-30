@@ -18,4 +18,4 @@ class Suggestion
   # @token:@choice. We can guarantee that token doesn't contain the
   # character :, but can make no such guarantee about the choice.
   remember: ->
-    Cookie.createCookie(@experiment.config.cookieName, "#{@token}:#{@choice}", @experiment.config.cookieLifespan)
+    Cookie.create(@experiment.config.cookieName, "#{@token}:#{@choice}", @experiment.config.cookieLifespan)
