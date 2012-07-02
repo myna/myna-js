@@ -9,7 +9,6 @@ mynaFiles  = [
   'config'
   'cookie'
   'jsonp'
-  'basic'
   'experiment'
   'suggestion'
 ]

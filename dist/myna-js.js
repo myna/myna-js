@@ -1,4 +1,4 @@
-/*! myna-js - v0.1 - 2012-06-15
+/*! myna-js - v0.1 - 2012-07-02
 * http://mynaweb.com/
 * Copyright (c) 2012 Noel Welsh; Licensed BSD 2-Clause */
 
@@ -11,7 +11,9 @@
 
 
 (function() {
-  var JsonP, Log, LogLevel, Myna, extend;
+  var Config, Cookie, Experiment, JsonP, Log, LogLevel, Suggestion, extend;
+
+  window.Myna = {};
 
   LogLevel = {
     SILENT: 0,
@@ -46,6 +48,57 @@
       }
     }
     return dest;
+  };
+
+  Config = (function() {
+
+    function Config(uuid) {
+      this.cookieLifespan = 365;
+      this.cookieName = "myna" + uuid;
+      this.timeout = 1000;
+      this.baseurl = "http://api.mynaweb.com";
+      this.loglevel = LogLevel.ERROR;
+    }
+
+    Config.prototype.extend = function(options) {
+      return extend(extend({}, this), options);
+    };
+
+    return Config;
+
+  })();
+
+  Cookie = {
+    create: function(name, value, days) {
+      var date, expires;
+      expires = days ? (date = new Date(), date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000)), "; expires=" + date.toGMTString()) : "";
+      return document.cookie = "" + name + "=" + (value + expires) + "; path=/";
+    },
+    read: function(name) {
+      var cookie, cookieValue, cookies, found, isNameEQCookie, nameEQ, _i, _len;
+      nameEQ = name + "=";
+      isNameEQCookie = function(cookie) {
+        var i;
+        i = cookie.indexOf(nameEQ);
+        return i >= 0 && cookie.substring(0, i).match('^\\s*$');
+      };
+      cookieValue = function(cookie) {
+        var i;
+        i = cookie.indexOf(nameEQ);
+        return cookie.substring(i + nameEQ.length, cookie.length);
+      };
+      cookies = document.cookie.split(';');
+      for (_i = 0, _len = cookies.length; _i < _len; _i++) {
+        cookie = cookies[_i];
+        if (isNameEQCookie(cookie)) {
+          found = cookieValue(cookie);
+        }
+      }
+      return found;
+    },
+    erase: function(name) {
+      return Cookie.create(name, "", -1);
+    }
   };
 
   window.myna = {
@@ -114,168 +167,129 @@
     }
   };
 
-  Myna = (function() {
+  Experiment = (function() {
 
-    Myna.prototype.token = null;
-
-    function Myna(experiment, options) {
-      var defaults;
-      this.experiment = experiment;
-      this.options = options != null ? options : {};
-      defaults = {
-        cookieLifespan: 365,
-        cookieName: "myna" + this.experiment,
-        timeout: 1000,
-        baseurl: "http://api.mynaweb.com",
-        loglevel: 1
-      };
-      this.options = extend(extend({}, defaults), options);
-      this.logger = new Log(this.options.loglevel);
+    function Experiment(uuid, options) {
+      this.uuid = uuid;
+      if (options == null) {
+        options = {};
+      }
+      this.config = new Config(this.uuid).extend(options);
+      this.logger = new Log(this.config.loglevel);
     }
 
-    Myna.prototype.parseSuggestResponse = function(content) {
-      return {
-        token: content.token,
-        choice: content.choice
+    Experiment.prototype.suggest = function(success, error) {
+      var errorWrapper, successWrapper,
+        _this = this;
+      successWrapper = function(data) {
+        var suggestion;
+        _this.logger.log(LogLevel.DEBUG, "Experiment.suggest successWrapper called");
+        _this.logger.log(LogLevel.DEBUG, data);
+        if (data.typename === "suggestion") {
+          _this.logger.log(LogLevel.INFO, "Myna suggested " + data.choice);
+          _this.logger.log(LogLevel.DEBUG, "Response token is " + data.token);
+          suggestion = new Suggestion(_this, data.choice, data.token);
+          if (success) {
+            return success(suggestion);
+          } else {
+            return _this.logger.log(LogLevel.WARN, "You should pass a success function to Experiment.suggest. See the docs for details.");
+          }
+        } else if (data.typename === "problem") {
+          _this.logger.log(LogLevel.ERROR, "Experiment.suggest returned an API error: " + data.subtype + " " + data.messages);
+          if (error) {
+            return error(data);
+          }
+        } else {
+          _this.logger.log(LogLevel.ERROR, "Experiment.suggest did something unexpected");
+          _this.logger.log(LogLevel.ERROR, data);
+          if (error) {
+            return error({
+              typename: 'problem',
+              subtype: 400,
+              messages: [
+                {
+                  typename: "unexpected",
+                  item: data
+                }
+              ]
+            });
+          }
+        }
       };
+      errorWrapper = function(data) {
+        _this.logger.log(LogLevel.DEBUG, "Experiment.suggest errorWrapper called");
+        _this.logger.log(LogLevel.ERROR, data);
+        _this.logger.log(LogLevel.ERROR, "Experiment.suggest failed: error " + data.messages);
+        if (error) {
+          return error(data);
+        }
+      };
+      return JsonP.doJsonP({
+        url: this.config.baseurl + ("/v1/experiment/" + this.uuid + "/suggest"),
+        data: {},
+        success: successWrapper,
+        error: errorWrapper
+      });
     };
 
-    Myna.prototype.parseErrorResponse = function(content) {
-      return {
-        code: content.subtype,
-        messages: content.messages
-      };
+    Experiment.prototype.recall = function() {
+      var choice, cookie, i, token;
+      cookie = Cookie.read(this.config.cookieName);
+      if (cookie) {
+        i = cookie.indexOf(':');
+        if (i >= 0) {
+          token = cookie.substring(0, i);
+          choice = cookie.substring(i + 1, cookie.length);
+          return new Suggestion(this, choice, token);
+        } else {
+          return void 0;
+        }
+      } else {
+        return void 0;
+      }
     };
 
-    Myna.prototype.doAjax = function(path, data, success, error) {
-      var ajaxOptions;
-      this.logger.log(LogLevel.DEBUG, "myna.doAjax called");
-      ajaxOptions = extend(extend({}, this.options), {
-        url: this.options.baseurl + path,
+    Experiment.prototype.forget = function() {
+      return Cookie.erase(this.config.cookieName);
+    };
+
+    return Experiment;
+
+  })();
+
+  window.Myna.Experiment = Experiment;
+
+  Suggestion = (function() {
+
+    function Suggestion(experiment, choice, token) {
+      this.experiment = experiment;
+      this.choice = choice;
+      this.token = token;
+    }
+
+    Suggestion.prototype.reward = function(amount, success, error) {
+      var data;
+      if (amount == null) {
+        amount = 1.0;
+      }
+      data = {
+        token: this.token,
+        amount: amount
+      };
+      return JsonP.doJsonP({
+        url: this.experiment.config.baseurl + ("/v1/experiment/" + this.experiment.uuid + "/reward"),
         data: data,
         success: success,
         error: error
       });
-      this.logger.log(LogLevel.DEBUG, ajaxOptions);
-      return JsonP.doJsonP(ajaxOptions);
     };
 
-    Myna.prototype.suggest = function(success, error) {
-      var data, errorWrapper, successWrapper,
-        _this = this;
-      this.logger.log(LogLevel.DEBUG, "myna.suggest called");
-      data = {};
-      successWrapper = function(data, msg, xhr) {
-        var response;
-        _this.logger.log(LogLevel.DEBUG, "myna.suggest successWrapper called");
-        _this.logger.log(LogLevel.DEBUG, data);
-        if (data.typename === "suggestion") {
-          response = _this.parseSuggestResponse(data);
-          _this.logger.log(LogLevel.INFO, "Myna suggested " + response.suggestion);
-          _this.logger.log(LogLevel.DEBUG, "Response token stored " + response.token);
-          myna.token = response.token;
-          if (success) {
-            return success(response);
-          } else {
-            return _this.logger.log(LogLevel.WARN, "You should pass a success function to myna.suggest. See the docs for details.");
-          }
-        } else if (data.typename === "problem") {
-          _this.logger.log(LogLevel.ERROR, "Myna.suggest returned an API error: " + data.subtype + " " + data.messages);
-          if (error) {
-            return error(parseErrorResponse(data));
-          }
-        } else {
-          _this.logger.log(LogLevel.ERROR, "Myna.suggest did something unexpected");
-          _this.logger.log(LogLevel.ERROR, data);
-          if (error) {
-            return error(400, [
-              {
-                typename: "unexpected",
-                item: data
-              }
-            ]);
-          }
-        }
-      };
-      errorWrapper = function(response) {
-        var message;
-        _this.logger.log(LogLevel.DEBUG, "myna.suggest errorWrapper called");
-        message = _this.parseErrorResponse(response);
-        _this.logger.log(LogLevel.ERROR, response);
-        _this.logger.log(LogLevel.ERROR, "myna.suggest failed: error " + message);
-        if (error) {
-          return error(message);
-        }
-      };
-      return this.doAjax("/v1/experiment/" + this.experiment + "/suggest", data, successWrapper, errorWrapper);
+    Suggestion.prototype.remember = function() {
+      return Cookie.create(this.experiment.config.cookieName, "" + this.token + ":" + this.choice, this.experiment.config.cookieLifespan);
     };
 
-    Myna.prototype.reward = function(amount, success, error) {
-      var data, errorWrapper, successWrapper,
-        _this = this;
-      this.logger.log(LogLevel.DEBUG, "myna.reward called");
-      if (typeof amount === "object" && amount.target) {
-        this.logger.log(LogLevel.WARN, "You used myna.reward directly as an event handler, which is strictly speaking bad.");
-        this.logger.log(LogLevel.WARN, "To suppress this message, wrap the call to myna.reward in an anonymous function, e.g.:");
-        this.logger.log(LogLevel.WARN, "  $(\"foo\").click(function() { myna.reward() })");
-        amount = null;
-        success = null;
-        error = null;
-      }
-      if (!myna.token) {
-        this.logger.log(LogLevel.ERROR, "You must call suggest before you call reward.");
-        return;
-      }
-      data = {
-        token: myna.token,
-        amount: amount || 1.0
-      };
-      successWrapper = function(data, msg, xhr) {
-        _this.logger.log(LogLevel.DEBUG, "myna.reward successWrapper called");
-        myna.token = null;
-        _this.logger.log(LogLevel.INFO, "myna.reward succeeded");
-        if (success) {
-          return success();
-        }
-      };
-      errorWrapper = function(response) {
-        var message;
-        _this.logger.log(LogLevel.DEBUG, "myna.reward errorWrapper called");
-        message = _this.parseErrorResponse(response);
-        _this.logger.log(LogLevel.ERROR, "myna.reward failed: error " + response);
-        if (error) {
-          return error(message);
-        }
-      };
-      return this.doAjax("/v1/experiment/" + this.experiment + "/reward", data, successWrapper, errorWrapper);
-    };
-
-    Myna.prototype.saveToken = function(token) {
-      this.logger.log(LogLevel.DEBUG, "myna.saveToken called with token" + token);
-      token = token || myna.token;
-      if (token) {
-        return createCookie(myna.options.cookieName, token, myna.options.cookieLifespan);
-      } else {
-        return this.logger.log(LogLevel.WARN, "myna.saveToken called with empty token and myna.token also empty");
-      }
-    };
-
-    Myna.prototype.loadToken = function() {
-      var token;
-      token = readCookie(myna.options.cookieName);
-      if (!token) {
-        return this.logger.log(LogLevel.WARN, "myna.loadToken loaded empty token");
-      }
-    };
-
-    Myna.prototype.clearToken = function() {
-      return clearCookie(myna.options.cookieName);
-    };
-
-    return Myna;
+    return Suggestion;
 
   })();
-
-  window.Myna = Myna;
 
 }).call(this);

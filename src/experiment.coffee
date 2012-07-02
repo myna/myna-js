@@ -68,4 +68,4 @@ class Experiment
   # -> Undefined
   forget: -> Cookie.erase(@config.cookieName)
 
-window.Experiment = Experiment
+window.Myna.Experiment = Experiment
