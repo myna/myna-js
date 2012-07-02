@@ -7,7 +7,6 @@ The packaged library is in the `dist` directory. Choose minified or not as the u
 
 # TODO
 
-- Expose functions to save suggestions in a cookie
 - Add function to make rewarding a link simple
 - Change Myna server to respond to JSONP requests with a 200 OK on error. This will allow us to parse the error and fix the currently failing test.
 - Document
