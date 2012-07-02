@@ -12,7 +12,10 @@ class Config
     @baseurl = "http://api.mynaweb.com"
     # natural: See LogLevel for values
     @loglevel = LogLevel.ERROR
-    # json ->
+    # json -> undefined: Default function used for reward success callback
+    @rewardSuccess = (ok) -> undefined
+    # json -> undefined: Default function used for error callback
+    @error = (problem) -> undefined
 
   extend: (options) ->
     extend(extend({}, this), options)

@@ -3,7 +3,7 @@ class Suggestion
   # Experiment String String -> Suggestion
   constructor: (@experiment, @choice, @token) ->
 
-  reward: (amount = 1.0, success, error) ->
+  reward: (amount = 1.0, success = @experiment.config.rewardSuccess, error = @experiment.config.error) ->
     data =
       token: @token
       amount: amount

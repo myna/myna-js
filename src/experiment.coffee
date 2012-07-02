@@ -6,7 +6,7 @@ class Experiment
     @logger = new Log(@config.loglevel)
 
   # (Suggestion -> A) (JSON -> B) -> Undefined
-  suggest: (success, error) ->
+  suggest: (success, error = @config.error) ->
     # JSON -> A
     successWrapper = (data) =>
       @logger.log(LogLevel.DEBUG, "Experiment.suggest successWrapper called")

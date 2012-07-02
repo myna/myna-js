@@ -58,6 +58,12 @@
       this.timeout = 1000;
       this.baseurl = "http://api.mynaweb.com";
       this.loglevel = LogLevel.ERROR;
+      this.rewardSuccess = function(ok) {
+        return void 0;
+      };
+      this.error = function(problem) {
+        return void 0;
+      };
     }
 
     Config.prototype.extend = function(options) {
@@ -181,6 +187,9 @@
     Experiment.prototype.suggest = function(success, error) {
       var errorWrapper, successWrapper,
         _this = this;
+      if (error == null) {
+        error = this.config.error;
+      }
       successWrapper = function(data) {
         var suggestion;
         _this.logger.log(LogLevel.DEBUG, "Experiment.suggest successWrapper called");
@@ -271,6 +280,12 @@
       var data;
       if (amount == null) {
         amount = 1.0;
+      }
+      if (success == null) {
+        success = this.experiment.config.rewardSuccess;
+      }
+      if (error == null) {
+        error = this.experiment.config.error;
       }
       data = {
         token: this.token,
