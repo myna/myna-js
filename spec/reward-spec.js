@@ -26,6 +26,7 @@ describe("Suggestion.reward", function() {
       flag = false;
       result = false;
       suggestion.reward(
+        1.0,
         function(ok) { flag = true; result = ok; },
         function(error) { flag = true; result = err; }
       )
