@@ -6,8 +6,11 @@ mynaFiles  = [
   'intro'
   'log'
   'util'
+  'config'
+  'cookie'
   'jsonp'
-  'basic'
+  'experiment'
+  'suggestion'
 ]
 
 # Concatenate app files into lib/myna.coffee

@@ -45,11 +45,11 @@ JsonP =
 
     if options.timeout > 0
       window.setTimeout( ->
-                           if !returned
-                             returned = true
-                             JsonP.removeCallback.call(elem, callbackName)
-                             options.error({typename: 'problem', subtype: 500, messages: [{typename: "timeout", item: "The server took longer than #{options.timeout} ms to reply"}]})
-        , options.timeout)
+        if !returned
+          returned = true
+          JsonP.removeCallback.call(elem, callbackName)
+          options.error({typename: 'problem', subtype: 500, messages: [{typename: "timeout", item: "The server took longer than #{options.timeout} ms to reply"}]})
+      , options.timeout)
 
     elem = document.createElement("script")
     elem.setAttribute("type","text/javascript")
