@@ -3,7 +3,7 @@
 # {callbacks: [(Any ...) -> Undefined ...]}
 #
 # List of callback functions. Must be globally scoped
-window.myna = { callbacks: [] }
+window.Myna.callbacks = []
 
 JsonP =
   callbackCounter: 0
@@ -19,7 +19,7 @@ JsonP =
         this.parentNode.removeChild(this)
       catch e
       finally
-        window.myna.callbacks[callbackName] = null
+        window.Myna.callbacks[callbackName] = null
 
   # {success: (Any ...) -> Undefined,
   #  error: (JSON) -> Undefined,
@@ -33,7 +33,7 @@ JsonP =
     returned = false
 
     callbackName = "callback" + (JsonP.callbackCounter++)
-    window.myna.callbacks[callbackName] =
+    window.Myna.callbacks[callbackName] =
       (args) ->
         if !returned
           returned = true
@@ -41,7 +41,7 @@ JsonP =
 
     url = options.url + "?"
     url += "#{key}=#{value}&" for key, value of options.data
-    url += "callback=window.myna.callbacks." + callbackName
+    url += "callback=window.Myna.callbacks." + callbackName
 
     if options.timeout > 0
       window.setTimeout( ->

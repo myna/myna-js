@@ -37,19 +37,19 @@ class Experiment
 
       # JSON -> B
     errorWrapper = (data) =>
-      @logger.log(LogLevel.DEBUG, "Experiment.suggest errorWrapper called")
+      @logger.log(LogLevel.ERROR, "Experiment.suggest errorWrapper called")
       @logger.log(LogLevel.ERROR, data)
-      @logger.log(LogLevel.ERROR, "Experiment.suggest failed: error #{data.messages}")
 
       if error
         error(data)
 
-
-    JsonP.doJsonP
+    options =
       url: @config.baseurl + "/v1/experiment/#{@uuid}/suggest"
       data: {}
       success: successWrapper
       error: errorWrapper
+
+    JsonP.doJsonP(extend(options, @config))
 
   # -> (U Undefined Suggestion)
   recall: ->

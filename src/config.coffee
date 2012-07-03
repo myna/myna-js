@@ -7,7 +7,7 @@ class Config
     # string
     @cookieName = "myna" + uuid
     # natural (ms)
-    @timeout = 1000
+    @timeout = 400
     # string (url)
     @baseurl = "http://api.mynaweb.com"
     # natural: See LogLevel for values

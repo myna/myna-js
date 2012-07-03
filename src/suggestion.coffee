@@ -8,14 +8,51 @@ class Suggestion
       token: @token
       amount: amount
 
-    JsonP.doJsonP
+    errorWrapper = (data) =>
+      @experiment.logger.log(LogLevel.ERROR, "Suggestion.reward errorWrapper called")
+      @experiment.logger.log(LogLevel.ERROR, data)
+
+      if error
+        error(data)
+
+
+    options =
       url: @experiment.config.baseurl + "/v1/experiment/#{@experiment.uuid}/reward"
       data: data
       success: success
-      error: error
+      error: errorWrapper
+
+    JsonP.doJsonP(extend(options, @experiment.config))
 
   # Record this suggestion in a cookie. Value is of the form
   # @token:@choice. We can guarantee that token doesn't contain the
   # character :, but can make no such guarantee about the choice.
   remember: ->
     Cookie.create(@experiment.config.cookieName, "#{@token}:#{@choice}", @experiment.config.cookieLifespan)
+
+  # Element String -> Undefined
+  #
+  # Special case for rewarding Myna when a link is clicked. Waits for
+  # Myna to return from reward before forwarding the user to the new
+  # location. If this is not done, the request to Myna will be
+  # cancelled when the user navigates away from the current page.
+  #
+  # Any existing onClick handler is overridden.
+  rewardOnClick: (elt, location, amount = 1.0) ->
+    redirect = () -> window.location = location
+    handler = (evt) =>
+      # Get the event in IE
+      if !evt
+        evt = window.event
+
+      # Don't do default action (following the link)
+      if evt.stopPropagation
+        evt.stopPropagation()
+      if evt.returnValue
+        evt.returnValue = false
+
+      this.reward(amount, redirect, redirect)
+
+      false
+
+    elt.onclick = handler

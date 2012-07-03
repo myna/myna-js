@@ -28,7 +28,7 @@ describe("Suggestion.reward", function() {
       suggestion.reward(
         1.0,
         function(ok) { flag = true; result = ok; },
-        function(error) { flag = true; result = err; }
+        function(error) { flag = true; result = error; }
       )
     })
 
@@ -61,7 +61,7 @@ describe("Suggestion.reward", function() {
       suggestion.reward(
         0.5,
         function(ok) { flag = true; result = ok; },
-        function(error) { flag = true; result = err; }
+        function(error) { flag = true; result = error; }
       )
     })
 
@@ -90,8 +90,9 @@ describe("Suggestion.reward", function() {
       result = false;
       suggestion.token = "ha-ha"
       suggestion.reward(
+        1.0,
         function(ok) { flag = true; result = ok; },
-        function(error) { flag = true; result = err; }
+        function(error) { flag = true; result = error; }
       )
     })
 
@@ -99,7 +100,7 @@ describe("Suggestion.reward", function() {
 
     runs(function() {
       expect(result.typename).toBe("problem");
-      expect(result.code).toBe(400);
+      expect(result.subtype).toBe(400);
     })
   })
 
@@ -122,7 +123,7 @@ describe("Suggestion.reward", function() {
       suggestion.reward(
         2.0,
         function(ok) { flag = true; result = ok; },
-        function(error) { flag = true; result = err; }
+        function(error) { flag = true; result = error; }
       )
     })
 
@@ -130,7 +131,7 @@ describe("Suggestion.reward", function() {
 
     runs(function() {
       expect(result.typename).toBe("problem");
-      expect(result.code).toBe(400);
+      expect(result.subtype).toBe(400);
     })
   })
 

@@ -11,10 +11,10 @@ See the [wiki](https://github.com/myna/myna-js/wiki). Very much in progress.
 
 # TODO
 
-- Add sensible defaults for unnecessary callbacks (error in suggest, success and error in reward)
+- *DONE* Add sensible defaults for unnecessary callbacks (error in suggest, success and error in reward)
 - Add function to make rewarding a link simple
 - Change Myna server to respond to JSONP requests with a 200 OK on error. This will allow us to parse the error and fix the currently failing test.
-- Finish document
+- Finish documentation
 
 
 # Developing

@@ -1,4 +1,4 @@
-/*! myna-js - v0.1 - 2012-07-02
+/*! myna-js - v0.1 - 2012-07-03
 * http://mynaweb.com/
 * Copyright (c) 2012 Noel Welsh; Licensed BSD 2-Clause */
 
@@ -55,7 +55,7 @@
     function Config(uuid) {
       this.cookieLifespan = 365;
       this.cookieName = "myna" + uuid;
-      this.timeout = 1000;
+      this.timeout = 400;
       this.baseurl = "http://api.mynaweb.com";
       this.loglevel = LogLevel.ERROR;
       this.rewardSuccess = function(ok) {
@@ -107,9 +107,7 @@
     }
   };
 
-  window.myna = {
-    callbacks: []
-  };
+  window.Myna.callbacks = [];
 
   JsonP = {
     callbackCounter: 0,
@@ -123,7 +121,7 @@
         } catch (e) {
 
         } finally {
-          window.myna.callbacks[callbackName] = null;
+          window.Myna.callbacks[callbackName] = null;
         }
       }
     },
@@ -131,7 +129,7 @@
       var callbackName, elem, key, returned, url, value, _ref;
       returned = false;
       callbackName = "callback" + (JsonP.callbackCounter++);
-      window.myna.callbacks[callbackName] = function(args) {
+      window.Myna.callbacks[callbackName] = function(args) {
         if (!returned) {
           returned = true;
           return options.success.apply(this, arguments);
@@ -143,7 +141,7 @@
         value = _ref[key];
         url += "" + key + "=" + value + "&";
       }
-      url += "callback=window.myna.callbacks." + callbackName;
+      url += "callback=window.Myna.callbacks." + callbackName;
       if (options.timeout > 0) {
         window.setTimeout(function() {
           if (!returned) {
@@ -185,7 +183,7 @@
     }
 
     Experiment.prototype.suggest = function(success, error) {
-      var errorWrapper, successWrapper,
+      var errorWrapper, options, successWrapper,
         _this = this;
       if (error == null) {
         error = this.config.error;
@@ -226,19 +224,19 @@
         }
       };
       errorWrapper = function(data) {
-        _this.logger.log(LogLevel.DEBUG, "Experiment.suggest errorWrapper called");
+        _this.logger.log(LogLevel.ERROR, "Experiment.suggest errorWrapper called");
         _this.logger.log(LogLevel.ERROR, data);
-        _this.logger.log(LogLevel.ERROR, "Experiment.suggest failed: error " + data.messages);
         if (error) {
           return error(data);
         }
       };
-      return JsonP.doJsonP({
+      options = {
         url: this.config.baseurl + ("/v1/experiment/" + this.uuid + "/suggest"),
         data: {},
         success: successWrapper,
         error: errorWrapper
-      });
+      };
+      return JsonP.doJsonP(extend(options, this.config));
     };
 
     Experiment.prototype.recall = function() {
@@ -277,7 +275,8 @@
     }
 
     Suggestion.prototype.reward = function(amount, success, error) {
-      var data;
+      var data, errorWrapper, options,
+        _this = this;
       if (amount == null) {
         amount = 1.0;
       }
@@ -291,16 +290,49 @@
         token: this.token,
         amount: amount
       };
-      return JsonP.doJsonP({
+      errorWrapper = function(data) {
+        _this.experiment.logger.log(LogLevel.ERROR, "Suggestion.reward errorWrapper called");
+        _this.experiment.logger.log(LogLevel.ERROR, data);
+        if (error) {
+          return error(data);
+        }
+      };
+      options = {
         url: this.experiment.config.baseurl + ("/v1/experiment/" + this.experiment.uuid + "/reward"),
         data: data,
         success: success,
-        error: error
-      });
+        error: errorWrapper
+      };
+      return JsonP.doJsonP(extend(options, this.experiment.config));
     };
 
     Suggestion.prototype.remember = function() {
       return Cookie.create(this.experiment.config.cookieName, "" + this.token + ":" + this.choice, this.experiment.config.cookieLifespan);
+    };
+
+    Suggestion.prototype.rewardOnClick = function(elt, location, amount) {
+      var handler, redirect,
+        _this = this;
+      if (amount == null) {
+        amount = 1.0;
+      }
+      redirect = function() {
+        return window.location = location;
+      };
+      handler = function(evt) {
+        if (!evt) {
+          evt = window.event;
+        }
+        if (evt.stopPropagation) {
+          evt.stopPropagation();
+        }
+        if (evt.returnValue) {
+          evt.returnValue = false;
+        }
+        _this.reward(amount, redirect, redirect);
+        return false;
+      };
+      return elt.onclick = handler;
     };
 
     return Suggestion;
