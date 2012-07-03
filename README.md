@@ -30,3 +30,5 @@ The main commands you'll want to use are:
 - `grunt compile` to create `lib/myna.js`
 - `grunt test` to run the tests
 - `grunt package` to create the minified and unminified libraries in `dist`
+
+**NOTE** Tests are currently failing waiting deployment of a server-side change. Use `grunt --force` to build the library with failing tests.
