@@ -18,4 +18,4 @@ class Config
     @error = (problem) -> undefined
 
   extend: (options) ->
-    extend(extend({}, this), options)
+    extend(extend({}, options), this)
