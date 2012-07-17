@@ -2,6 +2,8 @@
 class Config
   # String -> Config
   constructor: (uuid) ->
+    protocol = if 'https:' == document.location.protocol then 'https' else 'http'
+
     # number (lifespan of the cookie in days from now)
     @cookieLifespan = 365
     # string
@@ -9,7 +11,7 @@ class Config
     # natural (ms)
     @timeout = 400
     # string (url)
-    @baseurl = "http://api.mynaweb.com"
+    @baseurl = "#{protocol}://api.mynaweb.com"
     # natural: See LogLevel for values
     @loglevel = LogLevel.ERROR
     # json -> undefined: Default function used for reward success callback

@@ -1,4 +1,4 @@
-/*! myna-js - v0.1 - 2012-07-03
+/*! myna-js - v0.1 - 2012-07-17
 * http://mynaweb.com/
 * Copyright (c) 2012 Noel Welsh; Licensed BSD 2-Clause */
 
@@ -53,10 +53,12 @@
   Config = (function() {
 
     function Config(uuid) {
+      var protocol;
+      protocol = 'https:' === document.location.protocol ? 'https' : 'http';
       this.cookieLifespan = 365;
       this.cookieName = "myna" + uuid;
       this.timeout = 400;
-      this.baseurl = "http://api.mynaweb.com";
+      this.baseurl = "" + protocol + "://api.mynaweb.com";
       this.loglevel = LogLevel.ERROR;
       this.rewardSuccess = function(ok) {
         return void 0;
@@ -67,7 +69,7 @@
     }
 
     Config.prototype.extend = function(options) {
-      return extend(extend({}, this), options);
+      return extend(extend({}, options), this);
     };
 
     return Config;
