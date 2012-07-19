@@ -32,7 +32,7 @@ module.exports = function(grunt) {
       },
       latest: {
         src: ['<banner:meta.banner>', '<config:concat.dist.dest>'],
-        dest: 'dist/<%= pkg.name %>-<%= pkg.series %>-latest.min.js'
+        dest: 'dist/<%= pkg.name %>-<%= pkg.series %>.latest.min.js'
       }
     },
     watch: {
