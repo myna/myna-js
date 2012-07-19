@@ -1,6 +1,7 @@
 {
    "name": "myna",
-   "version": "0.1",
+   "version": "1.0.0",
+   "series": "1",
    "description": "Javascript client for Myna. See http://mynaweb.com/",
    "homepage": "http://mynaweb.com/",
    "keywords": [

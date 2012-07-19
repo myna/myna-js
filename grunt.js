@@ -22,13 +22,17 @@ module.exports = function(grunt) {
     concat: {
       dist: {
         src: ['<banner:meta.banner>', 'lib/myna.js'],
-        dest: 'dist/<%= pkg.name %>.js'
+        dest: 'dist/<%= pkg.name %>-<%= pkg.version %>.js'
       }
     },
     min: {
       dist: {
         src: ['<banner:meta.banner>', '<config:concat.dist.dest>'],
-        dest: 'dist/<%= pkg.name %>.min.js'
+        dest: 'dist/<%= pkg.name %>-<%= pkg.version %>.min.js'
+      },
+      latest: {
+        src: ['<banner:meta.banner>', '<config:concat.dist.dest>'],
+        dest: 'dist/<%= pkg.name %>-<%= pkg.series %>-latest.min.js'
       }
     },
     watch: {

@@ -1,4 +1,4 @@
-/*! myna - v0.1 - 2012-07-17
+/*! myna - v1.0.0 - 2012-07-19
 * http://mynaweb.com/
 * Copyright (c) 2012 Noel Welsh; Licensed BSD 2-Clause */
 
