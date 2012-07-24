@@ -8,7 +8,7 @@ The packaged library is in the `dist` directory. Choose minified or not as the u
 
 # Documentation
 
-See the [wiki](https://github.com/myna/myna-js/wiki). Very much in progress.
+See the [wiki](https://github.com/myna/myna-js/wiki) for comprehensive documentation, and the [site](http://myna.github.com/myna-js/) for demonstrations.
 
 
 # Demo
