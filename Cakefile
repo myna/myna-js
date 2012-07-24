@@ -11,6 +11,7 @@ mynaFiles  = [
   'jsonp'
   'experiment'
   'suggestion'
+  'outro'
 ]
 
 # Concatenate app files into lib/myna.coffee

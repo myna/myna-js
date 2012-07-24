@@ -4,4 +4,4 @@
 ###
 
 # Create container to hold all exported values
-window.Myna = {}
+window.Myna = if window.Myna? then window.Myna else { onload: [] }
