@@ -1,0 +1,27 @@
+.embiggen {
+  padding-top: 20px;
+  padding-bottom: 20px;
+}
+.embiggen h1 {
+  font-size: 250%;
+}
+li .suggestion {
+  display: inline-block;
+  font-weight: bold;
+  padding-right: 10px;
+  width: 50px;
+}
+li .token {
+  display: inline-block;
+  padding-right: 20px;
+  width: 300px;
+}
+li a {
+  padding-right: 10px;
+}
+li .problem {
+  color: red;
+}
+li .success {
+  color: green;
+}
