@@ -4,22 +4,29 @@ class Suggestion
   constructor: (@experiment, @choice, @token) ->
 
   reward: (amount = 1.0, success = @experiment.config.rewardSuccess, error = @experiment.config.error) ->
+    doOnReward = (result) =>
+      f(this, amount, result) for f in Myna.onreward
+
     data =
       token: @token
       amount: amount
+
+    successWrapper = (data) =>
+      doOnReward(data)
+      success(data)
 
     errorWrapper = (data) =>
       @experiment.logger.log(LogLevel.ERROR, "Suggestion.reward errorWrapper called")
       @experiment.logger.log(LogLevel.ERROR, data)
 
+      doOnReward(data)
       if error
         error(data)
-
 
     options =
       url: @experiment.config.baseurl + "/v1/experiment/#{@experiment.uuid}/reward"
       data: data
-      success: success
+      success: successWrapper
       error: errorWrapper
 
     JsonP.doJsonP(extend(options, @experiment.config))

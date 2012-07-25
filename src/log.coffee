@@ -11,3 +11,5 @@ class Log
   log: (level, message) ->
     if window.console and @loglevel >= level
       window.console.log(message)
+
+window.Myna.LogLevel = LogLevel
