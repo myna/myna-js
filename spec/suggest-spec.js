@@ -64,4 +64,56 @@ describe("Experiment.suggest", function() {
       expect(result.messages[0].typename).toBe('timeout')
     })
   })
+
+  it("should run suggest event handlers when making a suggestion", function() {
+    var count = 0;
+    var evts = [];
+    var flag = false;
+    var result = undefined;
+
+    runs(function () {
+      var handler = function(expt, suggestion) { count++; evts.push([expt, suggestion]) };
+      Myna.onsuggest.push(handler, handler);
+
+      experiment.suggest(
+        function(suggestion) { flag = true; result = suggestion },
+        function(error) { flag = true; result = error})
+    })
+
+    waitsFor(function() { return flag; }, "The suggestion should return", 500)
+
+    runs(function() {
+      Myna.onsuggest.pop(); Myna.onsuggest.pop();
+      expect(count).toBe(2);
+      expect(evts.length).toBe(2);
+      expect(evts[0]).toEqual([experiment, result]);
+      expect(evts[1]).toEqual([experiment, result]);
+    })
+  })
+
+  it("should run suggest event handlers on error", function() {
+    var count = 0;
+    var evts = [];
+    var flag = false;
+    var result = undefined;
+    var experiment = new Experiment("br0ken");
+
+    runs(function () {
+      var handler = function(expt, suggestion) { count++; evts.push([expt, suggestion]) };
+      Myna.onsuggest.push(handler, handler);
+
+      experiment.suggest(
+        function(suggestion) { flag = true; result = suggestion },
+        function(error) { flag = true; result = error})
+    })
+
+    waitsFor(function() { return flag; }, "The suggestion should return", 500)
+
+    runs(function() {
+      expect(count).toBe(2);
+      expect(evts.length).toBe(2);
+      expect(evts[0]).toEqual([experiment, result]);
+      expect(evts[1]).toEqual([experiment, result]);
+    })
+  })
 })

@@ -7,6 +7,10 @@ class Experiment
 
   # (Suggestion -> A) (JSON -> B) -> Undefined
   suggest: (success, error = @config.error) ->
+    # (U Suggestion JSON) -> Undefined
+    doOnSuggest = (data) =>
+      f(this, data) for f in Myna.onsuggest
+
     # JSON -> A
     successWrapper = (data) =>
       @logger.log(LogLevel.DEBUG, "Experiment.suggest successWrapper called")
@@ -16,6 +20,7 @@ class Experiment
         @logger.log(LogLevel.INFO, "Myna suggested " + data.choice)
         @logger.log(LogLevel.DEBUG, "Response token is " + data.token)
         suggestion = new Suggestion(this, data.choice, data.token)
+        doOnSuggest(suggestion)
 
         if success
           success(suggestion)
@@ -23,23 +28,22 @@ class Experiment
           @logger.log(LogLevel.WARN, "You should pass a success function to Experiment.suggest. See the docs for details.")
       else if data.typename == "problem"
         @logger.log(LogLevel.ERROR, "Experiment.suggest returned an API error: #{data.subtype} #{data.messages}")
-
-        if error
-          error(data)
+        errorWrapper(data)
       else
         @logger.log(LogLevel.ERROR, "Experiment.suggest did something unexpected")
         @logger.log(LogLevel.ERROR, data)
-        if error
-          error
-            typename: 'problem',
-            subtype: 400
-            messages: [{typename: "unexpected", item: data}]
+
+        errorWrapper
+          typename: 'problem',
+          subtype: 400
+          messages: [{typename: "unexpected", item: data}]
 
       # JSON -> B
     errorWrapper = (data) =>
       @logger.log(LogLevel.ERROR, "Experiment.suggest errorWrapper called")
       @logger.log(LogLevel.ERROR, data)
 
+      doOnSuggest(data)
       if error
         error(data)
 
