@@ -23,6 +23,10 @@ module.exports = function(grunt) {
       dist: {
         src: ['<banner:meta.banner>', 'lib/myna.js'],
         dest: 'dist/<%= pkg.name %>-<%= pkg.version %>.js'
+      },
+      latest: {
+        src: ['<banner:meta.banner>', 'lib/myna.js'],
+        dest: 'dist/<%= pkg.name %>-<%= pkg.series %>.latest.js'
       }
     },
     min: {
