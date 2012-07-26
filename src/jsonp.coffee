@@ -26,8 +26,6 @@ JsonP =
   #  timeout: (U Number Undefined)
   #  url: String,
   #  data: Hash[String, String]} -> Undefined
-  #
-  # TODO: Handle errors and timeouts
   doJsonP: (options) ->
     # Used to sync the callback and timeout handlers
     returned = false
