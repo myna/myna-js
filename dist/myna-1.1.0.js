@@ -1,4 +1,4 @@
-/*! myna - v1.1.0 - 2012-07-25
+/*! myna - v1.1.0 - 2012-07-26
 * http://mynaweb.com/
 * Copyright (c) 2012 Noel Welsh; Licensed BSD 2-Clause */
 
@@ -11,16 +11,10 @@
 
 
 (function() {
-  var Config, Cookie, Experiment, JsonP, Log, LogLevel, Myna, Suggestion, extend, f, _i, _len, _ref,
+  var Config, Cookie, Experiment, JsonP, Log, LogLevel, Suggestion, extend, f, _i, _len, _ref,
     __slice = [].slice;
 
-  Myna = {
-    onload: [],
-    onsuggest: [],
-    onreward: []
-  };
-
-  window.Myna = window.Myna != null ? window.Myna : Myna;
+  window.Myna = window.Myna != null ? window.Myna : {};
 
   LogLevel = {
     SILENT: 0,
@@ -45,6 +39,8 @@
     return Log;
 
   })();
+
+  window.Myna.LogLevel = LogLevel;
 
   extend = function(dest, src) {
     var key, value;
@@ -203,7 +199,7 @@
         _results = [];
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           f = _ref[_i];
-          _results.push(f(data));
+          _results.push(f(_this, data));
         }
         return _results;
       };
@@ -292,7 +288,7 @@
     }
 
     Suggestion.prototype.reward = function(amount, success, error) {
-      var data, errorWrapper, options,
+      var data, doOnReward, errorWrapper, options, successWrapper,
         _this = this;
       if (amount == null) {
         amount = 1.0;
@@ -303,13 +299,28 @@
       if (error == null) {
         error = this.experiment.config.error;
       }
+      doOnReward = function(result) {
+        var f, _i, _len, _ref, _results;
+        _ref = Myna.onreward;
+        _results = [];
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          f = _ref[_i];
+          _results.push(f(_this, amount, result));
+        }
+        return _results;
+      };
       data = {
         token: this.token,
         amount: amount
       };
+      successWrapper = function(data) {
+        doOnReward(data);
+        return success(data);
+      };
       errorWrapper = function(data) {
         _this.experiment.logger.log(LogLevel.ERROR, "Suggestion.reward errorWrapper called");
         _this.experiment.logger.log(LogLevel.ERROR, data);
+        doOnReward(data);
         if (error) {
           return error(data);
         }
@@ -317,7 +328,7 @@
       options = {
         url: this.experiment.config.baseurl + ("/v1/experiment/" + this.experiment.uuid + "/reward"),
         data: data,
-        success: success,
+        success: successWrapper,
         error: errorWrapper
       };
       return JsonP.doJsonP(extend(options, this.experiment.config));
@@ -355,6 +366,12 @@
     return Suggestion;
 
   })();
+
+  extend(window.Myna, {
+    onload: [],
+    onsuggest: [],
+    onreward: []
+  });
 
   window.Myna.onload.push = function() {
     var elts, f, _i, _len, _results;
