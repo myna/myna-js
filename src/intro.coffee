@@ -4,5 +4,4 @@
 ###
 
 # Create container to hold all exported values
-Myna = { onload: [], onsuggest: [], onreward: [] }
-window.Myna = if window.Myna? then window.Myna else Myna
+window.Myna = if window.Myna? then window.Myna else {}
