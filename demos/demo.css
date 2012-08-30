@@ -1,27 +1,39 @@
-.embiggen {
-  padding-top: 20px;
-  padding-bottom: 20px;
+.container {
+  margin: 40px auto;
 }
-.embiggen h1 {
+
+h1 {
   font-size: 250%;
+  margin: 0 0 20px;
 }
-li .suggestion {
-  display: inline-block;
-  font-weight: bold;
-  padding-right: 10px;
-  width: 50px;
+
+p,li,#hero {
+  font-size: 16px;
+  margin: 20px 0;
 }
-li .token {
-  display: inline-block;
-  padding-right: 20px;
-  width: 300px;
+
+#hero {
+  position: relative;
+  height: 516px;
+  background: #ffffff url(loading.gif) no-repeat center center;
+  border: 1px solid #ccc;
 }
-li a {
-  padding-right: 10px;
+
+#hero .btn {
+            position: absolute;
+              bottom: 220px;
+             padding: 30px 50px;
+           font-size: 1.3em;
+         font-weight: bold;
+  -webkit-box-shadow: 0 3px 10px rgba(0, 0, 0, .7);
+     -moz-box-shadow: 0 3px 10px rgba(0, 0, 0, .7);
+          box-shadow: 0 3px 10px rgba(0, 0, 0, .7);
 }
-li .problem {
-  color: red;
+
+#hero .btn.canal {
+  left: 100px;
 }
-li .success {
-  color: green;
+
+#hero .btn.park {
+  right: 100px;
 }

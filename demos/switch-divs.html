@@ -6,90 +6,119 @@
 
     <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
     <script type="text/javascript" src="http://cdn.mynaweb.com/clients/myna-1.latest.min.js"></script>
-    <script type="text/javascript" src="../javascripts/spin.min.js"></script>
 
     <link href="bootstrap.css" rel="stylesheet">
-    <link href="http://twitter.github.com/bootstrap/assets/js/google-code-prettify/prettify.css" rel="stylesheet">
     <link href="demo.css" rel="stylesheet">
 
-    <!-- Le HTML5 shim, for IE6-8 support of HTML5 elements -->
-    <!--[if lt IE 9]>
-      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
+    <script type="text/javascript">
+      // Set this to false to run the demo at full speed:
+      var slowDown = true;
 
+      // Wait until the page has loaded...
+      $(function () {
+        // First create a Myna experiment. Use the UUID for your own experiment here:
+        var experiment = new Myna.Experiment("45923780-80ed-47c6-aa46-15e2ae7a0e8c");
+
+        // DIVs we're going to use below:
+        var hero   = $("#hero");   // wrapper for the hero image we're loading
+        var status = $("#status"); // status message so we can see what's going on in the demo
+
+        // Delay starting for a couple of seconds so we can see what's going on in the demo
+        // (you don't need to do this in production code):
+        window.setTimeout(function() {
+          status.text("Asking Myna for a suggestion...")
+
+          // Ask Myna to make a suggestion:
+          experiment.suggest(
+            // This function is called once Myna has responded:
+            function(suggestion) {
+              // Update the demo status so we can see what variant Myna suggested:
+              status.text("Myna suggested " + suggestion.choice);
+
+              // The suggestion contains a "choice" field, which is the name of the variant.
+              // In this case weuse the variant name as the ID of the hidden hero DIV:
+              hero.html($("#" + suggestion.choice).html()).removeClass("loading");
+
+              // The DIV also contains a sign-up link that we want the user to click.
+              var signUpLink = hero.find(".btn");
+
+              // When the user clicks the link, we reward Myna and load the "success.html" page.
+              //
+              // Note that the default action of clicking a hyperlink is to load a new page,
+              // which stops our Javascript rewarding Myna. We can get around this using the
+              // evt.preventDefault() method, but Myna JS provides a special method.
+              // suggestion.rewardOnClick(), which specifically handles this case.
+              suggestion.rewardOnClick(signUpLink.get(0), signUpLink.attr("href"));
+            },
+
+            // This function is called if there's an error or a time-out getting the suggestion:
+            function(error) {
+               status.text("Error getting suggestion. Displaying default.");
+               hero.html($("#variant1").html());
+            }
+          );
+        }, slowDown ? 2000 : 0);
+      });
+    </script>
   </head>
   <body>
     <div class="container">
+      <h1>Myna Hero Demo</h1>
 
-      <header class="embiggen">
-        <h1>The Myna Div Switching Demo</h1>
-      </header>
+      <p>
+        This demo shows how to use Myna to test a block of content such as a hero image.
+        See below for a description of how it works.
+      </p>
 
-      <section>
-        <p>This demo shows how to use Myna to choose a piece of content to display. While we're waiting for a suggestion from Myna we show a spinner. Note that we delay calling Myna to give you time to see the spinner. Normally Myna is fast enough that you won't notice it loading!</p>
-      </section>
+      <p>
+        <strong>This demo has been slowed down so we can see the calls to Myna in action.
+        Normally Myna is fast enough that the user won't notice what's going on!</strong>
+      </p>
 
-      <section>
-        <div id="wrapper" style="width: 100%; height: 517px; margin: 5px;">
-        </div>
-        <p><strong>Status: </strong><span id="status"></span></p>
-        <button id="button" class="btn btn-primary">Yes, this is the content I wanted!</button>
-        <div id="variant1" style="display: none;">
-          <img src="http://www.untyped.com/styles/images/untyped-background.jpg">
-        </div>
-        <div id="variant2" style="display: none;">
-          <img src="http://www.untyped.com/styles/images/untyping-background.jpg">
-        </div>
-      </section>
+      <div id="hero" class="loading"></div>
 
-      <script type="text/javascript">
-        var wrapper = $("#wrapper")
-        var button = $("#button");
-        var status = $("#status");
+      <p>
+        <strong>Status: </strong>
+        <span id="status">Pausing before we start the demo</span>
+      </p>
 
-        // Create a spinner while we wait for Myna
-        function doSpinner() {
-          var opts = {
-            lines: 12,
-            length: 10,
-            width: 4,
-            radius: 8
-          };
+      <h2>How it works</h2>
 
-          new Spinner(opts).spin(wrapper.get(0));
-        };
+      <ul>
+        <li>
+          The page contains an element with ID <tt>hero</tt>, which acts as a wrapper for the
+          hero image we're going to test.
+        </li>
+        <li>
+           The hero DIV has an animated background GIF that acts as a loading bar while we're
+           waiting for a suggestion from Myna.
+        </li>
+        <li>
+          The names of the variants on Myna, <tt>variant1</tt> and <tt>variant2</tt>, are used
+          as the IDs of hidden DIVs containing the hero content we want to display.
+        </li>
+        <li>
+          The hero content also contains a &quot;Sign up&quot; link. We monitor for clicks on
+          this link and send a reward back to Myna before going to the next page.
+        </li>
+      </ul>
 
-        function doSwitch() {
-          var experiment = new Myna.Experiment("45923780-80ed-47c6-aa46-15e2ae7a0e8c");
+    </div>
 
-          experiment.suggest(
-            // If we're successful display the variant and enable the reward button
-            function(suggestion) {
-              var variant = $("#" + suggestion.choice);
-              status.text("Choice is "+suggestion.choice);
+    <!-- BEGIN MYNA CODE - PART 2 OF 2 -->
 
-              wrapper.html(variant.html());
-              button.on("click", function() {
-               suggestion.reward();
-               status.text("Reward sent");
-               button.off("click");
-              });
-            },
+    <!-- Hidden DIVs containing the different variants of the hero image -->
 
-            // On error display a default
-            function(error) {
-               status.text("Error getting suggestion. Displaying default.");
-               wrapper.html($("#variant1").html());
-            }
-          );
-        }
+    <div id="variant1" style="display: none;">
+      <img src="http://www.untyped.com/styles/images/untyped-background.jpg">
+      <a class="btn btn-large canal" href="success.html">Sign up</a>
+    </div>
 
-        // Do everything when the document is ready.
-        $(function () {
-          doSpinner();
-          status.text("Loading...");
-          // Delay the call by 2s to give the spinner a chance to rotate.
-          window.setTimeout(doSwitch, 2000) });
-      </script>
+    <div id="variant2" style="display: none;">
+      <img src="http://www.untyped.com/styles/images/untyping-background.jpg">
+      <a class="btn btn-large park" href="success.html">Sign up</a>
+    </div>
+
+    <!-- END MYNA CODE - PART 2 OF 2 -->
   </body>
 </html>
