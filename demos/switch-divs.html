@@ -37,7 +37,8 @@
 
               // The suggestion contains a "choice" field, which is the name of the variant.
               // In this case weuse the variant name as the ID of the hidden hero DIV:
-              hero.html($("#" + suggestion.choice).html());
+              var variantHtml = $("#" + suggestion.choice).html();
+              hero.html(variantHtml);
 
               // The DIV also contains a sign-up link that we want the user to click.
               var signUpLink = hero.find(".btn");
