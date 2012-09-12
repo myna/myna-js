@@ -6,7 +6,7 @@ class Experiment
     @logger = new Log(@config.loglevel)
 
   # (Suggestion -> A) (JSON -> B) -> Undefined
-  suggest: (success, error = @config.error) ->
+  suggest: (success, error = @config.error) =>
     # (U Suggestion JSON) -> Undefined
     doOnSuggest = (data) =>
       f(this, data) for f in Myna.onsuggest
@@ -56,7 +56,7 @@ class Experiment
     JsonP.doJsonP(extend(options, @config))
 
   # -> (U Undefined Suggestion)
-  recall: ->
+  recall: =>
     cookie = Cookie.read(@config.cookieName)
     if cookie
       i = cookie.indexOf(':')
@@ -70,6 +70,14 @@ class Experiment
       undefined
 
   # -> Undefined
-  forget: -> Cookie.erase(@config.cookieName)
+  forget: => Cookie.erase(@config.cookieName)
+
+  # (Suggestion -> A) (JSON -> B) -> Undefined
+  recallOrSuggest: (success, error = @config.error) =>
+    recalled = @recall()
+    if recalled
+      success(recalled)
+    else
+      @suggest(success, error)
 
 window.Myna.Experiment = Experiment

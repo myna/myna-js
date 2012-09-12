@@ -13,7 +13,8 @@ describe("Experiment.suggest", function() {
     runs(function () {
       experiment.suggest(
         function(suggestion) { flag = true; result = suggestion },
-        function(error) { flag = true; result = error})
+        function(error) { flag = true; result = error}
+      )
     })
 
     waitsFor(function() { return flag; }, "The suggestion should return", 500)
