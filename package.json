@@ -6,30 +6,37 @@
    "homepage": "http://mynaweb.com/",
    "keywords": [
      "myna",
+     "multi-armed bandit",
      "bandit",
+     "a/b testing",
      "a/b"
    ],
    "maintainers": [
      {
        "name": "Noel Welsh",
-       "email": "noel@untyped.com",
-       "web": "http://www.untyped.com"
+       "email": "noel@mynaweb.com",
+       "web": "http://www.mynaweb.com"
+     },
+     {
+       "name": "Dave Gurnell",
+       "email": "dave@mynaweb.com",
+       "web": "http://www.mynaweb.com"
      }
    ],
    "contributors": [
      {
        "name": "Noel Welsh",
-       "email": "noel@untyped.com",
-       "web": "http://www.untyped.com"
+       "email": "noel@mynaweb.com",
+       "web": "http://www.mynaweb.com"
      },
      {
        "name": "Dave Gurnell",
-       "email": "dave@untyped.com",
-       "web": "http://www.untyped.com"
+       "email": "dave@mynaweb.com",
+       "web": "http://www.mynaweb.com"
      }
    ],
    "bugs": {
-       "mail": "noel@untyped.com",
+       "mail": "noel@mynaweb.com",
        "web": "https://github.com/myna/myna-js"
    },
    "licenses": [
