@@ -8,7 +8,7 @@ The packaged library is in the `dist` directory. Choose minified or not as the u
 
 # Documentation
 
-See the [wiki](https://github.com/myna/myna-js/wiki) for comprehensive documentation, and the [site](http://myna.github.com/myna-js/) for demonstrations.
+See the [wiki](https://github.com/myna/myna-js/wiki) for comprehensive API documentation, the demos [here](https://mynaweb.com/demo/js) and [here](http://myna.github.com/myna-js/).
 
 
 # Demo
@@ -21,7 +21,7 @@ Load the file `demo/ExperimentExperimenter.html` to test the client. It also pro
 - *DONE* Add sensible defaults for unnecessary callbacks (error in suggest, success and error in reward)
 - *DONE* Add function to make rewarding a link simple
 - *DONE* Change Myna server to respond to JSONP requests with a 200 OK on error. This will allow us to parse the error and fix the currently failing test.
-- Finish documentation
+- *DONE* Finish documentation
 
 
 # Developing
@@ -37,5 +37,3 @@ The main commands you'll want to use are:
 - `grunt compile` to create `lib/myna.js`
 - `grunt test` to run the tests
 - `grunt package` to create the minified and unminified libraries in `dist`
-
-**NOTE** Tests are currently failing waiting deployment of a server-side change. Use `grunt --force` to build the library with failing tests.
