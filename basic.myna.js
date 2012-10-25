@@ -1,6 +1,6 @@
 /**
  * @preserve Myna Basic Javascript Client v0.1
- * Copyright 2011 Untyped Ltd
+ * Copyright 2011 Myna Ltd
  */
 
 var callbackCounter = 0;
