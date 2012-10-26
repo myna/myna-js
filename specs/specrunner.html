@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Jasmine Spec Runner</title>
+
+  <link rel="shortcut icon" type="image/png" href="jasmine-1.2.0/jasmine_favicon.png">
+  <link rel="stylesheet" type="text/css" href="jasmine-1.2.0/jasmine.css">
+  <script type="text/javascript" src="jasmine-1.2.0/jasmine.js"></script>
+  <script type="text/javascript" src="jasmine-1.2.0/jasmine-html.js"></script>
+
+  <!-- include source files here... -->
+  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+
+  <script type="text/javascript" src="../dist/myna-1.latest.js"></script>
+
+  <!-- include spec files here... -->
+  <script type="text/javascript" src="util-spec.js"></script>
+  <script type="text/javascript" src="suggest-spec.js"></script>
+  <script type="text/javascript" src="reward-spec.js"></script>
+  <script type="text/javascript" src="suggestion-spec.js"></script>
+  <script type="text/javascript" src="cookie-spec.js"></script>
+  <script type="text/javascript" src="config-spec.js"></script>
+  <script type="text/javascript" src="onload-spec.js"></script>
+  <script type="text/javascript" src="recall-or-suggest-spec.js"></script>
+
+  <script type="text/javascript">
+    (function() {
+      var jasmineEnv = jasmine.getEnv();
+      jasmineEnv.updateInterval = 1000;
+
+      var htmlReporter = new jasmine.HtmlReporter();
+
+      jasmineEnv.addReporter(htmlReporter);
+
+      jasmineEnv.specFilter = function(spec) {
+        return htmlReporter.specFilter(spec);
+      };
+
+      var currentWindowOnload = window.onload;
+
+      window.onload = function() {
+        if (currentWindowOnload) {
+          currentWindowOnload();
+        }
+        execJasmine();
+      };
+
+      function execJasmine() {
+        jasmineEnv.execute();
+      }
+
+    })();
+  </script>
+
+</head>
+
+<body>
+</body>
+</html>

@@ -19,24 +19,61 @@ module.exports = function(grunt) {
     jasmine: {
       files: ['spec/**/*.html']
     },
+    coffee: {
+      app: {
+        src: [ 'src/*.coffee' ],
+        dest: 'temp',
+        options: { bare: true }
+      }
+    },
     concat: {
       dist: {
-        src: ['<banner:meta.banner>', 'lib/myna.js'],
+        src: [
+          '<banner:meta.banner>',
+          'temp/myna.js',
+          'temp/intro.js',
+          'temp/log.js',
+          'temp/util.js',
+          'temp/config.js',
+          'temp/cookie.js',
+          'temp/jsonp.js',
+          'temp/experiment.js',
+          'temp/suggestion.js',
+          'temp/outro.js'
+        ],
         dest: 'dist/<%= pkg.name %>-<%= pkg.version %>.js'
       },
       latest: {
-        src: ['<banner:meta.banner>', 'lib/myna.js'],
+        src: [
+          '<banner:meta.banner>',
+          'temp/myna.js',
+          'temp/intro.js',
+          'temp/log.js',
+          'temp/util.js',
+          'temp/config.js',
+          'temp/cookie.js',
+          'temp/jsonp.js',
+          'temp/experiment.js',
+          'temp/suggestion.js',
+          'temp/outro.js'
+        ],
         dest: 'dist/<%= pkg.name %>-<%= pkg.series %>.latest.js'
       }
     },
     min: {
       dist: {
-        src: ['<banner:meta.banner>', '<config:concat.dist.dest>'],
+        src: ['dist/<%= pkg.name %>-<%= pkg.version %>.js'],
         dest: 'dist/<%= pkg.name %>-<%= pkg.version %>.min.js'
       },
       latest: {
-        src: ['<banner:meta.banner>', '<config:concat.dist.dest>'],
+        src: ['dist/<%= pkg.name %>-<%= pkg.series %>.latest.js'],
         dest: 'dist/<%= pkg.name %>-<%= pkg.series %>.latest.min.js'
+      }
+    },
+    jasmine: {
+      all: {
+        src:['specs/specrunner.html'],
+        errorReporting: true
       }
     },
     watch: {
@@ -62,42 +99,9 @@ module.exports = function(grunt) {
     uglify: {}
   });
 
-  // Custom tasks
-  grunt.registerTask('compile', 'Compile Myna library', function() {
-    var done = this.async();
-    exec('cake compile-lib', function(err, stdout, stderr) {
-      grunt.log.writeln("Compiling Myna library")
-      if(err) {
-        grunt.log.error(err);
-        throw err;
-      } else {
-        grunt.log.writeln('Myna library compiled')
-        done();
-      }
-    })
-  })
-
-
-  grunt.registerTask('test', 'Run tests', function() {
-    var done = this.async();
-    exec('cake compile-bare', function(err, stdout, stderr) {
-      grunt.log.writeln("Compiling bare Myna library")
-      if(err) {
-        grunt.log.error(err);
-        throw err;
-      } else {
-        grunt.log.writeln('Myna bare library compiled')
-        grunt.task.run('jasmine')
-        done();
-      }
-    })
-  })
-
-  grunt.registerTask('package', 'compile test concat min')
-
-  // Default task.
-  grunt.registerTask('default', 'package');
-
-  // Load Jasmine integration
+  grunt.loadNpmTasks('grunt-coffee');
   grunt.loadNpmTasks('grunt-jasmine-task');
+
+  grunt.registerTask('package', 'coffee concat jasmine min')
+  grunt.registerTask('default', 'package');
 };

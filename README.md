@@ -1,39 +1,34 @@
-myna-js
-=======
+Javascript Client for Myna
+==========================
 
-Javascript client for Myna
+Copyright 2012 Myna Ltd
 
-The packaged library is in the `dist` directory. Choose minified or not as the urge takes you.
+Released under the [BSD 3-clause license](http://opensource.org/licenses/BSD-3-Clause).
+See [LICENSE.md](https://github.com/myna/myna-js/blob/master/LICENSE.md) for the full text.
 
+# What is this?
 
-# Documentation
+This is a Javascript client library for the [Myna](http://mynaweb.com) A/B testing platform.
 
-See the [wiki](https://github.com/myna/myna-js/wiki) for comprehensive API documentation, the demos [here](https://mynaweb.com/demo/js) and [here](http://myna.github.com/myna-js/).
+# Getting started
 
+If you're new to Myna, look at our [help pages](https://mynaweb.com/help/library-javascript) for instructions on how to get started. We also have a number of [demos](https://mynaweb.com/demo/js) showing common use cases.
 
-# Demo
+See the project's [Github wiki](https://github.com/myna/myna-js/wiki) for a comprehensive API reference.
 
-Load the file `demo/ExperimentExperimenter.html` to test the client. It also provides a handy way to test your experiments.
-
-
-# TODO
-
-- *DONE* Add sensible defaults for unnecessary callbacks (error in suggest, success and error in reward)
-- *DONE* Add function to make rewarding a link simple
-- *DONE* Change Myna server to respond to JSONP requests with a 200 OK on error. This will allow us to parse the error and fix the currently failing test.
-- *DONE* Finish documentation
-
+The latest versions of this library are hosted on our *content delivery network*. See our help for more information. You only need to use this Github repository if you want to contribute new features or bug fixes or build a custom version of the client.
 
 # Developing
 
-This project uses [Grunt](https://github.com/cowboy/grunt) as its build tool. You should see the Grunt website for full install instructions. If you have Node.js and npm installed, you should be able to install grunt with `npm install -g grunt`.
+This project is written in [Coffeescript](http://coffeescript.org) and uses the [Grunt](https://github.com/cowboy/grunt) build tool. See the respective web sites for full manuals and installation instructions.
 
-You also need [CoffeeScript](http://coffeescript.org/), which you can install with `npm install -g coffee-script`.
+If you have Node.js and npm installed, you should be able to the necessary tools with:
 
-To run the tests you will need to install [PhantomJS](http://code.google.com/p/phantomjs/downloads/list).
+    npm install -g grunt
+    npm install -g coffee-script
 
-The main commands you'll want to use are:
+The main command to build the library is then:
 
-- `grunt compile` to create `lib/myna.js`
-- `grunt test` to run the tests
-- `grunt package` to create the minified and unminified libraries in `dist`
+    grunt compile
+
+which creates `dist/myna-x.y.z.js` and `dist/myna-x.y.z.min.js`.
