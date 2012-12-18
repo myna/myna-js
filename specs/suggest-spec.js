@@ -55,7 +55,7 @@ describe("Experiment.suggest", function() {
         function(error) { flag = true; result = error})
     })
 
-    waitsFor(function() { return flag; }, "the suggestion to return", 500)
+    waitsFor(function() { return flag; }, "the suggestion to return", 1400)
 
     runs(function() {
       console.log(result)
