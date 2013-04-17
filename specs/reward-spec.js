@@ -2,41 +2,88 @@ describe("Suggestion.reward", function() {
   var testUuid = "45923780-80ed-47c6-aa46-15e2ae7a0e8c";
   var experiment;
 
+  var timeout = 1000; // How long, in ms, do we wait for calls to Myna
+
+  var debug = true;
+  function log(msg) {
+    if(debug) {
+      console.log("------------------------------------------------------------\n");
+      console.log(msg)
+      console.log("\n------------------------------------------------------------\n");
+    }
+  }
+
+  // Expects _this in scope
+  function successCallback(_this) =
+    function(good) { log("success"); _this.ready = "success"; _this.result = good; }
+  function errorCallback(_this) =
+    function(error) { log("error"); _this.ready = "error"; _this.result = error; }
+
+  var isReady = 
+    function() { log(this.ready); return this.ready != false; }
+
+  // Sets
+  //  this.ready (U false "success" "error") Indicates which callback was called
+  //  this.result JSON The result of the call
+  //
+  // Side-effecting this is pretty ugly but that's how Jasmine rolls
+  function makeSuggestion() {
+    runs(function() {
+      var _this = this;
+      _this.ready = false 
+      _this.result = null
+
+      experiment.suggest(successCallback(_this), errorCallback(_this))
+    });
+
+    waitsFor(isReady, "the suggestion to return", timeout);
+  }
+
+  function makeReward(amount) {
+    var _this = this;
+    var suggestion = this.result;
+
+    // Allow testing of optional amount parameter
+    runs(function() {
+      if(amount) {
+        suggestion.reward(
+          amount,
+          successCallback,
+          errorCallback
+        );
+      } else {
+          suggestion.reward(successCallback, errorCallback);
+      }
+    });
+
+    waitsFor(isReady, "the reward to return", timeout);
+  }
+
+  function isSuccess() {
+    expect(this.ready).toEqual("success");
+  }
+
+  function isError() {
+    expect(this.ready).toEqual("error");
+  }
+
+
   beforeEach(function() {
     experiment = new Experiment(testUuid);
   })
 
   it("should return ok when correctly rewarding", function() {
-    var flag = false;
-    var result = false;
-
-    runs(function () {
-      experiment.suggest(
-        function(suggestion) { flag = true; result = suggestion },
-        function(error) { flag = true; result = error})
-    })
-
-    waitsFor(function() { return flag; }, "the suggestion to return", 500)
+    makeSuggestion();
 
     runs(function() {
-      expect(result.choice).toBeTruthy();
-      expect(result.token).toBeTruthy();
+      isSuccess();
+      expect(this.result.choice).toBeTruthy();
+      expect(this.result.token).toBeTruthy();
+    });
 
-      var suggestion = result;
-      flag = false;
-      result = false;
-      suggestion.reward(
-        1.0,
-        function(ok) { flag = true; result = ok; },
-        function(error) { flag = true; result = error; }
-      )
-    })
+    makeReward();
 
-    waitsFor(function() { return flag; }, "the reward to return", 500)
-
-    runs(function() {
-      expect(result.typename).toBe("ok");
-    })
+    runs(isSuccess);
   })
 
   it("should allow amount to be specified", function() {
@@ -49,7 +96,7 @@ describe("Suggestion.reward", function() {
         function(error) { flag = true; result = error})
     })
 
-    waitsFor(function() { return flag; }, "the suggestion to return", 500)
+    waitsFor(function() { return flag; }, "the suggestion to return", timeout)
 
     runs(function() {
       expect(result.choice).toBeTruthy();
@@ -65,7 +112,7 @@ describe("Suggestion.reward", function() {
       )
     })
 
-    waitsFor(function() { return flag; }, "the reward to return", 500)
+    waitsFor(function() { return flag; }, "the reward to return", timeout)
 
     runs(function() {
       expect(result.typename).toBe("ok");
@@ -82,7 +129,7 @@ describe("Suggestion.reward", function() {
         function(error) { flag = true; result = error})
     })
 
-    waitsFor(function() { return flag; }, "the suggestion to return", 500)
+    waitsFor(function() { return flag; }, "the suggestion to return", timeout)
 
     runs(function() {
       var suggestion = result;
@@ -96,7 +143,7 @@ describe("Suggestion.reward", function() {
       )
     })
 
-    waitsFor(function() { return flag; }, "the reward to return", 500)
+    waitsFor(function() { return flag; }, "the reward to return", timeout)
 
     runs(function() {
       expect(result.typename).toBe("problem");
@@ -114,7 +161,7 @@ describe("Suggestion.reward", function() {
         function(error) { flag = true; result = error})
     })
 
-    waitsFor(function() { return flag; }, "the suggestion to return", 500)
+    waitsFor(function() { return flag; }, "the suggestion to return", timeout)
 
     runs(function() {
       var suggestion = result;
@@ -127,7 +174,7 @@ describe("Suggestion.reward", function() {
       )
     })
 
-    waitsFor(function() { return flag; }, "the reward to return", 500)
+    waitsFor(function() { return flag; }, "the reward to return", timeout)
 
     runs(function() {
       expect(result.typename).toBe("problem");
@@ -152,7 +199,7 @@ describe("Suggestion.reward", function() {
         function(error) { flag = true; suggestion = error; })
     })
 
-    waitsFor(function() { return flag; }, "the suggestion to return", 500)
+    waitsFor(function() { return flag; }, "the suggestion to return", timeout)
 
     runs(function() {
       Myna.onreward.push(handler); Myna.onreward.push(handler);
@@ -165,7 +212,7 @@ describe("Suggestion.reward", function() {
       )
     })
 
-    waitsFor(function() { return flag; }, "the reward to return", 500)
+    waitsFor(function() { return flag; }, "the reward to return", timeout)
 
     runs(function() {
       Myna.onreward.pop(); Myna.onreward.pop();
@@ -196,7 +243,7 @@ describe("Suggestion.reward", function() {
         function(error) { flag = true; suggestion = error; })
     })
 
-    waitsFor(function() { return flag; }, "the suggestion to return", 500)
+    waitsFor(function() { return flag; }, "the suggestion to return", timeout)
 
     runs(function() {
       Myna.onreward.push(handler); Myna.onreward.push(handler);
@@ -209,7 +256,7 @@ describe("Suggestion.reward", function() {
       )
     })
 
-    waitsFor(function() { return flag; }, "the reward to return", 500)
+    waitsFor(function() { return flag; }, "the reward to return", timeout)
 
     runs(function() {
       Myna.onreward.pop(); Myna.onreward.pop();
