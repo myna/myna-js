@@ -22,7 +22,7 @@ The latest versions of this library are hosted on our *content delivery network*
 
 This project is written in [Coffeescript](http://coffeescript.org) and uses the [Grunt](https://github.com/cowboy/grunt) build tool. See the respective web sites for full manuals and installation instructions.
 
-If you have Node.js and npm installed, you should be able install to the necessary tools with:
+If you have Node.js and npm installed, you should be able install all the dependencies by running, from the home directory of this project:
 
     npm install -g grunt-cli
     npm install
