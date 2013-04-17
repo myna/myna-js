@@ -13,48 +13,60 @@ describe("Suggestion.reward", function() {
     }
   }
 
-  // Expects _this in scope
-  function successCallback(_this) =
-    function(good) { log("success"); _this.ready = "success"; _this.result = good; }
-  function errorCallback(_this) =
-    function(error) { log("error"); _this.ready = "error"; _this.result = error; }
 
-  var isReady = 
-    function() { log(this.ready); return this.ready != false; }
+  function promiseTest(promise) {
+      var _this = {
+        ready: false,  // (U "success" "error" false)
+        result: null   // Any
+      };
+      
+      runs(function() {
+        promise.fork(
+          function(data) {
+            _this.ready = "success";
+            _this.result = data;
+          },
+          function(error) {
+            _this.ready = "error";
+            _this.result = error;
+          }
+        )
+      });
 
-  // Sets
-  //  this.ready (U false "success" "error") Indicates which callback was called
-  //  this.result JSON The result of the call
-  //
-  // Side-effecting this is pretty ugly but that's how Jasmine rolls
+      waitsFor(
+        function() { return _this.ready != false; },
+        "promise to evaluate",
+        timeout
+      )
+  }
+
+
   function makeSuggestion() {
-    runs(function() {
-      var _this = this;
-      _this.ready = false 
-      _this.result = null
-
-      experiment.suggest(successCallback(_this), errorCallback(_this))
+    return new Promise(function(success, error) {
+        experiment.suggest(success, error);
     });
-
-    waitsFor(isReady, "the suggestion to return", timeout);
   }
 
   function makeReward(amount) {
-    var _this = this;
-    var suggestion = this.result;
-
-    // Allow testing of optional amount parameter
-    runs(function() {
+    return function(suggestion) {
       if(amount) {
-        suggestion.reward(
-          amount,
-          successCallback,
-          errorCallback
-        );
+        return new Promise(function(success, error) {
+          suggestion.reward(
+            amount,
+            success,
+            error
+          );
+        });
       } else {
-          suggestion.reward(successCallback, errorCallback);
+        return new Promise(function(success, error) {
+            suggestion.reward(
+              success,
+              error
+            );
+        });
       }
-    });
+    };
+  }
 
     waitsFor(isReady, "the reward to return", timeout);
   }
@@ -73,17 +85,7 @@ describe("Suggestion.reward", function() {
   })
 
   it("should return ok when correctly rewarding", function() {
-    makeSuggestion();
-
-    runs(function() {
-      isSuccess();
-      expect(this.result.choice).toBeTruthy();
-      expect(this.result.token).toBeTruthy();
-    });
-
-    makeReward();
-
-    runs(isSuccess);
+    promiseTest(makeSuggestion().chain(makeReward()));
   })
 
   it("should allow amount to be specified", function() {

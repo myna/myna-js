@@ -14,6 +14,7 @@ module.exports = (grunt) ->
       src: 'dist/<%= pkg.name %>-<%= pkg.version %>.js',
       options: {
         specs: ['specs/**/*-spec.js']
+        helpers: ['specs/promise.js']
       }
     },
     coffee: {
