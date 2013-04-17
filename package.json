@@ -1,56 +1,66 @@
 {
-   "name": "myna",
-   "version": "1.2.1",
-   "series": "1",
-   "description": "Javascript client for Myna. See http://mynaweb.com/",
-   "homepage": "http://mynaweb.com/",
-   "keywords": [
-     "myna",
-     "multi-armed bandit",
-     "bandit",
-     "a/b testing",
-     "a/b"
-   ],
-   "maintainers": [
-     {
-       "name": "Noel Welsh",
-       "email": "noel@mynaweb.com",
-       "web": "http://www.mynaweb.com"
-     },
-     {
-       "name": "Dave Gurnell",
-       "email": "dave@mynaweb.com",
-       "web": "http://www.mynaweb.com"
-     }
-   ],
-   "contributors": [
-     {
-       "name": "Noel Welsh",
-       "email": "noel@mynaweb.com",
-       "web": "http://www.mynaweb.com"
-     },
-     {
-       "name": "Dave Gurnell",
-       "email": "dave@mynaweb.com",
-       "web": "http://www.mynaweb.com"
-     }
-   ],
-   "bugs": {
-       "mail": "noel@mynaweb.com",
-       "web": "https://github.com/myna/myna-js"
-   },
-   "licenses": [
-       {
-           "type": "BSD 2-Clause",
-           "url": "https://github.com/myna/myna-js/LICENSE.txt"
-       }
-   ],
-   "repositories": [
-       {
-           "type": "git",
-           "url": "https://github.com/myna/myna-js"
-       }
-   ],
-   "dependencies": {
-   }
+  "name": "myna",
+  "version": "1.2.1",
+  "series": "1",
+  "description": "Javascript client for Myna. See http://mynaweb.com/",
+  "homepage": "http://mynaweb.com/",
+  "keywords": [
+    "myna",
+    "multi-armed bandit",
+    "bandit",
+    "a/b testing",
+    "a/b"
+  ],
+  "maintainers": [
+    {
+      "name": "Noel Welsh",
+      "email": "noel@mynaweb.com",
+      "web": "http://www.mynaweb.com"
+    },
+    {
+      "name": "Dave Gurnell",
+      "email": "dave@mynaweb.com",
+      "web": "http://www.mynaweb.com"
+    }
+  ],
+  "contributors": [
+    {
+      "name": "Noel Welsh",
+      "email": "noel@mynaweb.com",
+      "web": "http://www.mynaweb.com"
+    },
+    {
+      "name": "Dave Gurnell",
+      "email": "dave@mynaweb.com",
+      "web": "http://www.mynaweb.com"
+    }
+  ],
+  "bugs": {
+      "mail": "noel@mynaweb.com",
+      "web": "https://github.com/myna/myna-js"
+  },
+  "licenses": [
+      {
+          "type": "BSD 2-Clause",
+          "url": "https://github.com/myna/myna-js/LICENSE.txt"
+      }
+  ],
+  "repositories": [
+      {
+          "type": "git",
+          "url": "https://github.com/myna/myna-js"
+      }
+  ],
+  "dependencies": {
+  },
+  "devDependencies": {
+    "grunt": "~0.4.1",
+    "grunt-contrib-jshint": "~0.1.1",
+    "grunt-contrib-nodeunit": "~0.1.2",
+    "grunt-contrib-concat": "~0.2",
+    "grunt-contrib-uglify": "~0.2",
+    "grunt-contrib-watch": "~0.3",
+    "grunt-contrib-jasmine": "~0.4",
+    "grunt-contrib-coffee": "~0.6"
+  }
 }
