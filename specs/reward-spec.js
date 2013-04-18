@@ -4,15 +4,15 @@ describe("Suggestion.reward", function() {
 
   var timeout = 1000; // How long, in ms, do we wait for calls to Myna
 
+  // Useful debugging stuff
   var debug = true;
   function log(msg) {
     if(debug) {
       console.log("------------------------------------------------------------\n");
-      console.log(msg)
+      console.log(msg);
       console.log("\n------------------------------------------------------------\n");
     }
   }
-
 
   function promiseTest(promise) {
       var _this = {
@@ -30,14 +30,18 @@ describe("Suggestion.reward", function() {
             _this.ready = "error";
             _this.result = error;
           }
-        )
+        );
       });
 
       waitsFor(
-        function() { return _this.ready != false; },
+        function() { return _this.ready !== false; },
         "promise to evaluate",
         timeout
-      )
+      );
+
+      runs(function() {
+        expect(_this.ready).toBe("success");
+      });
   }
 
 
@@ -60,6 +64,7 @@ describe("Suggestion.reward", function() {
       } else {
         return new Promise(function(success, error) {
             suggestion.reward(
+              1.0,
               success,
               error
             );
@@ -68,121 +73,56 @@ describe("Suggestion.reward", function() {
     };
   }
 
-    waitsFor(isReady, "the reward to return", timeout);
-  }
-
-  function isSuccess() {
-    expect(this.ready).toEqual("success");
-  }
-
-  function isError() {
-    expect(this.ready).toEqual("error");
-  }
-
-
   beforeEach(function() {
     experiment = new Experiment(testUuid);
-  })
+  });
 
   it("should return ok when correctly rewarding", function() {
     promiseTest(makeSuggestion().chain(makeReward()));
-  })
+  });
 
   it("should allow amount to be specified", function() {
-    var flag = false;
-    var result = false;
-
-    runs(function () {
-      experiment.suggest(
-        function(suggestion) { flag = true; result = suggestion },
-        function(error) { flag = true; result = error})
-    })
-
-    waitsFor(function() { return flag; }, "the suggestion to return", timeout)
-
-    runs(function() {
-      expect(result.choice).toBeTruthy();
-      expect(result.token).toBeTruthy();
-
-      var suggestion = result;
-      flag = false;
-      result = false;
-      suggestion.reward(
-        0.5,
-        function(ok) { flag = true; result = ok; },
-        function(error) { flag = true; result = error; }
-      )
-    })
-
-    waitsFor(function() { return flag; }, "the reward to return", timeout)
-
-    runs(function() {
-      expect(result.typename).toBe("ok");
-    })
-  })
+    promiseTest(makeSuggestion().chain(makeReward(1.0)));
+  });
 
   it("should handle errors on an invalid token", function() {
-    var flag = false;
-    var result = false;
-
-    runs(function () {
-      experiment.suggest(
-        function(suggestion) { flag = true; result = suggestion },
-        function(error) { flag = true; result = error})
-    })
-
-    waitsFor(function() { return flag; }, "the suggestion to return", timeout)
-
-    runs(function() {
-      var suggestion = result;
-      flag = false;
-      result = false;
-      suggestion.token = "ha-ha"
-      suggestion.reward(
-        1.0,
-        function(ok) { flag = true; result = ok; },
-        function(error) { flag = true; result = error; }
-      )
-    })
-
-    waitsFor(function() { return flag; }, "the reward to return", timeout)
-
-    runs(function() {
-      expect(result.typename).toBe("problem");
-      expect(result.subtype).toBe(400);
-    })
-  })
+    promiseTest(makeSuggestion().chain(function(suggestion) {
+      suggestion.token = "ha-ha";
+      return new Promise(function(success, error) {
+        suggestion.reward(
+          1.0,
+          // Success is failure in this case
+          function(ok) { error(ok); },
+          function(problem) { 
+            if(problem.typename === "problem" && problem.subtype === 400) {
+              success(problem); 
+            } else {
+              error(problem);
+            }
+          }
+        );
+      });
+    }));
+  });
 
   it("should handle errors on an invalid amount", function() {
-    var flag = false;
-    var result = false;
-
-    runs(function () {
-      experiment.suggest(
-        function(suggestion) { flag = true; result = suggestion },
-        function(error) { flag = true; result = error})
-    })
-
-    waitsFor(function() { return flag; }, "the suggestion to return", timeout)
-
-    runs(function() {
-      var suggestion = result;
-      flag = false;
-      result = false;
-      suggestion.reward(
-        2.0,
-        function(ok) { flag = true; result = ok; },
-        function(error) { flag = true; result = error; }
-      )
-    })
-
-    waitsFor(function() { return flag; }, "the reward to return", timeout)
-
-    runs(function() {
-      expect(result.typename).toBe("problem");
-      expect(result.subtype).toBe(400);
-    })
-  })
+    promiseTest(makeSuggestion().chain(function(suggestion) {
+      return new Promise(function(success, error) {
+        suggestion.reward(
+          2.0,
+          // Success is failure in this case
+          function(ok) { error(ok); },
+          function(problem) { 
+            if(problem.typename === "problem" && problem.subtype === 400) {
+              success(problem); 
+            } else {
+              error(problem);
+            }
+          }
+        );
+      });
+    }));
+  });
 
   it("should run reward event handlers when making a reward", function() {
     var flag = false;
