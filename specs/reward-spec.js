@@ -127,7 +127,7 @@ describe("Suggestion.reward", function() {
   it("should run reward event handlers when making a reward", function() {
     var flag = false;
     var result = false;
-    var suggestion = undefined;
+    var suggestion;
     var count = 0;
     var evts = [];
     var handler = function(suggestion, amount, result) {
@@ -171,7 +171,7 @@ describe("Suggestion.reward", function() {
   it("should run reward event handlers on error", function() {
     var flag = false;
     var result = false;
-    var suggestion = undefined;
+    var suggestion;
     var count = 0;
     var evts = [];
     var handler = function(suggestion, amount, result) {

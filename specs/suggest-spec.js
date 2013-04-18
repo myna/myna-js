@@ -70,7 +70,7 @@ describe("Experiment.suggest", function() {
     var count = 0;
     var evts = [];
     var flag = false;
-    var result = undefined;
+    var result;
 
     runs(function () {
       var handler = function(expt, suggestion) { count++; evts.push([expt, suggestion]) };
@@ -96,7 +96,7 @@ describe("Experiment.suggest", function() {
     var count = 0;
     var evts = [];
     var flag = false;
-    var result = undefined;
+    var result;
     var experiment = new Experiment("br0ken");
 
     runs(function () {
