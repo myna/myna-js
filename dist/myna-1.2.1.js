@@ -1,4 +1,4 @@
-/*! myna - v1.2.2 - 2013-04-18\n* http://mynaweb.com/
+/*! myna - v1.2.1 - 2013-04-18\n* http://mynaweb.com/
 * Copyright (c) 2013 Noel Welsh; Licensed BSD 2-Clause *//*
  Myna Javascript Client
  Copyright Untyped 2012
