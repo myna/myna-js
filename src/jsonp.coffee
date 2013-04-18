@@ -33,9 +33,12 @@ JsonP =
     callbackName = "callback" + (JsonP.callbackCounter++)
     window.Myna.callbacks[callbackName] =
       (args) ->
-        if !returned
-          returned = true
-          options.success.apply(this, arguments)
+    window.Myna.callbacks[callbackName] = (response) ->
+      unless returned
+        returned = true
+      switch response.typename
+        when "problem" then options.error.call(this, response)
+        else options.success.call(this, response)
 
     url = options.url + "?"
     url += "#{key}=#{value}&" for key, value of options.data
