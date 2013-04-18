@@ -64,6 +64,12 @@ module.exports = (grunt) ->
         dest: 'dist/<%= pkg.name %>-<%= pkg.series %>.latest.js'
       }
     },
+    jshint: {
+      files: ['specs/**/*-spec.js']
+      options: {
+        asi: true # Shutup about missing semicolons
+      }
+    },
     uglify: {
       dist: {
         src: ['dist/<%= pkg.name %>-<%= pkg.version %>.js'],
@@ -73,7 +79,7 @@ module.exports = (grunt) ->
         src: ['dist/<%= pkg.name %>-<%= pkg.series %>.latest.js'],
         dest: 'dist/<%= pkg.name %>-<%= pkg.series %>.latest.min.js'
       }
-    },
+    }
   })
 
   grunt.loadNpmTasks("grunt-contrib-concat")
@@ -81,7 +87,8 @@ module.exports = (grunt) ->
   grunt.loadNpmTasks("grunt-contrib-watch")
   grunt.loadNpmTasks("grunt-contrib-jasmine")
   grunt.loadNpmTasks("grunt-contrib-coffee")
+  grunt.loadNpmTasks("grunt-contrib-jshint")
 
-  grunt.registerTask('package', ['coffee', 'concat', 'jasmine', 'uglify'])
+  grunt.registerTask('package', ['coffee', 'concat', 'jshint', 'jasmine', 'uglify'])
   grunt.registerTask('default', 'package');
 
