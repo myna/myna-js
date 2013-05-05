@@ -11,6 +11,8 @@ Cookie =
         ""
     document.cookie = "#{name}=#{value+expires}; path=/"
 
+    return
+
   # String -> (U String Undefined)
   read: (name) ->
     nameEQ = name + "="

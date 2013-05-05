@@ -46,7 +46,9 @@ class Suggestion
   #
   # Any existing onClick handler is overridden.
   rewardOnClick: (elt, location, amount = 1.0) ->
-    redirect = () -> window.location = location
+    redirect = () ->
+      window.location = location
+      return
     handler = (evt) =>
       # Get the event in IE
       if !evt
@@ -63,3 +65,4 @@ class Suggestion
       false
 
     elt.onclick = handler
+    return
