@@ -2,29 +2,33 @@
 module.exports = (grunt) ->
 
   mainSources = [
-    'myna.coffee'
     'intro.coffee'
-    'log.coffee'
-    'util.coffee'
-    'config.coffee'
-    'cookie.coffee'
-    'jsonp.coffee'
+    # 'config.coffee'
+    # 'cookie.coffee'
+    # 'jsonp.coffee'
+    'settings.coffee'
+    'cache.coffee'
+    'variant.coffee'
     'experiment.coffee'
-    'suggestion.coffee'
-    'outro.coffee'
+    'client.coffee'
+    # 'experiment.coffee'
+    # 'suggestion.coffee'
+    # 'outro.coffee'
   ]
 
   testSources = [
     'config-spec.coffee'
-    'cookie-spec.coffee'
-    'onload-spec.coffee'
-    'promise.coffee'
-    'recall-or-suggest-spec.coffee'
-    'reward-spec.coffee'
-    'specrunner.html'
-    'suggest-spec.coffee'
-    'suggestion-spec.coffee'
-    'util-spec.coffee'
+    'variant-spec.coffee'
+    'experiment-spec.coffee'
+    # 'cookie-spec.coffee'
+    # 'onload-spec.coffee'
+    # 'promise.coffee'
+    # 'recall-or-suggest-spec.coffee'
+    # 'reward-spec.coffee'
+    # 'specrunner.html'
+    # 'suggest-spec.coffee'
+    # 'suggestion-spec.coffee'
+    # 'util-spec.coffee'
   ]
 
   sources = (dir, sources, ext = null) ->
@@ -53,7 +57,7 @@ module.exports = (grunt) ->
     pkg: pkg
     meta: { banner }
     coffee:
-      options: bare: true
+      options: bare: false
       main: { expand: true, cwd: 'src/main/', src: [ '**/*.coffee' ], dest: 'temp/main/', ext: '.js' }
       test: { expand: true, cwd: 'src/test/', src: [ '**/*.coffee' ], dest: 'temp/test/', ext: '.js' }
     copy:
@@ -81,13 +85,23 @@ module.exports = (grunt) ->
         dest: distLatestMin
   })
 
-  grunt.loadNpmTasks "grunt-contrib-coffee"
-  grunt.loadNpmTasks "grunt-contrib-concat"
-  grunt.loadNpmTasks "grunt-contrib-copy"
-  grunt.loadNpmTasks "grunt-contrib-jasmine"
-  grunt.loadNpmTasks "grunt-contrib-jshint"
-  grunt.loadNpmTasks "grunt-contrib-uglify"
-  grunt.loadNpmTasks "grunt-contrib-watch"
+  grunt.loadNpmTasks 'grunt-contrib-coffee'
+  grunt.loadNpmTasks 'grunt-contrib-concat'
+  grunt.loadNpmTasks 'grunt-contrib-copy'
+  grunt.loadNpmTasks 'grunt-contrib-jasmine'
+  grunt.loadNpmTasks 'grunt-contrib-jshint'
+  grunt.loadNpmTasks 'grunt-contrib-uglify'
+  grunt.loadNpmTasks 'grunt-contrib-watch'
 
-  grunt.registerTask 'package', [ 'coffee', 'copy', 'concat', 'jshint', 'jasmine', 'uglify' ]
-  grunt.registerTask 'default', [ 'package' ]
+  grunt.registerTask 'package', [
+    'coffee'
+    'copy'
+    'concat'
+    # 'jshint'
+    'jasmine'
+    'uglify'
+  ]
+
+  grunt.registerTask 'default', [
+    'package'
+  ]

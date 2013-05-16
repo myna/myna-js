@@ -1,83 +1,131 @@
-class Experiment
+class Myna.Experiment
+  constructor: (options = {}) ->
+    @uuid = options.uuid ? Myna.error("Myna.Experiment.constructor", "no UUID in options", options)
+    @name = options.name ? "Unnamed experiment"
+    @settings = new Myna.Settings(options.settings ? {})
 
-  # String Hash -> Experiment
-  constructor: (@uuid, options = {}) ->
-    @config = new Config(@uuid).extend(options)
-    @logger = new Log(@config.loglevel)
+    @variants = {}
+    for name, data of (options.variants ? {})
+      variant = new Myna.Variant(name, data)
+      @variants[name] = variant
 
-  # (Suggestion -> A) (JSON -> B) -> Undefined
-  suggest: (success, error = @config.error) =>
-    # (U Suggestion JSON) -> Undefined
-    doOnSuggest = (data) =>
-      f(this, data) for f in Myna.onsuggest
+  # -> boolean
+  sticky: =>
+    !!@settings.get("myna.sticky", true)
 
-    # JSON -> A
-    successWrapper = (data) =>
-      @logger.log(LogLevel.DEBUG, "Experiment.suggest successWrapper called")
-      @logger.log(LogLevel.DEBUG, data)
+  # -> double
+  totalWeight: =>
+    ans = 0.0
+    for name, variant of @variants then ans += variant.weight
+    ans
 
-      if data.typename == "suggestion"
-        @logger.log(LogLevel.INFO, "Myna suggested " + data.choice)
-        @logger.log(LogLevel.DEBUG, "Response token is " + data.token)
-        suggestion = new Suggestion(this, data.choice, data.token)
-        doOnSuggest(suggestion)
-
-        if success
-          success(suggestion)
+  # (variant -> void) (any -> void) -> void
+  suggest: (success = (->), error = (->)) =>
+    Myna.log("Myna.Experiment.suggest", @uuid)
+    try
+      if @sticky()
+        if (variant = @loadStickySuggestion())?
+          success(variant)
         else
-          @logger.log(LogLevel.WARN, "You should pass a success function to Experiment.suggest. See the docs for details.")
-      else if data.typename == "problem"
-        @logger.log(LogLevel.ERROR, "Experiment.suggest returned an API error: #{data.subtype} #{data.messages}")
-        errorWrapper(data)
+          variant = @randomVariant()
+          @saveStickySuggestion(variant)
+          @recordView(variant)
+          success(variant)
       else
-        @logger.log(LogLevel.ERROR, "Experiment.suggest did something unexpected")
-        @logger.log(LogLevel.ERROR, data)
+        variant = @randomVariant()
+        @saveLastSuggestion(variant)
+        @recordView(variant)
+        success(variant)
+    catch exn
+      error(exn)
 
-        errorWrapper
-          typename: 'problem',
-          subtype: 400
-          messages: [{typename: "unexpected", item: data}]
-
-      # JSON -> B
-    errorWrapper = (data) =>
-      @logger.log(LogLevel.ERROR, "Experiment.suggest errorWrapper called")
-      @logger.log(LogLevel.ERROR, data)
-
-      doOnSuggest(data)
-      if error
-        error(data)
-
-    options =
-      url: @config.baseurl + "/v1/experiment/#{@uuid}/suggest"
-      data: {}
-      success: successWrapper
-      error: errorWrapper
-
-    JsonP.doJsonP(extend(options, @config))
-
-  # -> (U Undefined Suggestion)
-  recall: =>
-    cookie = Cookie.read(@config.cookieName)
-    if cookie
-      i = cookie.indexOf(':')
-      if i >= 0
-        token = cookie.substring(0,i)
-        choice = cookie.substring(i+1, cookie.length)
-        new Suggestion(this, choice, token)
+  # number-between-0-and-1 (variant -> void) (any -> void) -> void
+  reward: (amount = 1.0, success = (->), error = (->)) =>
+    Myna.log("Myna.Experiment.reward", @uuid, amount)
+    try
+      if @sticky()
+        if (variant = @loadStickyReward())?
+          success()
+        else if (variant = @loadLastSuggestion())?
+          @saveStickyReward(variant)
+          @clearLastSuggestion()
+          @recordReward(variant, amount)
+          success()
+        else
+          error()
       else
-        undefined
-    else
-      undefined
+        if (variant = @loadLastSuggestion())?
+          @clearLastSuggestion()
+          @recordReward(variant, amount)
+          success()
+        else
+          error()
+    catch exn
+      error(exn)
 
-  # -> Undefined
-  forget: => Cookie.erase(@config.cookieName)
+  randomVariant: =>
+    total = @totalWeight()
+    random = Math.random() * total
+    for name, variant of @variants
+      total -= variant.weight
+      if total <= random
+        return variant
+    return null
 
-  # (Suggestion -> A) (JSON -> B) -> Undefined
-  recallOrSuggest: (success, error = @config.error) =>
-    recalled = @recall()
-    if recalled
-      success(recalled)
-    else
-      @suggest(success, error)
+  recordView: (variant) =>
+    Myna.log("Myna.Experiment.recordView", @uuid, variant)
 
-window.Myna.Experiment = Experiment
+  recordReward: (variant, amount) =>
+    Myna.log("Myna.Experiment.recordReward", @uuid, variant, amount)
+
+  # => U(variant undefined)
+  loadLastSuggestion: =>
+    @variants[Myna.cache.load(@uuid)?.lastSuggestion]
+
+  # => void
+  clearLastSuggestion: =>
+    @loadAndSave (saved) ->
+      delete saved['lastSuggestion']
+      saved
+
+  # => U(variant undefined)
+  loadStickySuggestion: =>
+    name = Myna.cache.load(@uuid)?.stickySuggestion
+    variant = if name? then @variants[name] else null
+    variant
+
+  # variant => void
+  saveStickySuggestion: (variant) =>
+    @loadAndSave (saved) ->
+      Myna.log("BAZ2", saved)
+      saved.stickySuggestion = variant.name
+      saved
+
+  clearStickySuggestion: =>
+    @loadAndSave (saved) ->
+      saved.stickySuggestion = null
+      saved
+
+  # => U(variant undefined)
+  loadStickyReward: =>
+    @variants[Myna.cache.load(@uuid)?.stickyReward]
+
+  # variant => void
+  saveStickyReward: (variant) =>
+    @loadAndSave (saved) ->
+      saved.stickyReward = variant.name
+      saved
+
+  clearStickyReward: =>
+    @loadAndSave (saved) ->
+      saved.stickyReward = null
+      saved
+
+  load: =>
+    Myna.cache.load(@uuid)
+
+  save: (state) =>
+    Myna.cache.save(@uuid, state)
+
+  loadAndSave: (func) =>
+    Myna.cache.save(@uuid, func(Myna.cache.load(@uuid) ? {}))

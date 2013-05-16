@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Myna for Javascript</title>
+
+    <script src="myna-2.latest.js"></script>
+
+    <script type="text/javascript">
+      var client = new Myna.Client({
+        apiRoot: '//apibeta.mynaweb.com',
+        apiKey: '092c90f6-a8f2-11e2-a2b9-7c6d628b25f7',
+        experiments: [{
+          "typename": "experiment",
+          "subtype": "summary",
+          "uuid": "8ebfeab2-c308-413f-93ff-45beb603949a",
+          "name": "__demo experiment",
+          "variants": [
+            {
+              "typename": "variant",
+              "name": "a",
+              "weight": 0.05220744480360347
+            }, {
+              "typename": "variant",
+              "name": "b",
+              "weight": 0.06840613617760642
+            }, {
+              "typename": "variant",
+              "name": "c",
+              "weight": 0.8793864190187901
+            }
+          ]
+        }, {
+          "typename": "experiment",
+          "subtype": "summary",
+          "uuid": "e558c983-1f73-4fdb-8462-0dc740d412c4",
+          "name": "hero image",
+          "variants": [
+            {
+              "typename": "variant",
+              "name": "bronze",
+              "weight": 0.3333333333333333
+            }, {
+              "typename": "variant",
+              "name": "gold",
+              "weight": 0.3333333333333333
+            }, {
+              "typename": "variant",
+              "name": "silver",
+              "weight": 0.3333333333333333
+            }
+          ]
+        }]
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="experiments" style="padding: 20px 0; text-align: center; font-family: sans-serif; font-size: .8em">
+      Test data:
+      <span class="expt1" data-show="variant1">Ex1v1</span>
+      <span class="expt1" data-show="variant2">Ex1v2</span>
+      <a    class="expt1" data-goal="click" href="#">Ex1goal</a>
+      <span class="expt2" data-show="variant1">Ex2v1</span>
+      <span class="expt2" data-show="variant2">Ex2v2</span>
+      <a    class="expt2" data-goal="click" href="#">Ex2goal</a>
+    </div>
+  </body>
+</html>
