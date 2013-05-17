@@ -1,6 +1,6 @@
 Myna.cache ?= {}
 
-localStorageSupported =
+Myna.cache.localStorageSupported =
   try
     localStorage.setItem('modernizer', 'modernizer')
     localStorage.removeItem('modernizer')
@@ -8,25 +8,25 @@ localStorageSupported =
   catch exn
     false
 
+# Manually disable local storage by setting this to false:
+Myna.cache.localStorageEnabled =
+  true
+
 # Local storage ---------------------------------
 
 # string -> U(object null)
 readLocalStorage = (key) ->
-  Myna.log("readLocalStorage", key)
   str = window.localStorage.getItem("myna-" + key)
-  ans = if str?
-          try
-            JSON.parse(str)
-          catch exn
-            null
-        else
-          null
-  Myna.log(" - readLocalStorage", key, ans)
-  ans
+  if str?
+    try
+      JSON.parse(str)
+    catch exn
+      null
+  else
+    null
 
 # string object -> void
 writeLocalStorage = (key, obj) ->
-  Myna.log("writeLocalStorage", key, obj)
   if obj?
     window.localStorage.setItem("myna-" + key, JSON.stringify(obj))
   else
@@ -98,14 +98,14 @@ removeCookie = (name) ->
 
 # string -> object
 Myna.cache.load = (key) =>
-  if localStorageSupported
+  if Myna.cache.localStorageSupported && Myna.cache.localStorageEnabled
     readLocalStorage(key)
   else
     readCookie(key)
 
 # string object -> void
 Myna.cache.save = (key, value) =>
-  if localStorageSupported
+  if Myna.cache.localStorageSupported && Myna.cache.localStorageEnabled
     writeLocalStorage(key, value)
   else
     writeCookie(key, value)
@@ -113,7 +113,7 @@ Myna.cache.save = (key, value) =>
 
 # string object -> void
 Myna.cache.remove = (key) =>
-  if localStorageSupported
+  if Myna.cache.localStorageSupported && Myna.cache.localStorageEnabled
     removeLocalStorage(key)
   else
     removeCookie(key)

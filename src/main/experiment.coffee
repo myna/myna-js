@@ -78,54 +78,64 @@ class Myna.Experiment
   recordReward: (variant, amount) =>
     Myna.log("Myna.Experiment.recordReward", @uuid, variant, amount)
 
-  # => U(variant undefined)
+  # => U(variant null)
   loadLastSuggestion: =>
-    @variants[Myna.cache.load(@uuid)?.lastSuggestion]
+    @loadVariant('lastSuggestion')
+
+  # variant => void
+  saveLastSuggestion: (variant) =>
+    @saveVariant('lastSuggestion', variant)
 
   # => void
   clearLastSuggestion: =>
-    @loadAndSave (saved) ->
-      delete saved['lastSuggestion']
-      saved
+    @clearVariant('lastSuggestion')
 
-  # => U(variant undefined)
+  # => U(variant null)
   loadStickySuggestion: =>
-    name = Myna.cache.load(@uuid)?.stickySuggestion
-    variant = if name? then @variants[name] else null
-    variant
+    @loadVariant('stickySuggestion')
 
   # variant => void
   saveStickySuggestion: (variant) =>
-    @loadAndSave (saved) ->
-      Myna.log("BAZ2", saved)
-      saved.stickySuggestion = variant.name
-      saved
+    @saveVariant('stickySuggestion', variant)
 
+  # => void
   clearStickySuggestion: =>
-    @loadAndSave (saved) ->
-      saved.stickySuggestion = null
-      saved
+    @clearVariant('stickySuggestion')
 
-  # => U(variant undefined)
+  # => U(variant null)
   loadStickyReward: =>
-    @variants[Myna.cache.load(@uuid)?.stickyReward]
+    @loadVariant('stickyReward')
 
   # variant => void
   saveStickyReward: (variant) =>
+    @saveVariant('stickyReward', variant)
+
+  # => void
+  clearStickyReward: =>
+    @clearVariant('stickyReward')
+
+  loadVariant: (id) =>
+    Myna.log("Myna.Experiment.loadVariant", id)
+    name = @load()?[id]
+    if name? then @variants[name] else null
+
+  saveVariant: (id, variant) =>
     @loadAndSave (saved) ->
-      saved.stickyReward = variant.name
+      Myna.log("Myna.Experiment.saveVariant", id, variant, saved)
+      saved[id] = variant.name
       saved
 
-  clearStickyReward: =>
+  clearVariant: (id) =>
     @loadAndSave (saved) ->
-      saved.stickyReward = null
+      Myna.log("Myna.Experiment.clearVariant", id, saved)
+      delete saved[id]
       saved
+
+  loadAndSave: (func) =>
+    @save(func(@load() ? {}))
 
   load: =>
     Myna.cache.load(@uuid)
 
   save: (state) =>
     Myna.cache.save(@uuid, state)
-
-  loadAndSave: (func) =>
-    Myna.cache.save(@uuid, func(Myna.cache.load(@uuid) ? {}))

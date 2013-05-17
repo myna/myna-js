@@ -1,4 +1,4 @@
-/*! myna - v2.0.0 - 2013-05-16 - http://mynaweb.com/
+/*! myna - v2.0.0 - 2013-05-17 - http://mynaweb.com/
 * Copyright (c) 2013 Noel Welsh; Licensed BSD 2-Clause */(function() {
   var _ref,
     __slice = [].slice;
@@ -220,14 +220,14 @@
 }).call(this);
 
 (function() {
-  var decodeCookieValue, encodeCookieValue, exn, localStorageSupported, readCookie, readLocalStorage, removeCookie, removeLocalStorage, writeCookie, writeLocalStorage, _ref,
+  var decodeCookieValue, encodeCookieValue, exn, readCookie, readLocalStorage, removeCookie, removeLocalStorage, writeCookie, writeLocalStorage, _ref,
     _this = this;
 
   if ((_ref = Myna.cache) == null) {
     Myna.cache = {};
   }
 
-  localStorageSupported = (function() {
+  Myna.cache.localStorageSupported = (function() {
     try {
       localStorage.setItem('modernizer', 'modernizer');
       localStorage.removeItem('modernizer');
@@ -238,29 +238,25 @@
     }
   })();
 
-  readLocalStorage = function(key) {
-    var ans, str;
+  Myna.cache.localStorageEnabled = true;
 
-    Myna.log("readLocalStorage", key);
+  readLocalStorage = function(key) {
+    var str;
+
     str = window.localStorage.getItem("myna-" + key);
-    ans = (function() {
-      if (str != null) {
-        try {
-          return JSON.parse(str);
-        } catch (_error) {
-          exn = _error;
-          return null;
-        }
-      } else {
+    if (str != null) {
+      try {
+        return JSON.parse(str);
+      } catch (_error) {
+        exn = _error;
         return null;
       }
-    })();
-    Myna.log(" - readLocalStorage", key, ans);
-    return ans;
+    } else {
+      return null;
+    }
   };
 
   writeLocalStorage = function(key, obj) {
-    Myna.log("writeLocalStorage", key, obj);
     if (obj != null) {
       window.localStorage.setItem("myna-" + key, JSON.stringify(obj));
     } else {
@@ -330,7 +326,7 @@
   };
 
   Myna.cache.load = function(key) {
-    if (localStorageSupported) {
+    if (Myna.cache.localStorageSupported && Myna.cache.localStorageEnabled) {
       return readLocalStorage(key);
     } else {
       return readCookie(key);
@@ -338,7 +334,7 @@
   };
 
   Myna.cache.save = function(key, value) {
-    if (localStorageSupported) {
+    if (Myna.cache.localStorageSupported && Myna.cache.localStorageEnabled) {
       writeLocalStorage(key, value);
     } else {
       writeCookie(key, value);
@@ -346,7 +342,7 @@
   };
 
   Myna.cache.remove = function(key) {
-    if (localStorageSupported) {
+    if (Myna.cache.localStorageSupported && Myna.cache.localStorageEnabled) {
       removeLocalStorage(key);
     } else {
       removeCookie(key);
@@ -392,9 +388,12 @@
       if (options == null) {
         options = {};
       }
-      this.loadAndSave = __bind(this.loadAndSave, this);
       this.save = __bind(this.save, this);
       this.load = __bind(this.load, this);
+      this.loadAndSave = __bind(this.loadAndSave, this);
+      this.clearVariant = __bind(this.clearVariant, this);
+      this.saveVariant = __bind(this.saveVariant, this);
+      this.loadVariant = __bind(this.loadVariant, this);
       this.clearStickyReward = __bind(this.clearStickyReward, this);
       this.saveStickyReward = __bind(this.saveStickyReward, this);
       this.loadStickyReward = __bind(this.loadStickyReward, this);
@@ -402,6 +401,7 @@
       this.saveStickySuggestion = __bind(this.saveStickySuggestion, this);
       this.loadStickySuggestion = __bind(this.loadStickySuggestion, this);
       this.clearLastSuggestion = __bind(this.clearLastSuggestion, this);
+      this.saveLastSuggestion = __bind(this.saveLastSuggestion, this);
       this.loadLastSuggestion = __bind(this.loadLastSuggestion, this);
       this.recordReward = __bind(this.recordReward, this);
       this.recordView = __bind(this.recordView, this);
@@ -535,59 +535,73 @@
     };
 
     Experiment.prototype.loadLastSuggestion = function() {
-      var _ref;
+      return this.loadVariant('lastSuggestion');
+    };
 
-      return this.variants[(_ref = Myna.cache.load(this.uuid)) != null ? _ref.lastSuggestion : void 0];
+    Experiment.prototype.saveLastSuggestion = function(variant) {
+      return this.saveVariant('lastSuggestion', variant);
     };
 
     Experiment.prototype.clearLastSuggestion = function() {
-      return this.loadAndSave(function(saved) {
-        delete saved['lastSuggestion'];
-        return saved;
-      });
+      return this.clearVariant('lastSuggestion');
     };
 
     Experiment.prototype.loadStickySuggestion = function() {
-      var name, variant, _ref;
-
-      name = (_ref = Myna.cache.load(this.uuid)) != null ? _ref.stickySuggestion : void 0;
-      variant = name != null ? this.variants[name] : null;
-      return variant;
+      return this.loadVariant('stickySuggestion');
     };
 
     Experiment.prototype.saveStickySuggestion = function(variant) {
-      return this.loadAndSave(function(saved) {
-        Myna.log("BAZ2", saved);
-        saved.stickySuggestion = variant.name;
-        return saved;
-      });
+      return this.saveVariant('stickySuggestion', variant);
     };
 
     Experiment.prototype.clearStickySuggestion = function() {
-      return this.loadAndSave(function(saved) {
-        saved.stickySuggestion = null;
-        return saved;
-      });
+      return this.clearVariant('stickySuggestion');
     };
 
     Experiment.prototype.loadStickyReward = function() {
-      var _ref;
-
-      return this.variants[(_ref = Myna.cache.load(this.uuid)) != null ? _ref.stickyReward : void 0];
+      return this.loadVariant('stickyReward');
     };
 
     Experiment.prototype.saveStickyReward = function(variant) {
+      return this.saveVariant('stickyReward', variant);
+    };
+
+    Experiment.prototype.clearStickyReward = function() {
+      return this.clearVariant('stickyReward');
+    };
+
+    Experiment.prototype.loadVariant = function(id) {
+      var name, _ref;
+
+      Myna.log("Myna.Experiment.loadVariant", id);
+      name = (_ref = this.load()) != null ? _ref[id] : void 0;
+      if (name != null) {
+        return this.variants[name];
+      } else {
+        return null;
+      }
+    };
+
+    Experiment.prototype.saveVariant = function(id, variant) {
       return this.loadAndSave(function(saved) {
-        saved.stickyReward = variant.name;
+        Myna.log("Myna.Experiment.saveVariant", id, variant, saved);
+        saved[id] = variant.name;
         return saved;
       });
     };
 
-    Experiment.prototype.clearStickyReward = function() {
+    Experiment.prototype.clearVariant = function(id) {
       return this.loadAndSave(function(saved) {
-        saved.stickyReward = null;
+        Myna.log("Myna.Experiment.clearVariant", id, saved);
+        delete saved[id];
         return saved;
       });
+    };
+
+    Experiment.prototype.loadAndSave = function(func) {
+      var _ref;
+
+      return this.save(func((_ref = this.load()) != null ? _ref : {}));
     };
 
     Experiment.prototype.load = function() {
@@ -596,12 +610,6 @@
 
     Experiment.prototype.save = function(state) {
       return Myna.cache.save(this.uuid, state);
-    };
-
-    Experiment.prototype.loadAndSave = function(func) {
-      var _ref;
-
-      return Myna.cache.save(this.uuid, func((_ref = Myna.cache.load(this.uuid)) != null ? _ref : {}));
     };
 
     return Experiment;

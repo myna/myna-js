@@ -71,47 +71,81 @@ do ->
       expect(names).toContain("b")
       expect(names).not.toContain("c")
 
-  describe "Experiment.{load,save,clear}StickySuggestion", ->
-    it "should load nothing if nothing has been saved", ->
-      expt.clearStickySuggestion()
-      expect(expt.loadStickySuggestion()).toEqual(null)
+  for localStorageEnabled in [false, true] # end up resetting it to true
+    Myna.cache.localStorageEnabled = localStorageEnabled
 
-    it "should load the last saved suggestion", ->
-      expt.saveStickySuggestion(expt.variants.a)
-      expect(expt.loadStickySuggestion()).toBe(expt.variants.a)
+    localStorageStatus =
+      "localStorage " +
+      (if Myna.cache.localStorageSupported then ' supported,' else ' unsupported,') +
+      (if Myna.cache.localStorageEnabled then ' enabled' else ' disabled')
 
-      expt.saveStickySuggestion(expt.variants.b)
-      expect(expt.loadStickySuggestion()).toBe(expt.variants.b)
+    describe "Experiment.{load,save,clear}LastSuggestion - #{localStorageStatus}", ->
+      it "should load nothing if nothing has been saved", ->
+        expt.clearLastSuggestion()
+        expect(expt.loadLastSuggestion()).toEqual(null)
 
-    it "should not interfere with other experiments", ->
-      expt2 = new Myna.Experiment
-        uuid: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
-        name: "name2"
-      expt.saveStickySuggestion(expt.variants.a)
-      expect(expt2.loadStickySuggestion()).toEqual(null)
+      it "should load the last saved suggestion", ->
+        expt.saveLastSuggestion(expt.variants.a)
+        expect(expt.loadLastSuggestion()).toBe(expt.variants.a)
 
+        expt.saveLastSuggestion(expt.variants.b)
+        expect(expt.loadLastSuggestion()).toBe(expt.variants.b)
 
-  describe "Experiment.{load,save,clear}StickyReward", ->
-    it "should load nothing if nothing has been saved", ->
-      expt.clearStickyReward()
-      expect(expt.loadStickyReward()).toEqual(null)
+      it "should not interfere with other experiments", ->
+        expt2 = new Myna.Experiment
+          uuid: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
+          name: "name2"
+        expt.saveLastSuggestion(expt.variants.a)
+        expect(expt2.loadLastSuggestion()).toEqual(null)
 
-    it "should load the last saved suggestion", ->
-      expt.saveStickyReward(expt.variants.a)
-      expect(expt.loadStickyReward()).toBe(expt.variants.a)
+    describe "Experiment.{load,save,clear}StickySuggestion - #{localStorageStatus}", ->
+      it "should load nothing if nothing has been saved", ->
+        expt.clearStickySuggestion()
+        expect(expt.loadStickySuggestion()).toEqual(null)
 
-      expt.saveStickyReward(expt.variants.b)
-      expect(expt.loadStickyReward()).toBe(expt.variants.b)
+      it "should load the last saved suggestion", ->
+        expt.saveStickySuggestion(expt.variants.a)
+        expect(expt.loadStickySuggestion()).toBe(expt.variants.a)
 
-    it "should not interfere with other experiments", ->
-      expt2 = new Myna.Experiment
-        uuid: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
-        name: "name2"
-      expt.saveStickyReward(expt.variants.a)
-      expect(expt2.loadStickyReward()).toEqual(null)
+        expt.saveStickySuggestion(expt.variants.b)
+        expect(expt.loadStickySuggestion()).toBe(expt.variants.b)
 
-    it "should not interfere with sticky suggestions", ->
-      expt.saveStickySuggestion(expt.variants.a)
-      expt.saveStickyReward(expt.variants.b)
-      expect(expt.loadStickySuggestion()).toBe(expt.variants.a)
-      expect(expt.loadStickyReward()).toBe(expt.variants.b)
+      it "should not interfere with other experiments", ->
+        expt2 = new Myna.Experiment
+          uuid: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
+          name: "name2"
+        expt.saveStickySuggestion(expt.variants.a)
+        expect(expt2.loadStickySuggestion()).toEqual(null)
+
+      it "should not interfere with the last suggestion", ->
+        expt.saveLastSuggestion(expt.variants.a)
+        expt.saveStickySuggestion(expt.variants.b)
+        expect(expt.loadLastSuggestion()).toBe(expt.variants.a)
+        expect(expt.loadStickySuggestion()).toBe(expt.variants.b)
+
+    describe "Experiment.{load,save,clear}StickyReward - #{localStorageStatus}", ->
+      it "should load nothing if nothing has been saved", ->
+        expt.clearStickyReward()
+        expect(expt.loadStickyReward()).toEqual(null)
+
+      it "should load the last saved suggestion", ->
+        expt.saveStickyReward(expt.variants.a)
+        expect(expt.loadStickyReward()).toBe(expt.variants.a)
+
+        expt.saveStickyReward(expt.variants.b)
+        expect(expt.loadStickyReward()).toBe(expt.variants.b)
+
+      it "should not interfere with other experiments", ->
+        expt2 = new Myna.Experiment
+          uuid: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
+          name: "name2"
+        expt.saveStickyReward(expt.variants.a)
+        expect(expt2.loadStickyReward()).toEqual(null)
+
+      it "should not interfere with the last or sticky suggestion", ->
+        expt.saveLastSuggestion(expt.variants.a)
+        expt.saveStickySuggestion(expt.variants.b)
+        expt.saveStickyReward(expt.variants.c)
+        expect(expt.loadLastSuggestion()).toBe(expt.variants.a)
+        expect(expt.loadStickySuggestion()).toBe(expt.variants.b)
+        expect(expt.loadStickyReward()).toBe(expt.variants.c)
