@@ -24,18 +24,13 @@ class Myna.Experiment
     Myna.log("Myna.Experiment.suggest", @uuid)
     try
       if @sticky()
-        if (variant = @loadStickySuggestion())?
-          success(variant)
-        else
-          variant = @randomVariant()
-          @saveStickySuggestion(variant)
-          @recordView(variant)
-          success(variant)
+        variant = @loadStickySuggestion() ? @randomVariant()
+        @saveStickySuggestion(variant)
       else
         variant = @randomVariant()
-        @saveLastSuggestion(variant)
-        @recordView(variant)
-        success(variant)
+      @saveLastSuggestion(variant)
+      @recordView(variant)
+      success(variant)
     catch exn
       error(exn)
 
@@ -71,6 +66,10 @@ class Myna.Experiment
       if total <= random
         return variant
     return null
+
+  unstick: =>
+    @clearStickySuggestion()
+    @clearStickyReward()
 
   recordView: (variant) =>
     Myna.log("Myna.Experiment.recordView", @uuid, variant)

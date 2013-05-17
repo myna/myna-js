@@ -1,4 +1,7 @@
-do ->
+describe "Myna.Experiment", ->
+  pending = ->
+    expect("Have we written this test yet?").toEqual("Nope - it's pending.")
+
   beforeEach ->
     this.addMatchers toBeInstanceOf: (expected) ->
       this.actual instanceof expected
@@ -13,7 +16,7 @@ do ->
       b: { settings: { buttons: "green" }, weight: 0.4 }
       c: { settings: { buttons: "blue"  }, weight: 0.6 }
 
-  describe "Experiment.constructor", ->
+  describe "constructor", ->
     it "should accept custom options", ->
       expect(expt.uuid).toEqual("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
       expect(expt.name).toEqual("name")
@@ -38,7 +41,7 @@ do ->
     it "should provide a sensible default name is provided", ->
       expect(new Myna.Experiment(uuid: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa").name).toEqual("Unnamed experiment")
 
-  describe "Experiment.sticky", ->
+  describe "sticky", ->
     it "should be derived from the 'myna.sticky' setting", ->
       expect(new Myna.Experiment(uuid: "uuid", name: "name", settings: "myna.sticky": true).sticky()).toEqual(true)
       expect(new Myna.Experiment(uuid: "uuid", name: "name", settings: "myna.sticky": false).sticky()).toEqual(false)
@@ -46,11 +49,11 @@ do ->
     it "should default to true", ->
       expect(new Myna.Experiment(uuid: "uuid", name: "name").sticky()).toEqual(true)
 
-  describe "Experiment.totalWeight", ->
+  describe "totalWeight", ->
     it "should return the sum of the variants' weights, even if they don't total 1.0", ->
       expect(expt.totalWeight()).toBeCloseTo(1.2, 0.001)
 
-  describe "Experiment.randomVariant", ->
+  describe "randomVariant", ->
     it "should return ... er ... random variants", ->
       names = []
       for i in [1..100]
@@ -79,7 +82,7 @@ do ->
       (if Myna.cache.localStorageSupported then ' supported,' else ' unsupported,') +
       (if Myna.cache.localStorageEnabled then ' enabled' else ' disabled')
 
-    describe "Experiment.{load,save,clear}LastSuggestion - #{localStorageStatus}", ->
+    describe "{load,save,clear}LastSuggestion - #{localStorageStatus}", ->
       it "should load nothing if nothing has been saved", ->
         expt.clearLastSuggestion()
         expect(expt.loadLastSuggestion()).toEqual(null)
@@ -98,7 +101,7 @@ do ->
         expt.saveLastSuggestion(expt.variants.a)
         expect(expt2.loadLastSuggestion()).toEqual(null)
 
-    describe "Experiment.{load,save,clear}StickySuggestion - #{localStorageStatus}", ->
+    describe "{load,save,clear}StickySuggestion - #{localStorageStatus}", ->
       it "should load nothing if nothing has been saved", ->
         expt.clearStickySuggestion()
         expect(expt.loadStickySuggestion()).toEqual(null)
@@ -123,7 +126,7 @@ do ->
         expect(expt.loadLastSuggestion()).toBe(expt.variants.a)
         expect(expt.loadStickySuggestion()).toBe(expt.variants.b)
 
-    describe "Experiment.{load,save,clear}StickyReward - #{localStorageStatus}", ->
+    describe "{load,save,clear}StickyReward - #{localStorageStatus}", ->
       it "should load nothing if nothing has been saved", ->
         expt.clearStickyReward()
         expect(expt.loadStickyReward()).toEqual(null)

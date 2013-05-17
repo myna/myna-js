@@ -1,3 +1,30 @@
+describe "Myna.Experiment.reward", ->
+  pending = ->
+    expect("Have we written this test yet?").toEqual("Nope - it's pending.")
+
+  describe "sticky", ->
+    it "should reward the last suggestion", pending
+    it "should clear the last suggestion", pending
+    it "should save the sticky reward", pending
+    it "should queue a reward event for upload", pending
+    it "should not reward anything thing the next time", pending
+    it "should NOT queue a second event for upload", pending
+    it "should be reset by unstick", pending
+    it "should fail in all the same cases that myna-html does", pending
+    # handle server timeout
+    # run beforeReward and afterReward event handlers
+    # handle alternative amounts
+
+  describe "non-sticky", ->
+    it "should reward the last suggestion", pending
+    it "should clear the last suggestion", pending
+    it "should NOT save the sticky reward", pending
+    it "should queue a view event for upload", pending
+    it "should reward the next suggestion", pending
+    it "should queue a second event for upload", pending
+    it "should allow unstick to be called without effect", pending
+    it "should fail in all the same cases that myna-html does", pending
+
 # describe "Suggestion.reward", ->
 #   testUuid = "45923780-80ed-47c6-aa46-15e2ae7a0e8c"
 #   experiment = null

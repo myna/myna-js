@@ -405,6 +405,7 @@
       this.loadLastSuggestion = __bind(this.loadLastSuggestion, this);
       this.recordReward = __bind(this.recordReward, this);
       this.recordView = __bind(this.recordView, this);
+      this.unstick = __bind(this.unstick, this);
       this.randomVariant = __bind(this.randomVariant, this);
       this.reward = __bind(this.reward, this);
       this.suggest = __bind(this.suggest, this);
@@ -439,7 +440,7 @@
     };
 
     Experiment.prototype.suggest = function(success, error) {
-      var exn, variant;
+      var exn, variant, _ref;
 
       if (success == null) {
         success = (function() {});
@@ -450,20 +451,14 @@
       Myna.log("Myna.Experiment.suggest", this.uuid);
       try {
         if (this.sticky()) {
-          if ((variant = this.loadStickySuggestion()) != null) {
-            return success(variant);
-          } else {
-            variant = this.randomVariant();
-            this.saveStickySuggestion(variant);
-            this.recordView(variant);
-            return success(variant);
-          }
+          variant = (_ref = this.loadStickySuggestion()) != null ? _ref : this.randomVariant();
+          this.saveStickySuggestion(variant);
         } else {
           variant = this.randomVariant();
-          this.saveLastSuggestion(variant);
-          this.recordView(variant);
-          return success(variant);
         }
+        this.saveLastSuggestion(variant);
+        this.recordView(variant);
+        return success(variant);
       } catch (_error) {
         exn = _error;
         return error(exn);
@@ -524,6 +519,11 @@
         }
       }
       return null;
+    };
+
+    Experiment.prototype.unstick = function() {
+      this.clearStickySuggestion();
+      return this.clearStickyReward();
     };
 
     Experiment.prototype.recordView = function(variant) {
