@@ -3,23 +3,19 @@ module.exports = (grunt) ->
 
   mainSources = [
     'intro.coffee'
-    # 'config.coffee'
-    # 'cookie.coffee'
-    # 'jsonp.coffee'
+    'jsonp.coffee'
     'settings.coffee'
     'cache.coffee'
     'variant.coffee'
     'experiment.coffee'
     'client.coffee'
-    # 'experiment.coffee'
-    # 'suggestion.coffee'
-    # 'outro.coffee'
+    'outro.coffee'
   ]
 
   testSources = [
-    # 'config-spec.coffee'
-    # 'variant-spec.coffee'
-    # 'experiment-spec.coffee'
+    #'settings-spec.coffee'
+    #'variant-spec.coffee'
+    #'experiment-spec.coffee'
     'suggest-spec.coffee'
 
     # 'cookie-spec.coffee'

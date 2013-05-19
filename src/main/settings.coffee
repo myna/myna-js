@@ -56,8 +56,10 @@ class Myna.Settings
     @set(data)
 
   get: (path, orElse = null) =>
-    Myna.log("Myna.Settings.get", path)
-    @parse(path).get(@data) ? orElse
+    ans = @parse(path).get(@data) ? orElse
+    Myna.log("Myna.Settings.get", path, ans)
+    ans
+
 
   set: =>
     switch arguments.length

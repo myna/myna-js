@@ -11,233 +11,108 @@ describe "Myna.Experiment.suggest", ->
     expect("This test").toBeImplemented()
 
   expt = new Myna.Experiment
-    uuid: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
-    name: "name"
+    uuid: "uuid"
+    id: "id"
     settings:
-      sticky: true
+      "myna.sticky": true
     variants:
       a: { settings: { buttons: "red"   }, weight: 0.2 }
       b: { settings: { buttons: "green" }, weight: 0.4 }
       c: { settings: { buttons: "blue"  }, weight: 0.6 }
 
-  for sticky in [false, true]
-
-    beforeEach ->
-      expt.settings.set("myna.sticky", sticky)
-      expt.clearLastSuggestion()
-      expt.unstick()
+  createSuggestTests = (sticky) ->
+    # Wrapper for a test that sets up the stickiness of expt
+    # without having to mutate Jasmine's global beforeEach variable:
+    initialized = (fn) ->
+      return ->
+        expt.settings.set("myna.sticky", sticky)
+        expt.clearLastSuggestion()
+        expt.unstick()
+        fn()
 
     # Helper function - grabs a suggestion and passes it to the argument:
     withSuggestion = (fn) ->
       variant = null
-      runs -> expt.suggest (v) -> variant = v
-      waitsFor (-> variant), "the suggestion", 100
+      runs ->
+        expt.suggest(
+          (v) -> variant = v
+          (args...) -> console.error("error in withSuggestion", args...)
+        )
+      waitsFor -> variant
       runs -> fn(variant)
 
+
     describe (if sticky then 'sticky' else 'non-sticky'), ->
-      it "should suggest something", ->
+      it "should suggest something", initialized ->
         withSuggestion (variant) ->
           expect(variant).toBeInstanceOf(Myna.Variant)
 
-      it "should save the last suggestion", ->
+      it "should save the last suggestion", initialized ->
         withSuggestion (variant) ->
           expect(expt.loadLastSuggestion()).toBe(variant)
 
-      it "should #{if sticky then 'save' else 'NOT save'} save the sticky suggestion", ->
+      it "should #{if sticky then 'save' else 'NOT save'} save the sticky suggestion", initialized ->
         withSuggestion (variant) ->
           if sticky
             expect(expt.loadStickySuggestion()).toBe(variant)
           else
             expect(expt.loadStickySuggestion()).toBe(null)
 
-      it "should queue a view event for upload", pending
+      it "should #{if sticky then 'queue' else 'NOT queue'} a view event for upload", initialized pending
 
-      it "should #{if sticky then 'always suggest' else 'NOT always suggest'} the same thing the next time", ->
+      it "should #{if sticky then 'always suggest' else 'NOT always suggest'} the same thing the next time", initialized ->
         hasBeenDifferent = false
 
         for i in [1..10]
-          expt.unstick()
-          withSuggestion (v1) -> withSuggestion (v2) ->
-            hasBeenDifferent = hasBeenDifferent || v1 != v2
+          do (finished = false) ->
+            runs ->
+              expt.unstick()
+              withSuggestion (v1) ->
+                withSuggestion (v2) ->
+                  hasBeenDifferent = hasBeenDifferent || (v1.id != v2.id)
+                  finished = true
 
-        expect(hasBeenDifferent).toEqual(if sticky then false else true)
+            waitsFor -> finished
 
-      it "should NOT queue a second event for upload", pending
+        runs ->
+          expect(hasBeenDifferent).toEqual(if sticky then false else true)
 
-      it "should be reset by unstick", ->
+      it "can be unstuck, offering new variants on future calls to suggest", initialized ->
         hasBeenDifferent = false
 
         for i in [1..10]
-          expt.unstick()
-          withSuggestion (v1) ->
+          do (finished = false) ->
             expt.unstick()
-            withSuggestion (v2) ->
-              hasBeenDifferent = hasBeenDifferent || v1 != v2
+            withSuggestion (v1) ->
+              expt.unstick()
+              withSuggestion (v2) ->
+                hasBeenDifferent = hasBeenDifferent || (v1 != v2)
+                finished = true
 
-        expect(hasBeenDifferent).toEqual(if sticky then false else true)
+            waitsFor -> finished
 
-      # it "should fail in all the same cases that myna-html does", pending
-      # it "should handle server timeout", pending
-      # it "should run beforeSuggest, afterSuggest, beforeView, and afterView event handlers", pending
+        runs ->
+          expect(hasBeenDifferent).toEqual(true)
 
-    # describe "non-sticky", ->
-    #   expt.settings.set("myna.sticky", false)
+      it "should call the error handler if an exeption is thrown", initialized ->
+        spyOn(expt, 'view').andCallFake(-> throw "spy exn")
 
-    #   it "should suggest something", pending
-    #   it "should save the last suggestion", pending
-    #   it "should NOT save the sticky suggestion", pending
-    #   it "should queue a view event for upload", pending
-    #   it "should NOT suggest the same thing the next time", pending
-    #   it "should queue a second event for upload", pending
-    #   it "should allow unstick to be called without effect", pending
-    #   it "should fail in all the same cases that myna-html does", pending
-    #   # handle server timeout
-    #   # run beforeSuggest, afterSuggest, beforeView, and afterView event handlers
+        success = false
+        error = false
 
-  # describe "Experiment.suggest", ->
-  #   testUuid = "45923780-80ed-47c6-aa46-15e2ae7a0e8c"
-  #   experiment = null
+        runs ->
+          expt.suggest((-> success = false), (-> error = true))
 
-  #   beforeEach ->
-  #     experiment = new Experiment(testUuid)
-  #     return
+        waitsFor ->
+          success || error
 
-  #   it "should return a suggestion when asked to", ->
-  #     flag = false
-  #     result = false
+        runs ->
+          expect(success).toEqual(false)
+          expect(error).toEqual(true)
+          @removeAllSpies()
 
-  #     runs ->
-  #       experiment.suggest(
-  #         (suggestion) ->
-  #           flag = true
-  #           result = suggestion
-  #           return
-  #         (error) ->
-  #           flag = true
-  #           result = error
-  #           return
-  #       )
+      it "should run beforeSuggest, afterSuggest, beforeView, and afterView event handlers", initialized pending
 
-  #     waitsFor (-> flag), "The suggestion should return", 500
+  createSuggestTests(false)
 
-  #     runs ->
-  #       expect(result.choice).toBeTruthy()
-  #       expect(result.token).toBeTruthy()
-
-  #   it "should handle errors on an invalid UUID", ->
-  #     flag = false
-  #     result = false
-
-  #     runs ->
-  #       new Experiment("br0ken").suggest(
-  #         (suggestion) ->
-  #           flag = true
-  #           result = suggestion
-  #           return
-  #         (error) ->
-  #           flag = true
-  #           result = error
-  #           return
-  #       )
-
-  #     waitsFor (-> flag), "the suggestion to return", 500
-
-  #     runs ->
-  #       console.log(result)
-  #       expect(result.typename).toBe('problem')
-  #       expect(result.subtype).toBe(400)
-  #       expect(result.messages).toBeTruthy()
-
-  #   it "should handle timeouts when the server doesn't respond", ->
-  #     flag = false
-  #     result = false
-
-  #     runs ->
-  #       new Experiment("br0ken", { baseurl: "http://example.com/" }).suggest(
-  #         (suggestion) ->
-  #           flag = true
-  #           result = suggestion
-  #           return
-  #         (error) ->
-  #           flag = true
-  #           result = error
-  #           return
-  #       )
-
-  #     waitsFor (-> flag), "the suggestion to return", 1400
-
-  #     runs ->
-  #       console.log(result)
-  #       expect(result.typename).toBe('problem')
-  #       expect(result.subtype).toBe(500)
-  #       expect(result.messages).toBeTruthy()
-  #       expect(result.messages[0].typename).toBe('timeout')
-
-  #   it "should run suggest event handlers when making a suggestion", ->
-  #     count = 0
-  #     evts = []
-  #     flag = false
-  #     result = null
-
-  #     runs ->
-  #       handler = (expt, suggestion) ->
-  #         count++
-  #         evts.push [expt, suggestion]
-  #         return
-
-  #       Myna.onsuggest.push(handler, handler)
-
-  #       experiment.suggest(
-  #         (suggestion) ->
-  #           flag = true
-  #           result = suggestion
-  #           return
-  #         (error) ->
-  #           flag = true
-  #           result = error
-  #           return
-  #       )
-
-  #     waitsFor (-> flag), "The suggestion should return", 500
-
-  #     runs ->
-  #       Myna.onsuggest.pop()
-  #       Myna.onsuggest.pop()
-  #       expect(count).toBe(2)
-  #       expect(evts.length).toBe(2)
-  #       expect(evts[0]).toEqual([experiment, result])
-  #       expect(evts[1]).toEqual([experiment, result])
-
-  #   it "should run suggest event handlers on error", ->
-  #     count = 0
-  #     evts = []
-  #     flag = false
-  #     result = null
-  #     experiment = new Experiment("br0ken")
-
-  #     runs ->
-  #       handler = (expt, suggestion) ->
-  #         count++
-  #         evts.push [expt, suggestion]
-  #         return
-
-  #       Myna.onsuggest.push(handler, handler)
-
-  #       experiment.suggest(
-  #         (suggestion) ->
-  #           flag = true
-  #           result = suggestion
-  #           return
-  #         (error) ->
-  #           flag = true
-  #           result = error
-  #           return
-  #       )
-
-  #     waitsFor (-> flag), "The suggestion should return", 500
-
-  #     runs ->
-  #       expect(count).toBe(2)
-  #       expect(evts.length).toBe(2)
-  #       expect(evts[0]).toEqual([experiment, result])
-  #       expect(evts[1]).toEqual([experiment, result])
+  createSuggestTests(true)
