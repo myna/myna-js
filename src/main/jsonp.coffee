@@ -1,61 +1,68 @@
-# # JSONP functions -----------------------------------------_
+# JSONP functions -----------------------------------------_
 
-# # {callbacks: [(Any ...) -> Undefined ...]}
-# #
-# # List of callback functions. Must be globally scoped
-# window.Myna.callbacks = []
+Myna.jsonp =
+  callbacks: {}
+  counter: 0
 
-# JsonP =
-#   callbackCounter: 0
+  # (
+  #   success : (any ... -> undefined)
+  #   error   : (json -> undefined)
+  #   timeout : (U number undefined)
+  #   url     : string
+  #   data    : object
+  # ->
+  #   undefined
+  # )
+  request: (options = {}) ->
+    urlRoot      = options.url     ? throw "no URL specified"
+    success      = options.success ? (->)
+    error        = options.error   ? (->)
+    timeout      = options.timeout ? 0 # 0 means don't time out
+    callbackName = "callback" + (Myna.jsonp.counter++)
+    returned     = false
 
-#   # String -> Undefined
-#   removeCallback: (callbackName) ->
-#     if this.readyState and
-#        this.readyState != "complete" and
-#        this.readyState != "loaded"
-#     else
-#       this.onload = null;
-#       try
-#         this.parentNode.removeChild(this)
-#       catch e
-#       finally
-#         window.Myna.callbacks[callbackName] = null
+    Myna.jsonp.callbacks[callbackName] = (response) ->
+      unless returned
+        returned = true
+        Myna.jsonp.remove(callbackName, elem)
+        if response.typename == "problem" then error(response) else success(response)
 
-#   # {success: (Any ...) -> Undefined,
-#   #  error: (JSON) -> Undefined,
-#   #  timeout: (U Number Undefined)
-#   #  url: String,
-#   #  data: Hash[String, String]} -> Undefined
-#   doJsonP: (options) ->
-#     # Used to sync the callback and timeout handlers
-#     returned = false
+    url = "#{urlRoot}?"
+    for key, value of options.data
+      url += "#{key}=#{value}&"
+    url += "callback=Myna.jsonp.callbacks." + callbackName
 
-#     callbackName = "callback" + (JsonP.callbackCounter++)
-#     window.Myna.callbacks[callbackName] =
-#       (args) ->
-#     window.Myna.callbacks[callbackName] = (response) ->
-#       unless returned
-#         returned = true
-#       switch response.typename
-#         when "problem" then options.error.call(this, response)
-#         else options.success.call(this, response)
+    scriptElem = document.createElement("script")
+    scriptElem.setAttribute("type","text/javascript")
+    scriptElem.setAttribute("async", "true")
+    scriptElem.setAttribute("src", url)
 
-#     url = options.url + "?"
-#     url += "#{key}=#{value}&" for key, value of options.data
-#     url += "callback=window.Myna.callbacks." + callbackName
+    # onreadystatechange is for IE
+    # onload/onerror for everyone else
+    scriptElem.onload = scriptElem.onreadystatechange = ->
+      Myna.jsonp.remove(callbackName, scriptElem)
 
-#     if options.timeout > 0
-#       window.setTimeout( ->
-#         if !returned
-#           returned = true
-#           JsonP.removeCallback.call(elem, callbackName)
-#           options.error({typename: 'problem', subtype: 500, messages: [{typename: "timeout", item: "The server took longer than #{options.timeout} ms to reply"}]})
-#       , options.timeout)
+    document.getElementsByTagName("head")[0].appendChild(scriptElem)
 
-#     elem = document.createElement("script")
-#     elem.setAttribute("type","text/javascript")
-#     elem.setAttribute("async", "true")
-#     # onreadystatechange is for IE, onload/onerror for everyone else
-#     elem.onload = elem.onreadystatechange = -> JsonP.removeCallback.call(elem, callbackName)
-#     elem.setAttribute("src", url)
-#     document.getElementsByTagName("head")[0].appendChild(elem)
+    if timeout > 0
+      func = ->
+        unless returned
+          returned = true
+          Myna.jsonp.remove(callbackName, scriptElem)
+          error
+            typename: 'problem'
+            subtype: 500
+            messages:
+              typename: 'timeout'
+              item: "The server took longer than #{options.timeout} ms to reply"
+      window.setTimeout(func, timeout)
+
+  remove: (callbackName, scriptElem) ->
+    readyState = scriptElem.readyState
+    unless readyState && readyState != "complete" && readyState != "loaded"
+      scriptElem.onload = null
+      try
+        scriptElem.parentNode.removeChild(scriptElem)
+      finally
+        delete Myna.jsonp.callbacks[callbackName]
+

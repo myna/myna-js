@@ -25,6 +25,7 @@ describe "Myna.Experiment.reward", ->
     # without having to mutate Jasmine's global beforeEach variable:
     initialized = (fn) ->
       return ->
+        expt.callbacks = {}
         expt.settings.set("myna.sticky", sticky)
         expt.clearLastSuggestion()
         expt.unstick()
@@ -144,8 +145,6 @@ describe "Myna.Experiment.reward", ->
         runs -> expect(finished).toEqual(true)
 
       it "should be reset by unstick, saving new events on future calls to reward", initialized ->
-        finished = false
-
         withSuggestion (v1) ->
           withReward 0.8, ->
             expt.unstick()
@@ -157,12 +156,89 @@ describe "Myna.Experiment.reward", ->
                   [ "view",   v2.id, null ],
                   [ "reward", v2.id, 0.6  ]
                 ]
-                finished = true
 
-        waitsFor -> finished
-        runs -> expect(finished).toEqual(true)
+      it "should run beforeReward and afterReward event handlers", initialized ->
+        suggested = false
+        rewarded = false
+        variant  = null
 
-      it "should run beforeReward and afterReward event handlers", initialized pending
+        beforeReward = jasmine.createSpy('beforeReward')
+        afterReward  = jasmine.createSpy('afterReward')
+
+        runs ->
+          Myna.log("SECTION A")
+          expt.callbacks = { beforeReward, afterReward }
+          expt.suggest (v) ->
+            variant = v
+            suggested = true
+
+        waitsFor -> suggested
+
+        runs ->
+          Myna.log("SECTION B")
+          expt.reward 0.8, ->
+            rewarded = true
+
+        waitsFor -> rewarded
+
+        runs ->
+          Myna.log("SECTION C")
+          expect(beforeReward).toHaveBeenCalledWith(variant, false)
+          expect(afterReward).toHaveBeenCalledWith(variant, false)
+
+          suggested = false
+          rewarded = false
+          expt.callbacks = { beforeReward, afterReward }
+
+          expt.suggest (v) ->
+            variant = v
+            suggested = true
+
+        waitsFor -> suggested
+
+        runs =>
+          expt.reward 0.6, ->
+            rewarded = true
+
+        waitsFor -> rewarded
+
+        runs ->
+          expect(variant).toBeInstanceOf(Myna.Variant)
+          expect(beforeReward).toHaveBeenCalledWith(variant, if sticky then true else false)
+          expect(afterReward).toHaveBeenCalledWith(variant, if sticky then true else false)
+
+      it "should allow beforeReward to cancel the reward", initialized ->
+        suggested = false
+        rewarded = false
+        variant  = null
+
+        beforeReward = jasmine.createSpy('beforeSuggest').andCallFake ->
+          rewarded = true
+          false
+
+        runs ->
+          expt.callbacks = { beforeReward }
+          expt.suggest (v) ->
+            variant = v
+            suggested = true
+
+        waitsFor -> suggested
+
+        runs ->
+          expt.reward 0.8, ->
+            rewarded = true
+
+        waitsFor -> rewarded
+
+        runs ->
+          expect(variant).toBeInstanceOf(Myna.Variant)
+          expect(expt.loadLastSuggestion()).toEqual(variant)
+          expect(expt.loadLastReward()).toEqual(null)
+          expect(expt.loadStickySuggestion()).toEqual(if sticky then variant else null)
+          expect(expt.loadStickyReward()).toEqual(null)
+          expect(eventSummaries(expt.loadQueuedEvents())).toEqual [
+            [ 'view', variant.id, null ]
+          ]
 
   createTests(false)
 

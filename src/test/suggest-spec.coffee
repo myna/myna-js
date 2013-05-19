@@ -25,6 +25,7 @@ describe "Myna.Experiment.suggest", ->
     # without having to mutate Jasmine's global beforeEach variable:
     initialized = (fn) ->
       return ->
+        expt.callbacks = {}
         expt.settings.set("myna.sticky", sticky)
         expt.clearLastSuggestion()
         expt.unstick()
@@ -150,7 +151,65 @@ describe "Myna.Experiment.suggest", ->
           expect(error).toEqual(true)
           @removeAllSpies()
 
-      it "should run beforeSuggest, afterSuggest, beforeView, and afterView event handlers", initialized pending
+      it "should run beforeSuggest, afterSuggest, beforeView, and afterView event handlers", initialized ->
+        finished = false
+        variant  = null
+
+        beforeSuggest = jasmine.createSpy('beforeSuggest')
+        afterSuggest  = jasmine.createSpy('afterSuggest')
+        beforeView    = jasmine.createSpy('beforeView')
+        afterView     = jasmine.createSpy('afterView')
+
+        runs ->
+          expt.callbacks = { beforeSuggest, afterSuggest, beforeView, afterView }
+          expt.suggest (v) ->
+            variant = v
+            finished = true
+
+        waitsFor -> finished
+
+        runs ->
+          expect(variant).toBeInstanceOf(Myna.Variant)
+          expect(beforeSuggest).toHaveBeenCalledWith(variant, false)
+          expect(afterSuggest).toHaveBeenCalledWith(variant, false)
+          expect(beforeView).toHaveBeenCalledWith(variant)
+          expect(afterView).toHaveBeenCalledWith(variant)
+
+        runs ->
+          finished = false
+          expt.callbacks = { beforeSuggest, afterSuggest, beforeView, afterView }
+          expt.suggest (v) ->
+            variant = v
+            finished = true
+
+        waitsFor -> finished
+
+        runs ->
+          expect(variant).toBeInstanceOf(Myna.Variant)
+          expect(beforeSuggest).toHaveBeenCalledWith(variant, if sticky then true else false)
+          expect(afterSuggest).toHaveBeenCalledWith(variant, if sticky then true else false)
+          expect(beforeView).toHaveBeenCalledWith(variant)
+          expect(afterView).toHaveBeenCalledWith(variant)
+
+      it "should allow beforeSuggest to cancel the suggestion", initialized ->
+        finished = false
+        variant  = null
+
+        beforeSuggest = jasmine.createSpy('beforeSuggest').andCallFake ->
+          Myna.log("CALLBACK")
+          finished = true
+          false
+
+        runs ->
+          expt.callbacks = { beforeSuggest }
+          expt.suggest()
+
+        waitsFor -> finished
+
+        runs ->
+          expect(expt.loadLastSuggestion()).toEqual(null)
+          expect(expt.loadStickySuggestion()).toEqual(null)
+          expect(eventSummaries(expt.loadQueuedEvents())).toEqual []
 
   createTests(false)
 
