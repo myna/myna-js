@@ -1,7 +1,10 @@
 window.Myna ?= {}
 
+Myna.debug = false
+
 Myna.log = (args...) ->
-  window.console?.log(for item in args then JSON.stringify(item))
+  if Myna.debug
+    window.console?.log(for item in args then JSON.stringify(item))
   return
 
 Myna.error = (args...) ->

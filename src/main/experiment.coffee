@@ -152,7 +152,7 @@ class Myna.BaseExperiment
       saved
 
   enqueueEvent: (evt) =>
-    Myna.log("Myna.BaseExperiment.enqueueEvent", @id, JSON.stringify(evt))
+    Myna.log("Myna.BaseExperiment.enqueueEvent", @id, evt)
     @loadAndSave (saved) ->
       if saved.queuedEvents?
         saved.queuedEvents.push(evt)

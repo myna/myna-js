@@ -7,21 +7,25 @@
     window.Myna = {};
   }
 
+  Myna.debug = false;
+
   Myna.log = function() {
     var args, item, _ref1;
 
     args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-    if ((_ref1 = window.console) != null) {
-      _ref1.log((function() {
-        var _i, _len, _results;
+    if (Myna.debug) {
+      if ((_ref1 = window.console) != null) {
+        _ref1.log((function() {
+          var _i, _len, _results;
 
-        _results = [];
-        for (_i = 0, _len = args.length; _i < _len; _i++) {
-          item = args[_i];
-          _results.push(JSON.stringify(item));
-        }
-        return _results;
-      })());
+          _results = [];
+          for (_i = 0, _len = args.length; _i < _len; _i++) {
+            item = args[_i];
+            _results.push(JSON.stringify(item));
+          }
+          return _results;
+        })());
+      }
     }
   };
 
@@ -733,7 +737,7 @@
     };
 
     BaseExperiment.prototype.enqueueEvent = function(evt) {
-      Myna.log("Myna.BaseExperiment.enqueueEvent", this.id, JSON.stringify(evt));
+      Myna.log("Myna.BaseExperiment.enqueueEvent", this.id, evt);
       return this.loadAndSave(function(saved) {
         if (saved.queuedEvents != null) {
           saved.queuedEvents.push(evt);
