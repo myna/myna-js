@@ -400,14 +400,20 @@
       this.save = __bind(this.save, this);
       this.load = __bind(this.load, this);
       this.loadAndSave = __bind(this.loadAndSave, this);
+      this.enqueueReward = __bind(this.enqueueReward, this);
+      this.enqueueView = __bind(this.enqueueView, this);
+      this.enqueueEvent = __bind(this.enqueueEvent, this);
+      this.clearQueuedEvents = __bind(this.clearQueuedEvents, this);
+      this.loadQueuedEvents = __bind(this.loadQueuedEvents, this);
       this.clearVariant = __bind(this.clearVariant, this);
       this.saveVariant = __bind(this.saveVariant, this);
       this.loadVariant = __bind(this.loadVariant, this);
+      this.clearLastReward = __bind(this.clearLastReward, this);
+      this.saveLastReward = __bind(this.saveLastReward, this);
+      this.loadLastReward = __bind(this.loadLastReward, this);
       this.clearLastSuggestion = __bind(this.clearLastSuggestion, this);
       this.saveLastSuggestion = __bind(this.saveLastSuggestion, this);
       this.loadLastSuggestion = __bind(this.loadLastSuggestion, this);
-      this.recordReward = __bind(this.recordReward, this);
-      this.recordView = __bind(this.recordView, this);
       this.randomVariant = __bind(this.randomVariant, this);
       this.totalWeight = __bind(this.totalWeight, this);
       this.rewardVariant = __bind(this.rewardVariant, this);
@@ -415,8 +421,8 @@
       this.view = __bind(this.view, this);
       this.suggest = __bind(this.suggest, this);
       Myna.log("Myna.BaseExperiment.constructor", options);
-      this.uuid = (_ref = options.uuid) != null ? _ref : Myna.error("Myna.Experiment.constructor", "no UUID in options", options);
-      this.id = (_ref1 = options.id) != null ? _ref1 : Myna.error("Myna.Experiment.constructor", "no ID in options", options);
+      this.uuid = (_ref = options.uuid) != null ? _ref : Myna.error("Myna.Experiment.constructor", this.id, "no UUID in options", options);
+      this.id = (_ref1 = options.id) != null ? _ref1 : Myna.error("Myna.Experiment.constructor", this.id, "no ID in options", options);
       this.settings = new Myna.Settings((_ref2 = options.settings) != null ? _ref2 : {});
       this.variants = {};
       _ref4 = (_ref3 = options.variants) != null ? _ref3 : {};
@@ -459,7 +465,8 @@
         Myna.log("Myna.BaseExperiment.view", this.id, variantId);
         variant = this.variants[variantId];
         this.saveLastSuggestion(variant);
-        this.recordView(variant);
+        this.clearLastReward();
+        this.enqueueView(variant);
         return success(variant);
       } catch (_error) {
         exn = _error;
@@ -494,7 +501,7 @@
     };
 
     BaseExperiment.prototype.rewardVariant = function(variant, amount, success, error) {
-      var exn;
+      var exn, rewarded;
 
       if (amount == null) {
         amount = 1.0;
@@ -507,9 +514,16 @@
       }
       try {
         Myna.log("Myna.BaseExperiment.rewardVariant", this.id, variant.id, amount);
-        this.clearLastSuggestion();
-        this.recordReward(variant, amount);
-        return success(variant);
+        rewarded = this.loadLastReward();
+        Myna.log(" - rewarded", rewarded);
+        if (rewarded != null) {
+          return error();
+        } else {
+          this.clearLastSuggestion();
+          this.saveLastReward(variant);
+          this.enqueueReward(variant, amount);
+          return success(variant);
+        }
       } catch (_error) {
         exn = _error;
         return error(exn);
@@ -531,7 +545,7 @@
     BaseExperiment.prototype.randomVariant = function() {
       var id, random, total, variant, _ref;
 
-      Myna.log("Myna.BaseExperiment.randomVariant");
+      Myna.log("Myna.BaseExperiment.randomVariant", this.id);
       total = this.totalWeight();
       random = Math.random() * total;
       _ref = this.variants;
@@ -539,20 +553,12 @@
         variant = _ref[id];
         total -= variant.weight;
         if (total <= random) {
-          Myna.log("Myna.BaseExperiment.randomVariant", variant.id);
+          Myna.log("Myna.BaseExperiment.randomVariant", this.id, variant.id);
           return variant;
         }
       }
-      Myna.log("Myna.BaseExperiment.randomVariant", null);
+      Myna.log("Myna.BaseExperiment.randomVariant", this.id, null);
       return null;
-    };
-
-    BaseExperiment.prototype.recordView = function(variant) {
-      return Myna.log("Myna.BaseExperiment.recordView", this.id, variant);
-    };
-
-    BaseExperiment.prototype.recordReward = function(variant, amount) {
-      return Myna.log("Myna.BaseExperiment.recordReward", this.id, variant, amount);
     };
 
     BaseExperiment.prototype.loadLastSuggestion = function() {
@@ -560,18 +566,31 @@
     };
 
     BaseExperiment.prototype.saveLastSuggestion = function(variant) {
-      return this.saveVariant('lastSuggestion', variant);
+      this.saveVariant('lastSuggestion', variant);
+      return this.clearVariant('lastReward');
     };
 
     BaseExperiment.prototype.clearLastSuggestion = function() {
       return this.clearVariant('lastSuggestion');
     };
 
+    BaseExperiment.prototype.loadLastReward = function() {
+      return this.loadVariant('lastReward');
+    };
+
+    BaseExperiment.prototype.saveLastReward = function(variant) {
+      return this.saveVariant('lastReward', variant);
+    };
+
+    BaseExperiment.prototype.clearLastReward = function() {
+      return this.clearVariant('lastReward');
+    };
+
     BaseExperiment.prototype.loadVariant = function(cacheKey) {
       var id, _ref;
 
       id = (_ref = this.load()) != null ? _ref[cacheKey] : void 0;
-      Myna.log("Myna.BaseExperiment.loadVariant", cacheKey, id);
+      Myna.log("Myna.BaseExperiment.loadVariant", this.id, cacheKey, id);
       if (id != null) {
         return this.variants[id];
       } else {
@@ -581,7 +600,7 @@
 
     BaseExperiment.prototype.saveVariant = function(cacheKey, variant) {
       return this.loadAndSave(function(saved) {
-        Myna.log("Myna.BaseExperiment.saveVariant", cacheKey, variant, saved);
+        Myna.log("Myna.BaseExperiment.saveVariant", this.id, cacheKey, variant, saved);
         if (variant != null) {
           saved[cacheKey] = variant.id;
         } else {
@@ -593,6 +612,53 @@
 
     BaseExperiment.prototype.clearVariant = function(cacheKey) {
       return this.saveVariant(cacheKey, null);
+    };
+
+    BaseExperiment.prototype.loadQueuedEvents = function() {
+      var ans, _ref;
+
+      ans = (_ref = this.load().queuedEvents) != null ? _ref : [];
+      Myna.log("Myna.BaseExperiment.loadQueuedEvents", this.id, ans);
+      return ans;
+    };
+
+    BaseExperiment.prototype.clearQueuedEvents = function() {
+      Myna.log("Myna.BaseExperiment.clearQueuedEvents", this.id);
+      return this.loadAndSave(function(saved) {
+        delete saved.queuedEvents;
+        return saved;
+      });
+    };
+
+    BaseExperiment.prototype.enqueueEvent = function(evt) {
+      Myna.log("Myna.BaseExperiment.enqueueEvent", this.id, JSON.stringify(evt));
+      return this.loadAndSave(function(saved) {
+        if (saved.queuedEvents != null) {
+          saved.queuedEvents.push(evt);
+        } else {
+          saved.queuedEvents = [evt];
+        }
+        return saved;
+      });
+    };
+
+    BaseExperiment.prototype.enqueueView = function(variant) {
+      Myna.log("Myna.BaseExperiment.enqueueView", this.id, variant);
+      return this.enqueueEvent({
+        typename: "view",
+        variant: variant.id,
+        timestamp: new Date().getTime()
+      });
+    };
+
+    BaseExperiment.prototype.enqueueReward = function(variant, amount) {
+      Myna.log("Myna.BaseExperiment.enqueueReward", this.id, variant, amount);
+      return this.enqueueEvent({
+        typename: "reward",
+        variant: variant.id,
+        amount: amount,
+        timestamp: new Date().getTime()
+      });
     };
 
     BaseExperiment.prototype.loadAndSave = function(func) {
@@ -631,7 +697,7 @@
     }
 
     Experiment.prototype.suggest = function(success, error) {
-      var exn, variant, _ref1;
+      var exn, suggested, variant;
 
       if (success == null) {
         success = (function() {});
@@ -642,12 +708,18 @@
       try {
         Myna.log("Myna.Experiment.suggest", this.id);
         if (this.sticky()) {
-          variant = (_ref1 = this.loadStickySuggestion()) != null ? _ref1 : this.randomVariant();
-          this.saveStickySuggestion(variant);
+          suggested = this.loadStickySuggestion();
+          variant = suggested != null ? suggested : this.randomVariant();
+          if (suggested == null) {
+            this.saveStickySuggestion(variant);
+          }
         } else {
+          suggested = null;
           variant = this.randomVariant();
         }
-        if (variant != null) {
+        if (suggested != null) {
+          return success(suggested);
+        } else if (variant != null) {
           return this.view(variant.id, success, error);
         } else {
           return error();
@@ -659,7 +731,7 @@
     };
 
     Experiment.prototype.reward = function(amount, success, error) {
-      var exn, variant, _ref1;
+      var exn, rewarded, variant;
 
       if (amount == null) {
         amount = 1.0;
@@ -673,12 +745,18 @@
       try {
         Myna.log("Myna.Experiment.reward", this.id, amount);
         if (this.sticky()) {
-          variant = (_ref1 = this.loadStickyReward()) != null ? _ref1 : this.loadLastSuggestion();
-          this.saveStickyReward(variant);
+          rewarded = this.loadStickyReward();
+          variant = rewarded != null ? rewarded : this.loadLastSuggestion();
+          if (rewarded == null) {
+            this.saveStickyReward(variant);
+          }
         } else {
+          rewarded = null;
           variant = this.loadLastSuggestion();
         }
-        if (variant != null) {
+        if (rewarded != null) {
+          return success();
+        } else if (variant != null) {
           return this.rewardVariant(variant, amount, success, error);
         } else {
           return error();
@@ -690,12 +768,18 @@
     };
 
     Experiment.prototype.sticky = function() {
-      return !!this.settings.get("myna.sticky", true);
+      var ans;
+
+      ans = !!this.settings.get("myna.sticky", true);
+      Myna.log("Myna.Experiment.sticky", this.id, ans);
+      return ans;
     };
 
     Experiment.prototype.unstick = function() {
-      this.clearStickySuggestion();
-      return this.clearStickyReward();
+      Myna.log("Myna.Experiment.unstick", this.id);
+      this.clearLastSuggestion();
+      this.clearLastReward();
+      return this.clearStickySuggestion();
     };
 
     Experiment.prototype.loadStickySuggestion = function() {
@@ -703,11 +787,13 @@
     };
 
     Experiment.prototype.saveStickySuggestion = function(variant) {
-      return this.saveVariant('stickySuggestion', variant);
+      this.saveVariant('stickySuggestion', variant);
+      return this.clearVariant('stickyReward');
     };
 
     Experiment.prototype.clearStickySuggestion = function() {
-      return this.clearVariant('stickySuggestion');
+      this.clearVariant('stickySuggestion');
+      return this.clearVariant('stickyReward');
     };
 
     Experiment.prototype.loadStickyReward = function() {

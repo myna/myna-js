@@ -1,212 +1,169 @@
 describe "Myna.Experiment.reward", ->
+  beforeEach ->
+    this.addMatchers
+      toBeInstanceOf: (expected) ->
+        this.actual instanceof expected
+      toBeImplemented: ->
+        this.message = -> "#{this.actual} has not been written yet."
+        false
+
   pending = ->
-    expect("Have we written this test yet?").toEqual("Nope - it's pending.")
+    expect("This test").toBeImplemented()
 
-  describe "sticky", ->
-    it "should reward the last suggestion", pending
-    it "should clear the last suggestion", pending
-    it "should save the sticky reward", pending
-    it "should queue a reward event for upload", pending
-    it "should not reward anything thing the next time", pending
-    it "should NOT queue a second event for upload", pending
-    it "should be reset by unstick", pending
-    it "should fail in all the same cases that myna-html does", pending
-    # handle server timeout
-    # run beforeReward and afterReward event handlers
-    # handle alternative amounts
+  expt = new Myna.Experiment
+    uuid: "uuid"
+    id: "id"
+    settings:
+      "myna.sticky": true
+    variants:
+      a: { settings: { buttons: "red"   }, weight: 0.2 }
+      b: { settings: { buttons: "green" }, weight: 0.4 }
+      c: { settings: { buttons: "blue"  }, weight: 0.6 }
 
-  describe "non-sticky", ->
-    it "should reward the last suggestion", pending
-    it "should clear the last suggestion", pending
-    it "should NOT save the sticky reward", pending
-    it "should queue a view event for upload", pending
-    it "should reward the next suggestion", pending
-    it "should queue a second event for upload", pending
-    it "should allow unstick to be called without effect", pending
-    it "should fail in all the same cases that myna-html does", pending
+  createTests = (sticky) ->
+    # Wrapper for a test that sets up the stickiness of expt
+    # without having to mutate Jasmine's global beforeEach variable:
+    initialized = (fn) ->
+      return ->
+        expt.settings.set("myna.sticky", sticky)
+        expt.clearLastSuggestion()
+        expt.unstick()
+        expt.clearQueuedEvents()
+        fn()
 
-# describe "Suggestion.reward", ->
-#   testUuid = "45923780-80ed-47c6-aa46-15e2ae7a0e8c"
-#   experiment = null
+    # Helper function - grabs a suggestion and passes it to the argument:
+    withSuggestion = (fn) ->
+      done = false
+      variant = null
+      runs ->
+        expt.suggest(
+          (v) ->
+            variant = v
+            done = true
+          (args...) ->
+            variant = null
+            done = true
+        )
+      waitsFor -> done
+      runs ->
+        fn(variant)
 
-#   timeout = 1000 # How long, in ms, do we wait for calls to Myna
+    # Helper function - records a reward and calls the argument:
+    withReward = (amount, fn) ->
+      done = false
+      runs ->
+        expt.reward(
+          amount
+          -> done = true
+          -> done = true
+        )
+      waitsFor -> done
+      runs ->
+        fn()
 
-#   # Useful debugging stuff
-#   debug = true
-#   log = (msg) ->
-#     if debug
-#       console.log "------------------------------------------------------------\n"
-#       console.log msg
-#       console.log "\n------------------------------------------------------------\n"
+    eventSummaries = (events) ->
+      for evt in events
+        switch evt.typename
+          when 'view'   then [ 'view', evt.variant, null ]
+          when 'reward' then [ 'reward', evt.variant, evt.amount ]
+          else [ 'error', evt ]
 
-#   promiseTest = (promise) ->
-#     _this =
-#       ready: false # (U "success" "error" false)
-#       result: null # Any
+    describe (if sticky then 'sticky' else 'non-sticky'), ->
+      it "should reward the last suggestion", initialized ->
+        withSuggestion (variant) ->
+          withReward 0.8, ->
+            expect(eventSummaries(expt.loadQueuedEvents())).toEqual [
+              [ "view",   variant.id, null ],
+              [ "reward", variant.id, 0.8  ]
+            ]
 
-#     runs ->
-#       promise.fork(
-#         (data) ->
-#           _this.ready = "success"
-#           _this.result = data
-#           return
-#         (error) ->
-#           _this.ready = "error"
-#           _this.result = error
-#           return
-#       )
+      it "should clear the last suggestion", initialized ->
+        withSuggestion (variant) ->
+          withReward 0.8, ->
+            expect(expt.loadLastSuggestion()).toEqual(null)
 
-#     waitsFor (-> _this.ready != false), "promise to evaluate", timeout
+      it "should #{if sticky then 'save' else 'NOT save'} the sticky reward", initialized ->
+        withSuggestion (variant) ->
+          withReward 0.8, ->
+            if sticky
+              expect(expt.loadStickyReward()).toBe(variant)
+            else
+              expect(expt.loadStickyReward()).toBe(null)
 
-#     runs ->
-#       expect(_this.ready).toBe("success")
+      it "should queue a reward event for upload", initialized ->
+        withSuggestion (variant) ->
+          expect(eventSummaries(expt.loadQueuedEvents())).toEqual [
+            [ "view",   variant.id, null ]
+          ]
+          withReward 0.8, ->
+            expect(eventSummaries(expt.loadQueuedEvents())).toEqual [
+              [ "view",   variant.id, null ],
+              [ "reward", variant.id, 0.8  ]
+            ]
 
-#   makeSuggestion = () ->
-#     new Promise (success, error) ->
-#       experiment.suggest(success, error)
+      it "should guard against duplicate rewards", initialized ->
+        finished = false
 
-#   makeReward = (amount) ->
-#     (suggestion) ->
-#       if amount
-#         new Promise (success, error) ->
-#           suggestion.reward(amount, success, error)
-#       else
-#         new Promise (success, error) ->
-#           suggestion.reward(1.0, success, error)
+        withSuggestion (variant) ->
+          expect(variant).toBeInstanceOf(Myna.Variant)
+          withReward 0.8, ->
+            withReward 0.6, ->
+              expect(eventSummaries(expt.loadQueuedEvents())).toEqual [
+                [ "view",   variant.id, null ],
+                [ "reward", variant.id, 0.8  ]
+              ]
+              finished = true
 
-#   beforeEach ->
-#     experiment = new Experiment(testUuid)
-#     return
+        waitsFor -> finished
+        runs -> expect(finished).toEqual(true)
 
-#   it "should return ok when correctly rewarding", ->
-#     promiseTest makeSuggestion().chain makeReward()
+      it "should #{if sticky then 'NOT' else ''} enqueue events for successive suggest/reward cycles", initialized ->
+        finished = false
 
-#   it "should allow amount to be specified", ->
-#     promiseTest makeSuggestion().chain makeReward(1.0)
+        withSuggestion (v1) ->
+          expect(v1).toBeInstanceOf(Myna.Variant)
+          withReward 0.8, ->
+            withSuggestion (v2) ->
+              withReward 0.6, ->
+                if sticky
+                  expect(v1.id).toEqual(v2.id)
+                  expect(eventSummaries(expt.loadQueuedEvents())).toEqual [
+                    [ "view",   v1.id, null ],
+                    [ "reward", v1.id, 0.8  ]
+                  ]
+                else
+                  expect(eventSummaries(expt.loadQueuedEvents())).toEqual [
+                    [ "view",   v1.id, null ],
+                    [ "reward", v1.id, 0.8  ]
+                    [ "view",   v2.id, null ],
+                    [ "reward", v2.id, 0.6  ]
+                  ]
+                finished = true
 
-#   it "should handle errors on an invalid token", ->
-#     promiseTest makeSuggestion().chain (suggestion) ->
-#       suggestion.token = "ha-ha"
-#       new Promise (success, error) ->
-#         suggestion.reward 1.0, error, (problem) ->
-#           if problem.typename == "problem" && problem.subtype == 400
-#             success(problem)
-#           else
-#             error(problem)
+        waitsFor -> finished
+        runs -> expect(finished).toEqual(true)
 
-#   it "should handle errors on an invalid amount", ->
-#     promiseTest makeSuggestion().chain (suggestion) ->
-#       new Promise (success, error) ->
-#         suggestion.reward 2.0, error, (problem) ->
-#           if problem.typename == "problem" && problem.subtype == 400
-#             success(problem)
-#           else
-#             error(problem)
+      it "should be reset by unstick, saving new events on future calls to reward", initialized ->
+        finished = false
 
-#   it "should run reward event handlers when making a reward", ->
-#     flag = false
-#     result = false
-#     suggestion = null
-#     count = 0
-#     evts = []
-#     handler = (suggestion, amount, result) ->
-#       count++
-#       evts.push [suggestion, amount, result]
+        withSuggestion (v1) ->
+          withReward 0.8, ->
+            expt.unstick()
+            withSuggestion (v2) ->
+              withReward 0.6, ->
+                expect(eventSummaries(expt.loadQueuedEvents())).toEqual [
+                  [ "view",   v1.id, null ],
+                  [ "reward", v1.id, 0.8  ]
+                  [ "view",   v2.id, null ],
+                  [ "reward", v2.id, 0.6  ]
+                ]
+                finished = true
 
-#     runs ->
-#       experiment.suggest(
-#         (s) ->
-#           flag = true
-#           suggestion = s
-#           return
-#         (error) ->
-#           flag = true
-#           suggestion = error
-#           return
-#       )
+        waitsFor -> finished
+        runs -> expect(finished).toEqual(true)
 
-#     waitsFor (-> flag), "the suggestion to return", timeout
+      it "should run beforeReward and afterReward event handlers", initialized pending
 
-#     runs ->
-#       Myna.onreward.push(handler)
-#       Myna.onreward.push(handler)
-#       flag = false
-#       result = false
-#       suggestion.reward(
-#         1.0
-#         (ok) ->
-#           flag = true
-#           result = ok
-#           return
-#         (error) ->
-#           flag = true
-#           result = error
-#           return
-#       )
+  createTests(false)
 
-#     waitsFor (-> flag), "the reward to return", timeout
-
-#     runs ->
-#       Myna.onreward.pop()
-#       Myna.onreward.pop()
-#       expect(evts.length).toBe(2)
-#       expect(evts[0][0].experiment.uuid).toEqual(suggestion.experiment.uuid)
-#       expect(evts[0][1]).toBe(1.0)
-#       expect(evts[0][2]).toBe(result)
-#       expect(evts[1][0].experiment.uuid).toEqual(suggestion.experiment.uuid)
-#       expect(evts[1][1]).toBe(1.0)
-#       expect(evts[1][2]).toBe(result)
-
-#   it "should run reward event handlers on error", ->
-#     flag = false
-#     result = false
-#     suggestion = null
-#     count = 0
-#     evts = []
-#     handler = (suggestion, amount, result) ->
-#       count++
-#       evts.push [suggestion, amount, result]
-
-#     runs ->
-#       experiment.suggest(
-#         (s) ->
-#           flag = true
-#           suggestion = s
-#           return
-#         (error) ->
-#           flag = true
-#           suggestion = error
-#           return
-#       )
-
-#     waitsFor (-> flag), "the suggestion to return", timeout
-
-#     runs ->
-#       Myna.onreward.push(handler)
-#       Myna.onreward.push(handler)
-#       flag = false
-#       result = false
-#       suggestion.reward(
-#         2.0
-#         (ok) ->
-#           flag = true
-#           result = ok
-#           return
-#         (error) ->
-#           flag = true
-#           result = error
-#           return
-#       )
-
-#     waitsFor (-> flag), "the reward to return", timeout
-
-#     runs ->
-#       Myna.onreward.pop()
-#       Myna.onreward.pop()
-#       expect(evts.length).toBe(2)
-#       expect(evts[0][0].experiment.uuid).toEqual(suggestion.experiment.uuid)
-#       expect(evts[0][1]).toBe(2.0)
-#       expect(evts[0][2]).toBe(result)
-#       expect(evts[1][0].experiment.uuid).toEqual(suggestion.experiment.uuid)
-#       expect(evts[1][1]).toBe(2.0)
-#       expect(evts[1][2]).toBe(result)
+  createTests(true)

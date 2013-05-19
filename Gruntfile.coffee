@@ -13,10 +13,11 @@ module.exports = (grunt) ->
   ]
 
   testSources = [
-    #'settings-spec.coffee'
-    #'variant-spec.coffee'
-    #'experiment-spec.coffee'
+    'settings-spec.coffee'
+    'variant-spec.coffee'
+    'experiment-spec.coffee'
     'suggest-spec.coffee'
+    'reward-spec.coffee'
 
     # 'cookie-spec.coffee'
     # 'onload-spec.coffee'

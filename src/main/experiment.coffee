@@ -2,8 +2,8 @@ class Myna.BaseExperiment
   constructor: (options = {}) ->
     Myna.log("Myna.BaseExperiment.constructor", options)
 
-    @uuid = options.uuid ? Myna.error("Myna.Experiment.constructor", "no UUID in options", options)
-    @id   = options.id   ? Myna.error("Myna.Experiment.constructor", "no ID in options", options)
+    @uuid = options.uuid ? Myna.error("Myna.Experiment.constructor", @id, "no UUID in options", options)
+    @id   = options.id   ? Myna.error("Myna.Experiment.constructor", @id, "no ID in options", options)
     @settings = new Myna.Settings(options.settings ? {})
 
     @variants = {}
@@ -25,7 +25,8 @@ class Myna.BaseExperiment
       Myna.log("Myna.BaseExperiment.view", @id, variantId)
       variant = @variants[variantId]
       @saveLastSuggestion(variant)
-      @recordView(variant)
+      @clearLastReward()
+      @enqueueView(variant)
       success(variant)
     catch exn
       error(exn)
@@ -46,9 +47,15 @@ class Myna.BaseExperiment
   rewardVariant: (variant, amount = 1.0, success = (->), error = (->)) =>
     try
       Myna.log("Myna.BaseExperiment.rewardVariant", @id, variant.id, amount)
-      @clearLastSuggestion()
-      @recordReward(variant, amount)
-      success(variant)
+      rewarded = @loadLastReward()
+      Myna.log(" - rewarded", rewarded)
+      if rewarded?
+        error()
+      else
+        @clearLastSuggestion()
+        @saveLastReward(variant)
+        @enqueueReward(variant, amount)
+        success(variant)
     catch exn
       error(exn)
 
@@ -59,22 +66,16 @@ class Myna.BaseExperiment
     ans
 
   randomVariant: =>
-    Myna.log("Myna.BaseExperiment.randomVariant")
+    Myna.log("Myna.BaseExperiment.randomVariant", @id)
     total = @totalWeight()
     random = Math.random() * total
     for id, variant of @variants
       total -= variant.weight
       if total <= random
-        Myna.log("Myna.BaseExperiment.randomVariant", variant.id)
+        Myna.log("Myna.BaseExperiment.randomVariant", @id, variant.id)
         return variant
-    Myna.log("Myna.BaseExperiment.randomVariant", null)
+    Myna.log("Myna.BaseExperiment.randomVariant", @id, null)
     return null
-
-  recordView: (variant) =>
-    Myna.log("Myna.BaseExperiment.recordView", @id, variant)
-
-  recordReward: (variant, amount) =>
-    Myna.log("Myna.BaseExperiment.recordReward", @id, variant, amount)
 
   # => U(variant null)
   loadLastSuggestion: =>
@@ -83,19 +84,33 @@ class Myna.BaseExperiment
   # variant => void
   saveLastSuggestion: (variant) =>
     @saveVariant('lastSuggestion', variant)
+    @clearVariant('lastReward')
 
   # => void
   clearLastSuggestion: =>
     @clearVariant('lastSuggestion')
+    # @clearVariant('lastReward')
+
+  # => U(variant null)
+  loadLastReward: =>
+    @loadVariant('lastReward')
+
+  # variant => void
+  saveLastReward: (variant) =>
+    @saveVariant('lastReward', variant)
+
+  # => void
+  clearLastReward: =>
+    @clearVariant('lastReward')
 
   loadVariant: (cacheKey) =>
     id = @load()?[cacheKey]
-    Myna.log("Myna.BaseExperiment.loadVariant", cacheKey, id)
+    Myna.log("Myna.BaseExperiment.loadVariant", @id, cacheKey, id)
     if id? then @variants[id] else null
 
   saveVariant: (cacheKey, variant) =>
     @loadAndSave (saved) ->
-      Myna.log("Myna.BaseExperiment.saveVariant", cacheKey, variant, saved)
+      Myna.log("Myna.BaseExperiment.saveVariant", @id, cacheKey, variant, saved)
       if variant?
         saved[cacheKey] = variant.id
       else
@@ -104,6 +119,41 @@ class Myna.BaseExperiment
 
   clearVariant: (cacheKey) =>
     @saveVariant(cacheKey, null)
+
+  loadQueuedEvents: =>
+    ans = @load().queuedEvents ? []
+    Myna.log("Myna.BaseExperiment.loadQueuedEvents", @id, ans)
+    ans
+
+  clearQueuedEvents: =>
+    Myna.log("Myna.BaseExperiment.clearQueuedEvents", @id)
+    @loadAndSave (saved) ->
+      delete saved.queuedEvents
+      saved
+
+  enqueueEvent: (evt) =>
+    Myna.log("Myna.BaseExperiment.enqueueEvent", @id, JSON.stringify(evt))
+    @loadAndSave (saved) ->
+      if saved.queuedEvents?
+        saved.queuedEvents.push(evt)
+      else
+        saved.queuedEvents = [ evt ]
+      saved
+
+  enqueueView: (variant) =>
+    Myna.log("Myna.BaseExperiment.enqueueView", @id, variant)
+    @enqueueEvent
+      typename:  "view"
+      variant:   variant.id
+      timestamp: new Date().getTime()
+
+  enqueueReward: (variant, amount) =>
+    Myna.log("Myna.BaseExperiment.enqueueReward", @id, variant, amount)
+    @enqueueEvent
+      typename:  "reward"
+      variant:   variant.id
+      amount:    amount
+      timestamp: new Date().getTime()
 
   loadAndSave: (func) =>
     @save(func(@load() ? {}))
@@ -121,12 +171,17 @@ class Myna.Experiment extends Myna.BaseExperiment
     try
       Myna.log("Myna.Experiment.suggest", @id)
       if @sticky()
-        variant = @loadStickySuggestion() ? @randomVariant()
-        @saveStickySuggestion(variant)
+        suggested = @loadStickySuggestion()
+        variant = suggested ? @randomVariant()
+        if !suggested?
+          @saveStickySuggestion(variant)
       else
+        suggested = null
         variant = @randomVariant()
 
-      if variant?
+      if suggested?
+        success(suggested)
+      else if variant?
         @view(variant.id, success, error)
       else
         error()
@@ -138,12 +193,17 @@ class Myna.Experiment extends Myna.BaseExperiment
     try
       Myna.log("Myna.Experiment.reward", @id, amount)
       if @sticky()
-        variant = @loadStickyReward() ? @loadLastSuggestion()
-        @saveStickyReward(variant)
+        rewarded = @loadStickyReward()
+        variant = rewarded ? @loadLastSuggestion()
+        if !rewarded?
+          @saveStickyReward(variant)
       else
+        rewarded = null
         variant = @loadLastSuggestion()
 
-      if variant?
+      if rewarded?
+        success()
+      else if variant?
         @rewardVariant(variant, amount, success, error)
       else
         error()
@@ -152,11 +212,15 @@ class Myna.Experiment extends Myna.BaseExperiment
 
   # -> boolean
   sticky: =>
-    !!@settings.get("myna.sticky", true)
+    ans = !!@settings.get("myna.sticky", true)
+    Myna.log("Myna.Experiment.sticky", @id, ans)
+    ans
 
   unstick: =>
+    Myna.log("Myna.Experiment.unstick", @id)
+    @clearLastSuggestion()
+    @clearLastReward()
     @clearStickySuggestion()
-    @clearStickyReward()
 
   # => U(variant null)
   loadStickySuggestion: =>
@@ -165,10 +229,12 @@ class Myna.Experiment extends Myna.BaseExperiment
   # variant => void
   saveStickySuggestion: (variant) =>
     @saveVariant('stickySuggestion', variant)
+    @clearVariant('stickyReward')
 
   # => void
   clearStickySuggestion: =>
     @clearVariant('stickySuggestion')
+    @clearVariant('stickyReward')
 
   # => U(variant null)
   loadStickyReward: =>

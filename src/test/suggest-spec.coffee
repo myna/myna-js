@@ -20,7 +20,7 @@ describe "Myna.Experiment.suggest", ->
       b: { settings: { buttons: "green" }, weight: 0.4 }
       c: { settings: { buttons: "blue"  }, weight: 0.6 }
 
-  createSuggestTests = (sticky) ->
+  createTests = (sticky) ->
     # Wrapper for a test that sets up the stickiness of expt
     # without having to mutate Jasmine's global beforeEach variable:
     initialized = (fn) ->
@@ -28,19 +28,32 @@ describe "Myna.Experiment.suggest", ->
         expt.settings.set("myna.sticky", sticky)
         expt.clearLastSuggestion()
         expt.unstick()
+        expt.clearQueuedEvents()
         fn()
 
     # Helper function - grabs a suggestion and passes it to the argument:
     withSuggestion = (fn) ->
+      done = false
       variant = null
       runs ->
         expt.suggest(
-          (v) -> variant = v
-          (args...) -> console.error("error in withSuggestion", args...)
+          (v) ->
+            variant = v
+            done = true
+          (args...) ->
+            expect("error callback was called with " + args).toEqual("success callback was called")
+            done = true
         )
-      waitsFor -> variant
-      runs -> fn(variant)
+      waitsFor -> done
+      runs ->
+        fn(variant)
 
+    eventSummaries = (events) ->
+      for evt in events
+        switch evt.typename
+          when 'view'   then [ 'view', evt.variant, null ]
+          when 'reward' then [ 'reward', evt.variant, evt.amount ]
+          else [ 'error', evt ]
 
     describe (if sticky then 'sticky' else 'non-sticky'), ->
       it "should suggest something", initialized ->
@@ -51,6 +64,18 @@ describe "Myna.Experiment.suggest", ->
         withSuggestion (variant) ->
           expect(expt.loadLastSuggestion()).toBe(variant)
 
+      it "should queue an event for upload", initialized ->
+        finished = false
+
+        withSuggestion (variant) ->
+          expect(eventSummaries(expt.loadQueuedEvents())).toEqual [
+            [ "view",   variant.id, null ],
+          ]
+          finished = true
+
+        waitsFor -> finished
+        runs -> expect(finished).toEqual(true)
+
       it "should #{if sticky then 'save' else 'NOT save'} save the sticky suggestion", initialized ->
         withSuggestion (variant) ->
           if sticky
@@ -58,7 +83,24 @@ describe "Myna.Experiment.suggest", ->
           else
             expect(expt.loadStickySuggestion()).toBe(null)
 
-      it "should #{if sticky then 'queue' else 'NOT queue'} a view event for upload", initialized pending
+      it "should #{if sticky then 'queue' else 'NOT queue'} a second event for upload", initialized ->
+        finished = false
+
+        withSuggestion (v1) ->
+          withSuggestion (v2) ->
+            if sticky
+              expect(eventSummaries(expt.loadQueuedEvents())).toEqual [
+                [ "view", v1.id, null ]
+              ]
+            else
+              expect(eventSummaries(expt.loadQueuedEvents())).toEqual [
+                [ "view", v1.id, null ],
+                [ "view", v2.id, null ]
+              ]
+            finished = true
+
+        waitsFor -> finished
+        runs -> expect(finished).toEqual(true)
 
       it "should #{if sticky then 'always suggest' else 'NOT always suggest'} the same thing the next time", initialized ->
         hasBeenDifferent = false
@@ -77,7 +119,7 @@ describe "Myna.Experiment.suggest", ->
         runs ->
           expect(hasBeenDifferent).toEqual(if sticky then false else true)
 
-      it "can be unstuck, offering new variants on future calls to suggest", initialized ->
+      it "should be reset by unstick, offering new variants on future calls to suggest", initialized ->
         hasBeenDifferent = false
 
         for i in [1..10]
@@ -91,8 +133,7 @@ describe "Myna.Experiment.suggest", ->
 
             waitsFor -> finished
 
-        runs ->
-          expect(hasBeenDifferent).toEqual(true)
+        runs -> expect(hasBeenDifferent).toEqual(true)
 
       it "should call the error handler if an exeption is thrown", initialized ->
         spyOn(expt, 'view').andCallFake(-> throw "spy exn")
@@ -100,11 +141,9 @@ describe "Myna.Experiment.suggest", ->
         success = false
         error = false
 
-        runs ->
-          expt.suggest((-> success = false), (-> error = true))
+        runs -> expt.suggest((-> success = false), (-> error = true))
 
-        waitsFor ->
-          success || error
+        waitsFor -> success || error
 
         runs ->
           expect(success).toEqual(false)
@@ -113,6 +152,6 @@ describe "Myna.Experiment.suggest", ->
 
       it "should run beforeSuggest, afterSuggest, beforeView, and afterView event handlers", initialized pending
 
-  createSuggestTests(false)
+  createTests(false)
 
-  createSuggestTests(true)
+  createTests(true)
