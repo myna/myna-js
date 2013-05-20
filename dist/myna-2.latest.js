@@ -1,4 +1,4 @@
-/*! myna - v2.0.0 - 2013-05-19 - http://mynaweb.com/
+/*! myna - v2.0.0 - 2013-05-20 - http://mynaweb.com/
 * Copyright (c) 2013 Noel Welsh; Licensed BSD 2-Clause */(function() {
   var _ref,
     __slice = [].slice;
@@ -55,7 +55,7 @@
     callbacks: {},
     counter: 0,
     request: function(options) {
-      var callbackName, error, func, key, returned, scriptElem, success, timeout, url, urlRoot, value, _ref, _ref1, _ref2, _ref3, _ref4;
+      var callbackName, error, key, returned, scriptElem, success, timeout, timer, url, urlRoot, value, _ref, _ref1, _ref2, _ref3, _ref4;
 
       if (options == null) {
         options = {};
@@ -72,10 +72,50 @@
       timeout = (_ref3 = options.timeout) != null ? _ref3 : 0;
       callbackName = "callback" + (Myna.jsonp.counter++);
       returned = false;
+      url = "" + urlRoot + "?";
+      _ref4 = options.params;
+      for (key in _ref4) {
+        value = _ref4[key];
+        url += "" + key + "=" + value + "&";
+      }
+      url += "callback=Myna.jsonp.callbacks." + callbackName;
+      Myna.log("Myna.jsonp.request", url, success, error, timeout);
+      scriptElem = document.createElement("script");
+      scriptElem.setAttribute("type", "text/javascript");
+      scriptElem.setAttribute("async", "true");
+      scriptElem.setAttribute("src", url);
+      scriptElem.setAttribute("class", "myna-jsonp");
+      scriptElem.setAttribute("data-callback", callbackName);
+      scriptElem.onload = scriptElem.onreadystatechange = function() {
+        return Myna.jsonp.remove(callbackName, scriptElem);
+      };
+      if ((timeout != null) && timeout > 0) {
+        timer = window.setTimeout(function() {
+          if (!returned) {
+            returned = true;
+            Myna.jsonp.remove(callbackName, scriptElem);
+            return error({
+              typename: 'problem',
+              subtype: 500,
+              messages: [
+                {
+                  typename: 'timeout',
+                  message: 'request timed out after #{timeout}ms',
+                  callback: callbackName,
+                  timeout: timeout
+                }
+              ]
+            });
+          }
+        }, timeout);
+      } else {
+        timer = null;
+      }
       Myna.jsonp.callbacks[callbackName] = function(response) {
         if (!returned) {
           returned = true;
-          Myna.jsonp.remove(callbackName, elem);
+          window.clearTimeout(timer);
+          Myna.jsonp.remove(callbackName, scriptElem);
           if (response.typename === "problem") {
             return error(response);
           } else {
@@ -83,49 +123,28 @@
           }
         }
       };
-      url = "" + urlRoot + "?";
-      _ref4 = options.data;
-      for (key in _ref4) {
-        value = _ref4[key];
-        url += "" + key + "=" + value + "&";
-      }
-      url += "callback=Myna.jsonp.callbacks." + callbackName;
-      scriptElem = document.createElement("script");
-      scriptElem.setAttribute("type", "text/javascript");
-      scriptElem.setAttribute("async", "true");
-      scriptElem.setAttribute("src", url);
-      scriptElem.onload = scriptElem.onreadystatechange = function() {
-        return Myna.jsonp.remove(callbackName, scriptElem);
-      };
       document.getElementsByTagName("head")[0].appendChild(scriptElem);
-      if (timeout > 0) {
-        func = function() {
-          if (!returned) {
-            returned = true;
-            Myna.jsonp.remove(callbackName, scriptElem);
-            return error({
-              typename: 'problem',
-              subtype: 500,
-              messages: {
-                typename: 'timeout',
-                item: "The server took longer than " + options.timeout + " ms to reply"
-              }
-            });
-          }
-        };
-        return window.setTimeout(func, timeout);
-      }
     },
     remove: function(callbackName, scriptElem) {
       var readyState;
 
-      readyState = scriptElem.readyState;
+      if (callbackName == null) {
+        callbackName = null;
+      }
+      if (scriptElem == null) {
+        scriptElem = null;
+      }
+      readyState = scriptElem != null ? scriptElem.readyState : void 0;
       if (!(readyState && readyState !== "complete" && readyState !== "loaded")) {
-        scriptElem.onload = null;
         try {
-          return scriptElem.parentNode.removeChild(scriptElem);
+          if (scriptElem) {
+            scriptElem.onload = null;
+            scriptElem.parentNode.removeChild(scriptElem);
+          }
         } finally {
-          delete Myna.jsonp.callbacks[callbackName];
+          if (callbackName) {
+            delete Myna.jsonp.callbacks[callbackName];
+          }
         }
       }
     }
