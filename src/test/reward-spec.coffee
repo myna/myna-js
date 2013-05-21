@@ -1,4 +1,4 @@
-window.expt = new Myna.Experiment
+expt = new Myna.Experiment
   uuid:     "uuid"
   id:       "id"
   apiKey:   "key"

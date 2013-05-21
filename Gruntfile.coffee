@@ -7,6 +7,7 @@ module.exports = (grunt) ->
     'settings.coffee'
     'cache.coffee'
     'variant.coffee'
+    'base-experiment.coffee'
     'experiment.coffee'
     'client.coffee'
     'outro.coffee'

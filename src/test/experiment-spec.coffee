@@ -1,4 +1,4 @@
-window.expt = new Myna.Experiment
+expt = new Myna.Experiment
   uuid:     "uuid"
   id:       "id"
   apiKey:   "key"
@@ -12,8 +12,8 @@ describe "Myna.Experiment.constructor", ->
   it "should accept custom options", ->
     expect(expt.uuid).toEqual("uuid")
     expect(expt.id).toEqual("id")
-    expect(expt.apiKey).toequal("key")
-    expect(expt.settings.data).toEqual(sticky: true)
+    expect(expt.apiKey).toEqual("key")
+    expect(expt.settings.data).toEqual(myna: sticky: true)
     expect(for key, value of expt.variants then key).toEqual(["a", "b", "c"])
     expect(for key, value of expt.variants then value.id).toEqual(["a", "b", "c"])
     expect(for key, value of expt.variants then value.settings.data).toEqual([
@@ -91,10 +91,7 @@ for localStorageEnabled in [false, true] # end up resetting it to true
       expect(expt.loadLastSuggestion()).toBe(expt.variants.b)
 
     it "should not interfere with other experiments", ->
-      expt2 = new Myna.Experiment
-        uuid:   "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
-        id:     "id2"
-        apiKey: "key"
+      expt2 = new Myna.Experiment(uuid: "uuid2", id: "id2", apiKey: "key")
       expt.saveLastSuggestion(expt.variants.a)
       expect(expt2.loadLastSuggestion()).toEqual(null)
 
@@ -111,9 +108,7 @@ for localStorageEnabled in [false, true] # end up resetting it to true
       expect(expt.loadStickySuggestion()).toBe(expt.variants.b)
 
     it "should not interfere with other experiments", ->
-      expt2 = new Myna.Experiment
-        uuid: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
-        id: "id2"
+      expt2 = new Myna.Experiment(uuid: "uuid2", id: "id2", apiKey: "key")
       expt.saveStickySuggestion(expt.variants.a)
       expect(expt2.loadStickySuggestion()).toEqual(null)
 
@@ -136,9 +131,7 @@ for localStorageEnabled in [false, true] # end up resetting it to true
       expect(expt.loadStickyReward()).toBe(expt.variants.b)
 
     it "should not interfere with other experiments", ->
-      expt2 = new Myna.Experiment
-        uuid: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
-        id: "id2"
+      expt2 = new Myna.Experiment(uuid: "uuid2", id: "id2", apiKey: "key")
       expt.saveStickyReward(expt.variants.a)
       expect(expt2.loadStickyReward()).toEqual(null)
 
