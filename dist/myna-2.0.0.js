@@ -7,7 +7,7 @@
     window.Myna = {};
   }
 
-  Myna.debug = true;
+  Myna.debug = false;
 
   Myna.log = function() {
     var args, item, _ref1;
@@ -356,8 +356,6 @@
 
   })();
 
-  Myna.cache = new Myna.Settings;
-
 }).call(this);
 
 (function() {
@@ -525,7 +523,7 @@
 
   Myna.BaseExperiment = (function() {
     function BaseExperiment(options) {
-      var data, id, variant, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7;
+      var data, id, variant, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8;
 
       if (options == null) {
         options = {};
@@ -561,12 +559,13 @@
       this.id = (_ref1 = options.id) != null ? _ref1 : Myna.error("Myna.Experiment.constructor", this.id, "no id in options", options);
       this.apiKey = (_ref2 = options.apiKey) != null ? _ref2 : Myna.error("Myna.Experiment.constructor", this.id, "no apiKey in options", options);
       this.apiRoot = (_ref3 = options.apiRoot) != null ? _ref3 : "//api.mynaweb.com";
-      this.callbacks = (_ref4 = options.callbacks) != null ? _ref4 : {};
-      this.settings = new Myna.Settings((_ref5 = options.settings) != null ? _ref5 : {});
+      this.timeout = (_ref4 = options.timeout) != null ? _ref4 : 1000;
+      this.callbacks = (_ref5 = options.callbacks) != null ? _ref5 : {};
+      this.settings = new Myna.Settings((_ref6 = options.settings) != null ? _ref6 : {});
       this.variants = {};
-      _ref7 = (_ref6 = options.variants) != null ? _ref6 : {};
-      for (id in _ref7) {
-        data = _ref7[id];
+      _ref8 = (_ref7 = options.variants) != null ? _ref7 : {};
+      for (id in _ref8) {
+        data = _ref8[id];
         variant = new Myna.Variant(id, data);
         this.variants[id] = variant;
       }
@@ -749,6 +748,7 @@
             error: function() {
               return recordAll(otherEvents, successEvents, errorEvents.concat([event]));
             },
+            timeout: _this.timeout,
             params: Myna.extend({}, event, {
               apikey: _this.apiKey
             })

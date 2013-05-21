@@ -5,6 +5,7 @@ class Myna.BaseExperiment
     @id        = options.id        ? Myna.error("Myna.Experiment.constructor", @id, "no id in options", options)
     @apiKey    = options.apiKey    ? Myna.error("Myna.Experiment.constructor", @id, "no apiKey in options", options)
     @apiRoot   = options.apiRoot   ? "//api.mynaweb.com"
+    @timeout   = options.timeout   ? 1000 # milliseconds
     @callbacks = options.callbacks ? {}
     @settings  = new Myna.Settings(options.settings ? {})
 
@@ -111,6 +112,7 @@ class Myna.BaseExperiment
           url:     "#{@apiRoot}/v2/experiment/#{@uuid}/record"
           success: -> recordAll(otherEvents, successEvents.concat([ event ]), errorEvents)
           error:   -> recordAll(otherEvents, successEvents, errorEvents.concat([ event ]))
+          timeout: @timeout
           params:  Myna.extend({}, event, { apikey: @apiKey })
 
       finish = (successEvents, errorEvents) =>

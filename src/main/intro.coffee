@@ -1,6 +1,6 @@
 window.Myna ?= {}
 
-Myna.debug = true
+Myna.debug = false
 
 Myna.log = (args...) ->
   if Myna.debug

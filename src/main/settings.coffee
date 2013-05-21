@@ -84,5 +84,3 @@ class Myna.Settings
 
   toJson: =>
     @data
-
-Myna.cache = new Myna.Settings
