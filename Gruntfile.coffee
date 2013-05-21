@@ -13,12 +13,14 @@ module.exports = (grunt) ->
   ]
 
   testSources = [
+    'common.coffee'
     'jsonp-spec.coffee'
     'settings-spec.coffee'
     'variant-spec.coffee'
     'experiment-spec.coffee'
     'suggest-spec.coffee'
     'reward-spec.coffee'
+    'record-spec.coffee'
   ]
 
   sources = (dir, sources, ext = null) ->

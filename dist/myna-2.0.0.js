@@ -1,4 +1,4 @@
-/*! myna - v2.0.0 - 2013-05-20 - http://mynaweb.com/
+/*! myna - v2.0.0 - 2013-05-21 - http://mynaweb.com/
 * Copyright (c) 2013 Noel Welsh; Licensed BSD 2-Clause */(function() {
   var _ref,
     __slice = [].slice;
@@ -7,7 +7,7 @@
     window.Myna = {};
   }
 
-  Myna.debug = false;
+  Myna.debug = true;
 
   Myna.log = function() {
     var args, item, _ref1;
@@ -36,16 +36,42 @@
     throw args;
   };
 
-  Myna.extend = function(des, src) {
-    var key, value;
+  Myna.extend = function() {
+    var des, key, sources, src, value, _i, _len;
 
-    for (key in src) {
-      value = src[key];
-      if (!des[key]) {
-        des[key] = value;
+    des = arguments[0], sources = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
+    for (_i = 0, _len = sources.length; _i < _len; _i++) {
+      src = sources[_i];
+      for (key in src) {
+        value = src[key];
+        if (!des[key]) {
+          des[key] = value;
+        }
       }
     }
     return des;
+  };
+
+  Myna.dateToString = function(date) {
+    var day, hour, milli, minute, month, pad, second, year;
+
+    pad = function(num, len) {
+      var str;
+
+      str = "" + num;
+      while (str.length < len) {
+        str = '0' + str;
+      }
+      return str;
+    };
+    year = pad(date.getUTCFullYear(), 4);
+    month = pad(date.getUTCMonth() + 1, 2);
+    day = pad(date.getUTCDate(), 2);
+    hour = pad(date.getUTCHours(), 2);
+    minute = pad(date.getUTCMinutes(), 2);
+    second = pad(date.getUTCSeconds(), 2);
+    milli = pad(date.getUTCMilliseconds(), 2);
+    return "" + year + "-" + month + "-" + day + "T" + hour + ":" + minute + ":" + second + "." + milli + "Z";
   };
 
 }).call(this);
@@ -55,7 +81,7 @@
     callbacks: {},
     counter: 0,
     request: function(options) {
-      var callbackName, error, key, returned, scriptElem, success, timeout, timer, url, urlRoot, value, _ref, _ref1, _ref2, _ref3, _ref4;
+      var callbackName, error, key, onComplete, onTimeout, returned, scriptElem, success, timeout, timer, url, urlRoot, value, _ref, _ref1, _ref2, _ref3, _ref4;
 
       if (options == null) {
         options = {};
@@ -89,31 +115,38 @@
       scriptElem.onload = scriptElem.onreadystatechange = function() {
         return Myna.jsonp.remove(callbackName, scriptElem);
       };
-      if ((timeout != null) && timeout > 0) {
-        timer = window.setTimeout(function() {
-          if (!returned) {
-            returned = true;
-            Myna.jsonp.remove(callbackName, scriptElem);
-            return error({
-              typename: 'problem',
-              subtype: 500,
-              messages: [
-                {
-                  typename: 'timeout',
-                  message: 'request timed out after #{timeout}ms',
-                  callback: callbackName,
-                  timeout: timeout
-                }
-              ]
-            });
-          }
-        }, timeout);
+      onTimeout = function() {
+        if (returned) {
+          return Myna.log("Myna.jsonp.request.onTimeout", callbackName, timeout, "already returned");
+        } else {
+          returned = true;
+          Myna.log("Myna.jsonp.request.onTimeout", callbackName, timeout);
+          Myna.jsonp.remove(callbackName, scriptElem);
+          return error({
+            typename: 'problem',
+            subtype: 500,
+            messages: [
+              {
+                typename: 'timeout',
+                message: 'request timed out after #{timeout}ms',
+                callback: callbackName,
+                timeout: timeout
+              }
+            ]
+          });
+        }
+      };
+      if (timeout > 0) {
+        timer = window.setTimeout(onTimeout, timeout);
       } else {
         timer = null;
       }
-      Myna.jsonp.callbacks[callbackName] = function(response) {
-        if (!returned) {
+      onComplete = function(response) {
+        if (returned) {
+          return Myna.log("Myna.jsonp.request.onComplete", callbackName, "already returned");
+        } else {
           returned = true;
+          Myna.log("Myna.jsonp.request.onComplete", callbackName, response.typename, response.typename === "problem", response);
           window.clearTimeout(timer);
           Myna.jsonp.remove(callbackName, scriptElem);
           if (response.typename === "problem") {
@@ -123,6 +156,7 @@
           }
         }
       };
+      Myna.jsonp.callbacks[callbackName] = onComplete;
       document.getElementsByTagName("head")[0].appendChild(scriptElem);
     },
     remove: function(callbackName, scriptElem) {
@@ -488,12 +522,13 @@
 (function() {
   var _ref,
     __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
+    __slice = [].slice,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
   Myna.BaseExperiment = (function() {
     function BaseExperiment(options) {
-      var data, id, variant, _ref, _ref1, _ref2, _ref3, _ref4, _ref5;
+      var data, id, variant, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7;
 
       if (options == null) {
         options = {};
@@ -503,6 +538,7 @@
       this.loadAndSave = __bind(this.loadAndSave, this);
       this.enqueueReward = __bind(this.enqueueReward, this);
       this.enqueueView = __bind(this.enqueueView, this);
+      this.requeueEvents = __bind(this.requeueEvents, this);
       this.enqueueEvent = __bind(this.enqueueEvent, this);
       this.clearQueuedEvents = __bind(this.clearQueuedEvents, this);
       this.loadQueuedEvents = __bind(this.loadQueuedEvents, this);
@@ -518,22 +554,27 @@
       this.callback = __bind(this.callback, this);
       this.randomVariant = __bind(this.randomVariant, this);
       this.totalWeight = __bind(this.totalWeight, this);
+      this.record = __bind(this.record, this);
       this.rewardVariant = __bind(this.rewardVariant, this);
       this.reward = __bind(this.reward, this);
       this.view = __bind(this.view, this);
       this.suggest = __bind(this.suggest, this);
       Myna.log("Myna.BaseExperiment.constructor", options);
-      this.uuid = (_ref = options.uuid) != null ? _ref : Myna.error("Myna.Experiment.constructor", this.id, "no UUID in options", options);
-      this.id = (_ref1 = options.id) != null ? _ref1 : Myna.error("Myna.Experiment.constructor", this.id, "no ID in options", options);
-      this.callbacks = (_ref2 = options.callbacks) != null ? _ref2 : {};
-      this.settings = new Myna.Settings((_ref3 = options.settings) != null ? _ref3 : {});
+      this.uuid = (_ref = options.uuid) != null ? _ref : Myna.error("Myna.Experiment.constructor", this.id, "no uuid in options", options);
+      this.id = (_ref1 = options.id) != null ? _ref1 : Myna.error("Myna.Experiment.constructor", this.id, "no id in options", options);
+      this.apiKey = (_ref2 = options.apiKey) != null ? _ref2 : Myna.error("Myna.Experiment.constructor", this.id, "no apiKey in options", options);
+      this.apiRoot = (_ref3 = options.apiRoot) != null ? _ref3 : "//api.mynaweb.com";
+      this.callbacks = (_ref4 = options.callbacks) != null ? _ref4 : {};
+      this.settings = new Myna.Settings((_ref5 = options.settings) != null ? _ref5 : {});
       this.variants = {};
-      _ref5 = (_ref4 = options.variants) != null ? _ref4 : {};
-      for (id in _ref5) {
-        data = _ref5[id];
+      _ref7 = (_ref6 = options.variants) != null ? _ref6 : {};
+      for (id in _ref7) {
+        data = _ref7[id];
         variant = new Myna.Variant(id, data);
         this.variants[id] = variant;
       }
+      this.recordSemaphore = 0;
+      this.waitingToRecord = [];
     }
 
     BaseExperiment.prototype.suggest = function(success, error) {
@@ -647,6 +688,92 @@
       }
     };
 
+    BaseExperiment.prototype.record = function(success, error) {
+      var allError, allSuccess, callbacks, finish, recordAll, recordOne,
+        _this = this;
+
+      if (success == null) {
+        success = (function() {});
+      }
+      if (error == null) {
+        error = (function() {});
+      }
+      this.waitingToRecord.push({
+        success: success,
+        error: error
+      });
+      if (this.recordSemaphore > 0) {
+        return Myna.log("Myna.Experiment.record", "queued");
+      } else {
+        this.recordSemaphore++;
+        callbacks = this.waitingToRecord;
+        this.waitingToRecord = [];
+        Myna.log("Myna.Experiment.record", "starting", callbacks.length);
+        allSuccess = function() {
+          var args, item, _i, _len, _results;
+
+          args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+          _results = [];
+          for (_i = 0, _len = callbacks.length; _i < _len; _i++) {
+            item = callbacks[_i];
+            _results.push(item.success.apply(item, args));
+          }
+          return _results;
+        };
+        allError = function() {
+          var args, item, _i, _len, _results;
+
+          args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+          _results = [];
+          for (_i = 0, _len = callbacks.length; _i < _len; _i++) {
+            item = callbacks[_i];
+            _results.push(item.error.apply(item, args));
+          }
+          return _results;
+        };
+        recordAll = function(events, successEvents, errorEvents) {
+          var head, tail;
+
+          Myna.log("Myna.Experiment.record.recordAll", events, successEvents, errorEvents);
+          if (events.length === 0) {
+            return finish(successEvents, errorEvents);
+          } else {
+            head = events[0], tail = 2 <= events.length ? __slice.call(events, 1) : [];
+            return recordOne(head, tail, successEvents, errorEvents);
+          }
+        };
+        recordOne = function(event, otherEvents, successEvents, errorEvents) {
+          Myna.log("Myna.Experiment.record.recordOne", event, otherEvents, successEvents, errorEvents);
+          return Myna.jsonp.request({
+            url: "" + _this.apiRoot + "/v2/experiment/" + _this.uuid + "/record",
+            success: function() {
+              return recordAll(otherEvents, successEvents.concat([event]), errorEvents);
+            },
+            error: function() {
+              return recordAll(otherEvents, successEvents, errorEvents.concat([event]));
+            },
+            params: Myna.extend({}, event, {
+              apikey: _this.apiKey
+            })
+          });
+        };
+        finish = function(successEvents, errorEvents) {
+          Myna.log("Myna.Experiment.record.finish", successEvents, errorEvents);
+          if (errorEvents.length > 0) {
+            _this.requeueEvents(errorEvents);
+            allError(errorEvents);
+          } else {
+            allSuccess(successEvents);
+          }
+          _this.recordSemaphore--;
+          if (_this.waitingToRecord.length > 0) {
+            return _this.record();
+          }
+        };
+        return recordAll(this.clearQueuedEvents(), [], []);
+      }
+    };
+
     BaseExperiment.prototype.totalWeight = function() {
       var ans, id, variant, _ref;
 
@@ -748,20 +875,39 @@
     };
 
     BaseExperiment.prototype.clearQueuedEvents = function() {
+      var ans;
+
       Myna.log("Myna.BaseExperiment.clearQueuedEvents", this.id);
-      return this.loadAndSave(function(saved) {
+      ans = [];
+      this.loadAndSave(function(saved) {
+        var _ref;
+
+        ans = (_ref = saved.queuedEvents) != null ? _ref : [];
         delete saved.queuedEvents;
+        return saved;
+      });
+      return ans;
+    };
+
+    BaseExperiment.prototype.enqueueEvent = function(event) {
+      Myna.log("Myna.BaseExperiment.enqueueEvent", this.id, event);
+      return this.loadAndSave(function(saved) {
+        if (saved.queuedEvents != null) {
+          saved.queuedEvents.push(event);
+        } else {
+          saved.queuedEvents = [event];
+        }
         return saved;
       });
     };
 
-    BaseExperiment.prototype.enqueueEvent = function(evt) {
-      Myna.log("Myna.BaseExperiment.enqueueEvent", this.id, evt);
+    BaseExperiment.prototype.requeueEvents = function(events) {
+      Myna.log("Myna.BaseExperiment.requeueEvents", this.id, events);
       return this.loadAndSave(function(saved) {
         if (saved.queuedEvents != null) {
-          saved.queuedEvents.push(evt);
+          saved.queuedEvents = events.concat(saved.queuedEvents);
         } else {
-          saved.queuedEvents = [evt];
+          saved.queuedEvents = events;
         }
         return saved;
       });
@@ -772,7 +918,7 @@
       return this.enqueueEvent({
         typename: "view",
         variant: variant.id,
-        timestamp: new Date().getTime()
+        timestamp: Myna.dateToString(new Date())
       });
     };
 
@@ -782,7 +928,7 @@
         typename: "reward",
         variant: variant.id,
         amount: amount,
-        timestamp: new Date().getTime()
+        timestamp: Myna.dateToString(new Date())
       });
     };
 

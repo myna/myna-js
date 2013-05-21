@@ -17,8 +17,8 @@ Myna.jsonp =
     urlRoot      = options.url     ? throw "no URL specified"
     success      = options.success ? (->)
     error        = options.error   ? (->)
-    timeout      = options.timeout ? 0 # 0 means don't time out
-    callbackName = "callback" + (Myna.jsonp.counter++)
+    timeout      = options.timeout ? 0 # 0 means no timeout
+    callbackName = "callback#{Myna.jsonp.counter++}"
     returned     = false
 
     # Calculate full URL:
@@ -43,31 +43,36 @@ Myna.jsonp =
 
     # Register timeout function
 
-    if timeout? && timeout > 0
-      timer = window.setTimeout(
-        ->
-          unless returned
-            returned = true
-            Myna.jsonp.remove(callbackName, scriptElem)
-            error
-              typename: 'problem'
-              subtype: 500
-              messages: [
-                typename: 'timeout'
-                message:  'request timed out after #{timeout}ms'
-                callback: callbackName
-                timeout:  timeout
-              ]
-        timeout
-      )
+    onTimeout = ->
+      if returned
+        Myna.log("Myna.jsonp.request.onTimeout", callbackName, timeout, "already returned")
+      else
+        returned = true
+        Myna.log("Myna.jsonp.request.onTimeout", callbackName, timeout)
+        Myna.jsonp.remove(callbackName, scriptElem)
+        error
+          typename: 'problem'
+          subtype: 500
+          messages: [
+            typename: 'timeout'
+            message:  'request timed out after #{timeout}ms'
+            callback: callbackName
+            timeout:  timeout
+          ]
+
+    if timeout > 0
+      timer = window.setTimeout(onTimeout, timeout)
     else
       timer = null
 
     # Register callback:
 
-    Myna.jsonp.callbacks[callbackName] = (response) ->
-      unless returned
+    onComplete = (response) ->
+      if returned
+        Myna.log("Myna.jsonp.request.onComplete", callbackName, "already returned")
+      else
         returned = true
+        Myna.log("Myna.jsonp.request.onComplete", callbackName, response.typename, response.typename == "problem", response)
         window.clearTimeout(timer)
         Myna.jsonp.remove(callbackName, scriptElem)
         if response.typename == "problem"
@@ -75,9 +80,12 @@ Myna.jsonp =
         else
           success(response)
 
-    # Append script tag to body:
+    Myna.jsonp.callbacks[callbackName] = onComplete
+
+    # Append script tag to body, initiating request:
 
     document.getElementsByTagName("head")[0].appendChild(scriptElem)
+
     return
 
   # string element -> void

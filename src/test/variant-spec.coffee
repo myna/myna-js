@@ -1,4 +1,4 @@
-describe "Variant.constructor", ->
+describe "Myna.Variant.constructor", ->
   it "should accept custom options", ->
     variant = new Myna.Variant "id",
       settings: a: b: c: 1

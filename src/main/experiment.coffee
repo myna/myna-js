@@ -1,8 +1,10 @@
 class Myna.BaseExperiment
   constructor: (options = {}) ->
     Myna.log("Myna.BaseExperiment.constructor", options)
-    @uuid      = options.uuid ? Myna.error("Myna.Experiment.constructor", @id, "no UUID in options", options)
-    @id        = options.id   ? Myna.error("Myna.Experiment.constructor", @id, "no ID in options", options)
+    @uuid      = options.uuid      ? Myna.error("Myna.Experiment.constructor", @id, "no uuid in options", options)
+    @id        = options.id        ? Myna.error("Myna.Experiment.constructor", @id, "no id in options", options)
+    @apiKey    = options.apiKey    ? Myna.error("Myna.Experiment.constructor", @id, "no apiKey in options", options)
+    @apiRoot   = options.apiRoot   ? "//api.mynaweb.com"
     @callbacks = options.callbacks ? {}
     @settings  = new Myna.Settings(options.settings ? {})
 
@@ -10,6 +12,9 @@ class Myna.BaseExperiment
     for id, data of (options.variants ? {})
       variant = new Myna.Variant(id, data)
       @variants[id] = variant
+
+    @recordSemaphore = 0
+    @waitingToRecord = []
 
   # (variant -> void) (any -> void) -> void
   suggest: (success = (->), error = (->)) =>
@@ -73,6 +78,55 @@ class Myna.BaseExperiment
         success(variant)
     catch exn
       error(exn)
+
+  record: (success = (->), error = (->)) =>
+    @waitingToRecord.push({ success, error })
+    if @recordSemaphore > 0
+      Myna.log("Myna.Experiment.record", "queued")
+    else
+      @recordSemaphore++
+
+      callbacks = @waitingToRecord
+      @waitingToRecord = []
+
+      Myna.log("Myna.Experiment.record", "starting", callbacks.length)
+
+      allSuccess = (args...) =>
+        for item in callbacks then item.success(args...)
+
+      allError = (args...) =>
+        for item in callbacks then item.error(args...)
+
+      recordAll = (events, successEvents, errorEvents) =>
+        Myna.log("Myna.Experiment.record.recordAll", events, successEvents, errorEvents)
+        if events.length == 0
+          finish(successEvents, errorEvents)
+        else
+          [ head, tail ... ] = events
+          recordOne(head, tail, successEvents, errorEvents)
+
+      recordOne = (event, otherEvents, successEvents, errorEvents) =>
+        Myna.log("Myna.Experiment.record.recordOne", event, otherEvents, successEvents, errorEvents)
+        Myna.jsonp.request
+          url:     "#{@apiRoot}/v2/experiment/#{@uuid}/record"
+          success: -> recordAll(otherEvents, successEvents.concat([ event ]), errorEvents)
+          error:   -> recordAll(otherEvents, successEvents, errorEvents.concat([ event ]))
+          params:  Myna.extend({}, event, { apikey: @apiKey })
+
+      finish = (successEvents, errorEvents) =>
+        Myna.log("Myna.Experiment.record.finish", successEvents, errorEvents)
+        if errorEvents.length > 0
+          @requeueEvents(errorEvents)
+          allError(errorEvents)
+        else
+          allSuccess(successEvents)
+
+        @recordSemaphore--
+
+        if @waitingToRecord.length > 0
+          @record() # spawn another record process
+
+      recordAll(@clearQueuedEvents(), [], [])
 
   # -> double
   totalWeight: =>
@@ -147,17 +201,29 @@ class Myna.BaseExperiment
 
   clearQueuedEvents: =>
     Myna.log("Myna.BaseExperiment.clearQueuedEvents", @id)
+    ans = []
     @loadAndSave (saved) ->
+      ans = saved.queuedEvents ? []
       delete saved.queuedEvents
       saved
+    ans
 
-  enqueueEvent: (evt) =>
-    Myna.log("Myna.BaseExperiment.enqueueEvent", @id, evt)
+  enqueueEvent: (event) =>
+    Myna.log("Myna.BaseExperiment.enqueueEvent", @id, event)
     @loadAndSave (saved) ->
       if saved.queuedEvents?
-        saved.queuedEvents.push(evt)
+        saved.queuedEvents.push(event)
       else
-        saved.queuedEvents = [ evt ]
+        saved.queuedEvents = [ event ]
+      saved
+
+  requeueEvents: (events) =>
+    Myna.log("Myna.BaseExperiment.requeueEvents", @id, events)
+    @loadAndSave (saved) ->
+      if saved.queuedEvents?
+        saved.queuedEvents = events.concat(saved.queuedEvents)
+      else
+        saved.queuedEvents = events
       saved
 
   enqueueView: (variant) =>
@@ -165,7 +231,7 @@ class Myna.BaseExperiment
     @enqueueEvent
       typename:  "view"
       variant:   variant.id
-      timestamp: new Date().getTime()
+      timestamp: Myna.dateToString(new Date())
 
   enqueueReward: (variant, amount) =>
     Myna.log("Myna.BaseExperiment.enqueueReward", @id, variant, amount)
@@ -173,7 +239,7 @@ class Myna.BaseExperiment
       typename:  "reward"
       variant:   variant.id
       amount:    amount
-      timestamp: new Date().getTime()
+      timestamp: Myna.dateToString(new Date())
 
   loadAndSave: (func) =>
     @save(func(@load() ? {}))
