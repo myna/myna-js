@@ -3,11 +3,11 @@ expt = new Myna.Experiment
   id:       "id"
   apiKey:   "092c90f6-a8f2-11e2-a2b9-7c6d628b25f7"
   apiRoot:  "http://localhost:8080"
-  timeout:  250
   settings: "myna.web.sticky": false
-  variants:
-    variant1: weight: 0.5
-    variant2: weight: 0.5
+  variants: [
+    { id: "variant1", weight: 0.5 }
+    { id: "variant2", weight: 0.5 }
+  ]
 
 initialized = (fn) ->
   return ->
@@ -58,7 +58,21 @@ initialized = (fn) ->
 
     fn(calls, callbacks, logCalls)
 
-describe "Myna.Experiment.suggest callbacks", ->
+findCall = (calls, name, index) ->
+  counter = 0
+  for call in calls when call[0] == name
+    if counter == index
+      return call
+    else
+      counter++
+  return null
+
+indexOfCall = (calls, name) ->
+  for index, call in calls when call[0] == name
+    return index
+  return null
+
+describe "callbacks", ->
   it "should be called in the correct order", initialized (calls, callbacks, logCalls) ->
     variant = null
 
@@ -70,10 +84,7 @@ describe "Myna.Experiment.suggest callbacks", ->
       calls.push([ "suggestCallback", args... ])
       logCalls()
       variant = arguments[0]
-      window.setTimeout(
-        -> expt.reward(0.8, rewardCallback)
-        0
-      )
+      window.setTimeout( (-> expt.reward(0.8, rewardCallback)), 500 )
 
     runs ->
       Myna.log("BLOCK 1")
@@ -87,33 +98,33 @@ describe "Myna.Experiment.suggest callbacks", ->
 
     runs ->
       Myna.log("BLOCK 2")
-      expect(for call in calls then call[0]).toEqual([
+      expect(for call in calls then call[0]).toEqual [
         "beforeSuggest"
         "beforeView"
         "suggestCallback"
         "afterView"
         "afterSuggest"
         "beforeRecord"
-        "beforeReward"
-        "afterReward"
         "afterRecord"
+        "beforeReward"
         "beforeRecord"
         "rewardCallback"
+        "afterReward"
         "afterRecord"
-      ])
+      ]
 
-      expect(calls[0]).toEqual([ "beforeSuggest",   variant, false ])
-      expect(calls[1]).toEqual([ "beforeView",      variant, false ])
-      expect(calls[2]).toEqual([ "suggestCallback", variant, false ])
-      expect(calls[3]).toEqual([ "afterView",       variant, false ])
-      expect(calls[4]).toEqual([ "afterSuggest",    variant, false ])
-      expect(calls[5]).toEqual([ "beforeRecord",    [[ 'view',   variant.id, null ]] ])
-      expect(calls[6]).toEqual([ "beforeReward",    variant, 0.8, false ])
-      expect(calls[7]).toEqual([ "afterReward",     variant, 0.8, false ])
-      expect(calls[8]).toEqual([ "afterRecord",     [[ 'view',   variant.id, null ]], [] ])
-      expect(calls[9]).toEqual([ "beforeRecord",    [[ 'reward', variant.id, 0.8  ]] ])
-      expect(calls[10]).toEqual([ "rewardCallback", variant, 0.8, false ])
-      expect(calls[11]).toEqual([ "afterRecord",    [[ 'reward', variant.id, 0.8  ]], [] ])
+      expect(findCall(calls, "beforeSuggest",   0)).toEqual([ "beforeSuggest",   variant, false ])
+      expect(findCall(calls, "beforeView",      0)).toEqual([ "beforeView",      variant, false ])
+      expect(findCall(calls, "suggestCallback", 0)).toEqual([ "suggestCallback", variant, false ])
+      expect(findCall(calls, "afterView",       0)).toEqual([ "afterView",       variant, false ])
+      expect(findCall(calls, "afterSuggest",    0)).toEqual([ "afterSuggest",    variant, false ])
+      expect(findCall(calls, "beforeRecord",    0)).toEqual([ "beforeRecord",    [[ 'view',   variant.id, null ]] ])
+      expect(findCall(calls, "beforeReward",    0)).toEqual([ "beforeReward",    variant, 0.8, false ])
+      expect(findCall(calls, "afterReward",     0)).toEqual([ "afterReward",     variant, 0.8, false ])
+      expect(findCall(calls, "afterRecord",     0)).toEqual([ "afterRecord",     [[ 'view',   variant.id, null ]], [] ])
+      expect(findCall(calls, "beforeRecord",    1)).toEqual([ "beforeRecord",    [[ 'reward', variant.id, 0.8  ]] ])
+      expect(findCall(calls, "rewardCallback",  0)).toEqual([ "rewardCallback",  variant, 0.8, false ])
+      expect(findCall(calls, "afterRecord",     1)).toEqual([ "afterRecord",     [[ 'reward', variant.id, 0.8  ]], [] ])
 
       @removeAllSpies()
 
@@ -159,7 +170,7 @@ describe "beforeSuggest callback", ->
         # "afterRecord"
       ]
 
-      expect(calls[0]).toEqual([ "beforeSuggest", variant, false ])
+      expect(findCall(calls, "beforeSuggest", 0)).toEqual([ "beforeSuggest", variant, false ])
 
       @removeAllSpies()
 
@@ -205,14 +216,13 @@ describe "beforeView callback", ->
         # "afterRecord"
       ]
 
-      expect(calls[0]).toEqual([ "beforeSuggest", variant, false ])
-      expect(calls[1]).toEqual([ "beforeView",    variant, false ])
+      expect(findCall(calls, "beforeSuggest", 0)).toEqual([ "beforeSuggest", variant, false ])
+      expect(findCall(calls, "beforeView",    0)).toEqual([ "beforeView",    variant, false ])
 
       @removeAllSpies()
 
-
 describe "beforeReward callback", ->
-  it "should be able to cancel a suggestion", initialized (calls, callbacks, logCalls) ->
+  it "should be able to cancel a reward", initialized (calls, callbacks, logCalls) ->
     variant  = null
 
     callbacks.beforeReward = jasmine.createSpy('beforeReward').andCallFake (args...) ->
@@ -227,13 +237,13 @@ describe "beforeReward callback", ->
     suggestCallback = jasmine.createSpy('suggestCallback').andCallFake (args...) ->
       calls.push([ "suggestCallback", args... ])
       logCalls()
-      window.setTimeout( (-> expt.reward(0.8, rewardCallback)), 0 )
+      window.setTimeout( (-> expt.reward(0.8, rewardCallback)), 500 )
 
     runs ->
       expt.callbacks = callbacks
       expt.suggest suggestCallback
 
-    waitsFor -> callbacks.beforeSuggest.callCount > 0
+    waitsFor -> callbacks.beforeReward.callCount > 0
 
     waits 250
 
@@ -245,21 +255,17 @@ describe "beforeReward callback", ->
         "afterView"
         "afterSuggest"
         "beforeRecord"
-        "beforeReward"
-        # "afterReward"
         "afterRecord"
-        # "beforeRecord"
-        # "rewardCallback"
-        # "afterRecord"
+        "beforeReward"
       ]
 
-      expect(calls[0]).toEqual([ "beforeSuggest",   variant, false ])
-      expect(calls[1]).toEqual([ "beforeView",      variant, false ])
-      expect(calls[2]).toEqual([ "suggestCallback", variant, false ])
-      expect(calls[3]).toEqual([ "afterView",       variant, false ])
-      expect(calls[4]).toEqual([ "afterSuggest",    variant, false ])
-      expect(calls[5]).toEqual([ "beforeRecord",    [[ 'view', variant.id, null ]] ])
-      expect(calls[6]).toEqual([ "beforeReward",    variant, 0.8, false ])
-      expect(calls[7]).toEqual([ "afterRecord",     [[ 'view', variant.id, null ]], [] ])
+      expect(findCall(calls, "beforeSuggest",   0)).toEqual([ "beforeSuggest",   variant, false ])
+      expect(findCall(calls, "beforeView",      0)).toEqual([ "beforeView",      variant, false ])
+      expect(findCall(calls, "suggestCallback", 0)).toEqual([ "suggestCallback", variant, false ])
+      expect(findCall(calls, "afterView",       0)).toEqual([ "afterView",       variant, false ])
+      expect(findCall(calls, "afterSuggest",    0)).toEqual([ "afterSuggest",    variant, false ])
+      expect(findCall(calls, "beforeRecord",    0)).toEqual([ "beforeRecord",    [[ 'view', variant.id, null ]] ])
+      expect(findCall(calls, "beforeReward",    0)).toEqual([ "beforeReward",    variant, 0.8, false ])
+      expect(findCall(calls, "afterRecord",     0)).toEqual([ "afterRecord",     [[ 'view', variant.id, null ]], [] ])
 
       @removeAllSpies()

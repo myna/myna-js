@@ -10,9 +10,8 @@ class Myna.BaseExperiment
     @callbacks = options.callbacks ? {}
 
     @variants = {}
-    for id, data of (options.variants ? {})
-      variant = new Myna.Variant(id, data)
-      @variants[id] = variant
+    for data in (options.variants ? [])
+      @variants[data.id] = new Myna.Variant(data)
 
     # The number of record requests currently in progress. Should be 0 or 1.
     # The value is used to prevent multiple record requests being submitted concurrently.
@@ -30,10 +29,6 @@ class Myna.BaseExperiment
   timeout: =>
     @settings.get("myna.web.timeout", 1000) # milliseconds
 
-  # -> boolean
-  autoRecord: =>
-    @settings.get("myna.web.autoRecord", true)
-
   # (variant -> void) (any -> void) -> void
   suggest: (success = (->), error = (->)) =>
     Myna.log("Myna.BaseExperiment.suggest", @id)
@@ -45,16 +40,12 @@ class Myna.BaseExperiment
 
     @callback('afterSuggest').call(this, variant)
 
-    if @autoRecord() then @record()
-
     return
 
   view: (variantId, success = (->), error = (->)) =>
     Myna.log("Myna.BaseExperiment.view", @id, variantId)
 
     if @viewVariant({ variant: @variants[variantId], success, error }) == false then return false
-
-    if @autoRecord() then @record()
 
     return
 
@@ -120,11 +111,7 @@ class Myna.BaseExperiment
       @saveLastReward(variant)
       @enqueueReward(variant, amount)
 
-      if @autoRecord()
-        # Call our success/error callbacks once the record is complete:
-        @record( (=> success.apply(this, args)), error )
-      else
-        success.apply(this, args)
+      success.apply(this, args)
 
     return
 

@@ -5,10 +5,11 @@ expt = new Myna.Experiment
   settings:
     "myna.web.sticky": true
     "myna.web.autoRecord": false
-  variants:
-    a: { settings: { buttons: "red"   }, weight: 0.2 }
-    b: { settings: { buttons: "green" }, weight: 0.4 }
-    c: { settings: { buttons: "blue"  }, weight: 0.6 }
+  variants: [
+    { id: "a", settings: { buttons: "red"   }, weight: 0.2 }
+    { id: "b", settings: { buttons: "green" }, weight: 0.4 }
+    { id: "c", settings: { buttons: "blue"  }, weight: 0.6 }
+  ]
 
 for sticky in [false, true]
   initialized = (fn) ->
@@ -19,6 +20,7 @@ for sticky in [false, true]
       expt.unstick()
       expt.clearQueuedEvents()
       fn()
+      @removeAllSpies()
 
   describe "Myna.Experiment.reward (#{(if sticky then 'sticky' else 'non-sticky')})", ->
     it "should reward the last suggestion", initialized ->
@@ -117,7 +119,7 @@ for sticky in [false, true]
       afterReward  = jasmine.createSpy('afterReward')
 
       runs ->
-        Myna.log("SECTION A")
+        Myna.log("BLOCK 1")
         expt.callbacks = { beforeReward, afterReward }
         expt.suggest (v) ->
           variant = v
@@ -126,20 +128,19 @@ for sticky in [false, true]
       waitsFor -> suggested
 
       runs ->
-        Myna.log("SECTION B")
+        Myna.log("BLOCK 2")
         expt.reward 0.8, ->
           rewarded = true
 
       waitsFor -> rewarded
 
       runs ->
-        Myna.log("SECTION C")
+        Myna.log("BLOCK 3")
         expect(beforeReward).toHaveBeenCalledWith(variant, 0.8, false)
         expect(afterReward).toHaveBeenCalledWith(variant, 0.8, false)
 
         suggested = false
         rewarded = false
-        expt.callbacks = { beforeReward, afterReward }
 
         expt.suggest (v) ->
           variant = v

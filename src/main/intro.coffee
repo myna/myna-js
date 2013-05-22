@@ -7,9 +7,6 @@ Myna.log = (args...) ->
     window.console?.log(for item in args then JSON.stringify(item))
   return
 
-Myna.error = (args...) ->
-  throw args
-
 Myna.extend = (des, sources...) ->
   for src in sources
     for key, value of src when !des[key]
@@ -32,3 +29,6 @@ Myna.dateToString = (date) ->
   milli  = pad(date.getUTCMilliseconds(), 2)
 
   "#{year}-#{month}-#{day}T#{hour}:#{minute}:#{second}.#{milli}Z"
+
+Myna.problem = (msg) ->
+  msg

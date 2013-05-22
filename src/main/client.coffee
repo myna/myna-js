@@ -1,11 +1,14 @@
 class Myna.Client
   constructor: (options = {}) ->
+    @apiKey  = options.apiKey  ? throw "apiKey not specified in options"
     @apiRoot = options.apiRoot ? '//api.mynaweb.com'
-    @apiKey = options.apiKey  ? Myna.error("Myna.Client.constructor", "no apiKey in options", options)
+
     @experiments = {}
-    for json in (options.experiments ? [])
-      expt = new Myna.Experiment(json)
-      @experiments[expt.id] = expt
+    for data in (options.experiments ? [])
+      if data instanceof Myna.Experiment
+        @experiments[data.id] = data
+      else
+        @experiments[data.id] = new Myna.Experiment(Myna.extend(data, { @apiKey, @apiRoot }))
 
   suggest: (exptId, success = (->), error = (->)) =>
     @experiments[exptId].suggest(success, error)

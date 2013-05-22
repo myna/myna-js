@@ -18,13 +18,14 @@ Myna.jsonp =
     success      = options.success ? (->)
     error        = options.error   ? (->)
     timeout      = options.timeout ? 0 # 0 means no timeout
+    params       = options.params  ? {}
     callbackName = "callback#{Myna.jsonp.counter++}"
     returned     = false
 
     # Calculate full URL:
 
     url = "#{urlRoot}?"
-    for key, value of options.params then url += "#{key}=#{value}&"
+    for key, value of params then url += "#{key}=#{value}&"
     url += "callback=Myna.jsonp.callbacks." + callbackName
 
     Myna.log("Myna.jsonp.request", url, success, error, timeout)
@@ -57,7 +58,6 @@ Myna.jsonp =
             typename: 'timeout'
             message:  'request timed out after #{timeout}ms'
             callback: callbackName
-            timeout:  timeout
           ]
 
     if timeout > 0

@@ -1,5 +1,13 @@
 class Myna.Experiment extends Myna.BaseExperiment
 
+  # -> boolean
+  sticky: =>
+    !!@settings.get("myna.web.sticky", true)
+
+  # -> boolean
+  autoRecord: =>
+    !!@settings.get("myna.web.autoRecord", true)
+
   # (variant -> void) (any -> void) -> void
   suggest: (success = (->), error = (->)) =>
     Myna.log("Myna.Experiment.suggest", @id)
@@ -45,24 +53,28 @@ class Myna.Experiment extends Myna.BaseExperiment
 
     if @callback('beforeReward').call(this, variant, amount, !!rewarded) == false then return false
 
-    if rewarded?
+    wrappedSuccess = =>
       success.call(this, variant, amount, !!rewarded)
+      @callback('afterReward').call(this, variant, amount, !!rewarded)
+
+    if rewarded?
+      wrappedSuccess()
     else if variant?
       if sticky then @saveStickyReward(variant, amount, !!rewarded)
-      if @rewardVariant({ variant, amount, success, error, otherArgs: [ !!rewarded ] }) == false then return false
+
+      delayedSuccess = =>
+        if @autoRecord()
+          # Call our success/error callbacks once the record is complete:
+          @record(wrappedSuccess, error)
+        else
+          wrappedSuccess()
+
+      if @rewardVariant({ variant, amount, success: delayedSuccess, error, otherArgs: [ !!rewarded ] }) == false then return false
     else
       error.call(this, Myna.problem("no-suggestion"))
       return false
 
-    @callback('afterReward').call(this, variant, amount, !!rewarded)
-
     return
-
-  # -> boolean
-  sticky: =>
-    ans = !!@settings.get("myna.web.sticky", true)
-    Myna.log("Myna.Experiment.sticky", @id, ans)
-    ans
 
   unstick: =>
     Myna.log("Myna.Experiment.unstick", @id)

@@ -10,6 +10,7 @@ module.exports = (grunt) ->
     'base-experiment.coffee'
     'experiment.coffee'
     'client.coffee'
+    'init.coffee'
     'outro.coffee'
   ]
 
@@ -23,6 +24,7 @@ module.exports = (grunt) ->
     'reward-spec.coffee'
     'record-spec.coffee'
     'callback-spec.coffee'
+    'init-spec.coffee'
   ]
 
   sources = (dir, sources, ext = null) ->

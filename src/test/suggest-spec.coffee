@@ -3,10 +3,11 @@ expt = new Myna.Experiment
   id:       "id"
   apiKey:   "092c90f6-a8f2-11e2-a2b9-7c6d628b25f7"
   settings: "myna.web.sticky": true
-  variants:
-    a: { settings: { buttons: "red"   }, weight: 0.2 }
-    b: { settings: { buttons: "green" }, weight: 0.4 }
-    c: { settings: { buttons: "blue"  }, weight: 0.6 }
+  variants: [
+    { id: "a", settings: { buttons: "red"   }, weight: 0.2 }
+    { id: "b", settings: { buttons: "green" }, weight: 0.4 }
+    { id: "c", settings: { buttons: "blue"  }, weight: 0.6 }
+  ]
 
 for sticky in [false, true]
   initialized = (fn) ->

@@ -17,13 +17,13 @@ for denyAccess in [ false, true ]
     id:       "id"
     apiKey:   apiKey
     apiRoot:  "http://localhost:8080"
-    timeout:  250
     settings:
       "myna.web.sticky": false
       "myna.web.autoRecord": false
-    variants:
-      variant1: weight: 0.5
-      variant2: weight: 0.5
+    variants: [
+      { id: "variant1", weight: 0.5 }
+      { id: "variant2", weight: 0.5 }
+    ]
 
   initialized = (fn) ->
     return ->
