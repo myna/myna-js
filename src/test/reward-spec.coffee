@@ -1,8 +1,10 @@
 expt = new Myna.Experiment
-  uuid:     "uuid"
+  uuid:     "45923780-80ed-47c6-aa46-15e2ae7a0e8c"
   id:       "id"
-  apiKey:   "key"
-  settings: "myna.sticky": true
+  apiKey:   "092c90f6-a8f2-11e2-a2b9-7c6d628b25f7"
+  settings:
+    "myna.web.sticky": true
+    "myna.web.autoRecord": false
   variants:
     a: { settings: { buttons: "red"   }, weight: 0.2 }
     b: { settings: { buttons: "green" }, weight: 0.4 }
@@ -12,7 +14,7 @@ for sticky in [false, true]
   initialized = (fn) ->
     return ->
       expt.callbacks = {}
-      expt.settings.set("myna.sticky", sticky)
+      expt.settings.set("myna.web.sticky", sticky)
       expt.clearLastSuggestion()
       expt.unstick()
       expt.clearQueuedEvents()
@@ -132,8 +134,8 @@ for sticky in [false, true]
 
       runs ->
         Myna.log("SECTION C")
-        expect(beforeReward).toHaveBeenCalledWith(variant, false)
-        expect(afterReward).toHaveBeenCalledWith(variant, false)
+        expect(beforeReward).toHaveBeenCalledWith(variant, 0.8, false)
+        expect(afterReward).toHaveBeenCalledWith(variant, 0.8, false)
 
         suggested = false
         rewarded = false
@@ -153,8 +155,8 @@ for sticky in [false, true]
 
       runs ->
         expect(variant).toBeInstanceOf(Myna.Variant)
-        expect(beforeReward).toHaveBeenCalledWith(variant, if sticky then true else false)
-        expect(afterReward).toHaveBeenCalledWith(variant, if sticky then true else false)
+        expect(beforeReward).toHaveBeenCalledWith(variant, 0.6, if sticky then true else false)
+        expect(afterReward).toHaveBeenCalledWith(variant, 0.6, if sticky then true else false)
 
     it "should allow beforeReward to cancel the reward", initialized ->
       suggested = false

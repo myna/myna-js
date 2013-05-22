@@ -2,7 +2,7 @@ expt = new Myna.Experiment
   uuid:     "uuid"
   id:       "id"
   apiKey:   "key"
-  settings: "myna.sticky": true
+  settings: "myna.web.sticky": true
   variants:
     a: { settings: { buttons: "red"   }, weight: 0.2 }
     b: { settings: { buttons: "green" }, weight: 0.4 }
@@ -13,7 +13,7 @@ describe "Myna.Experiment.constructor", ->
     expect(expt.uuid).toEqual("uuid")
     expect(expt.id).toEqual("id")
     expect(expt.apiKey).toEqual("key")
-    expect(expt.settings.data).toEqual(myna: sticky: true)
+    expect(expt.settings.data).toEqual(myna: web: sticky: true)
     expect(for key, value of expt.variants then key).toEqual(["a", "b", "c"])
     expect(for key, value of expt.variants then value.id).toEqual(["a", "b", "c"])
     expect(for key, value of expt.variants then value.settings.data).toEqual([
@@ -38,12 +38,26 @@ describe "Myna.Experiment.constructor", ->
     expect(-> new Myna.Experiment(uuid: "uuid", id: "id")).toThrow()
 
 describe "Myna.Experiment.sticky", ->
-  it "should be derived from the 'myna.sticky' setting", ->
-    expect(new Myna.Experiment(uuid: "uuid", id: "id", apiKey: "key", settings: "myna.sticky": true).sticky()).toEqual(true)
-    expect(new Myna.Experiment(uuid: "uuid", id: "id", apiKey: "key", settings: "myna.sticky": false).sticky()).toEqual(false)
+  it "should be derived from the 'myna.web.sticky' setting", ->
+    expect(new Myna.Experiment(uuid: "uuid", id: "id", apiKey: "key", settings: "myna.web.sticky": true).sticky()).toEqual(true)
+    expect(new Myna.Experiment(uuid: "uuid", id: "id", apiKey: "key", settings: "myna.web.sticky": false).sticky()).toEqual(false)
 
   it "should default to true", ->
     expect(new Myna.Experiment(uuid: "uuid", id: "id", apiKey: "key").sticky()).toEqual(true)
+
+describe "Myna.Experiment.timeout", ->
+  it "should be derived from the 'myna.web.timeout' setting", ->
+    expect(new Myna.Experiment(uuid: "uuid", id: "id", apiKey: "key", settings: "myna.web.timeout": 100).timeout()).toEqual(100)
+
+  it "should default to 1000ms", ->
+    expect(new Myna.Experiment(uuid: "uuid", id: "id", apiKey: "key").timeout()).toEqual(1000)
+
+describe "Myna.Experiment.autoRecord", ->
+  it "should be derived from the 'myna.web.timeout' setting", ->
+    expect(new Myna.Experiment(uuid: "uuid", id: "id", apiKey: "key", settings: "myna.web.timeout": 100).timeout()).toEqual(100)
+
+  it "should default to 1000ms", ->
+    expect(new Myna.Experiment(uuid: "uuid", id: "id", apiKey: "key").timeout()).toEqual(1000)
 
 describe "Myna.Experiment.totalWeight", ->
   it "should return the sum of the variants' weights, even if they don't total 1.0", ->

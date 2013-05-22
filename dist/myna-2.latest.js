@@ -1,4 +1,4 @@
-/*! myna - v2.0.0 - 2013-05-21 - http://mynaweb.com/
+/*! myna - v2.0.0 - 2013-05-22 - http://mynaweb.com/
 * Copyright (c) 2013 Noel Welsh; Licensed BSD 2-Clause */(function() {
   var _ref,
     __slice = [].slice;
@@ -499,16 +499,14 @@
       if (options == null) {
         options = {};
       }
-      this.settings = new Myna.Settings((_ref = options.settings) != null ? _ref : {});
       this.weight = (function() {
-        if ((_ref1 = options.weight) != null) {
-          return _ref1;
+        if ((_ref = options.weight) != null) {
+          return _ref;
         } else {
           throw "no weight provided";
         }
       })();
-      this.views = 0;
-      this.reward = 0;
+      this.settings = new Myna.Settings((_ref1 = options.settings) != null ? _ref1 : {});
     }
 
     return Variant;
@@ -523,7 +521,7 @@
 
   Myna.BaseExperiment = (function() {
     function BaseExperiment(options) {
-      var data, id, variant, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8;
+      var data, id, variant, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7;
 
       if (options == null) {
         options = {};
@@ -552,20 +550,22 @@
       this.record = __bind(this.record, this);
       this.rewardVariant = __bind(this.rewardVariant, this);
       this.reward = __bind(this.reward, this);
+      this.viewVariant = __bind(this.viewVariant, this);
       this.view = __bind(this.view, this);
       this.suggest = __bind(this.suggest, this);
+      this.autoRecord = __bind(this.autoRecord, this);
+      this.timeout = __bind(this.timeout, this);
       Myna.log("Myna.BaseExperiment.constructor", options);
-      this.uuid = (_ref = options.uuid) != null ? _ref : Myna.error("Myna.Experiment.constructor", this.id, "no uuid in options", options);
-      this.id = (_ref1 = options.id) != null ? _ref1 : Myna.error("Myna.Experiment.constructor", this.id, "no id in options", options);
-      this.apiKey = (_ref2 = options.apiKey) != null ? _ref2 : Myna.error("Myna.Experiment.constructor", this.id, "no apiKey in options", options);
+      this.uuid = (_ref = options.uuid) != null ? _ref : Myna.error("Myna.BaseExperiment.constructor", this.id, "no uuid in options", options);
+      this.id = (_ref1 = options.id) != null ? _ref1 : Myna.error("Myna.BaseExperiment.constructor", this.id, "no id in options", options);
+      this.apiKey = (_ref2 = options.apiKey) != null ? _ref2 : Myna.error("Myna.BaseExperiment.constructor", this.id, "no apiKey in options", options);
       this.apiRoot = (_ref3 = options.apiRoot) != null ? _ref3 : "//api.mynaweb.com";
-      this.timeout = (_ref4 = options.timeout) != null ? _ref4 : 1000;
+      this.settings = new Myna.Settings((_ref4 = options.settings) != null ? _ref4 : {});
       this.callbacks = (_ref5 = options.callbacks) != null ? _ref5 : {};
-      this.settings = new Myna.Settings((_ref6 = options.settings) != null ? _ref6 : {});
       this.variants = {};
-      _ref8 = (_ref7 = options.variants) != null ? _ref7 : {};
-      for (id in _ref8) {
-        data = _ref8[id];
+      _ref7 = (_ref6 = options.variants) != null ? _ref6 : {};
+      for (id in _ref7) {
+        data = _ref7[id];
         variant = new Myna.Variant(id, data);
         this.variants[id] = variant;
       }
@@ -573,8 +573,16 @@
       this.waitingToRecord = [];
     }
 
+    BaseExperiment.prototype.timeout = function() {
+      return this.settings.get("myna.web.timeout", 1000);
+    };
+
+    BaseExperiment.prototype.autoRecord = function() {
+      return this.settings.get("myna.web.autoRecord", true);
+    };
+
     BaseExperiment.prototype.suggest = function(success, error) {
-      var ans, exn, variant;
+      var variant;
 
       if (success == null) {
         success = (function() {});
@@ -582,50 +590,63 @@
       if (error == null) {
         error = (function() {});
       }
-      try {
-        Myna.log("Myna.BaseExperiment.suggest", this.id);
-        variant = this.randomVariant();
-        if (this.callback('beforeSuggest').call(this, variant) === false) {
-          return;
-        }
-        ans = this.view(variant.id, success, error);
-        this.callback('afterSuggest').call(this, variant);
-        return ans;
-      } catch (_error) {
-        exn = _error;
-        return this.error(exn);
+      Myna.log("Myna.BaseExperiment.suggest", this.id);
+      variant = this.randomVariant();
+      if (this.callback('beforeSuggest').call(this, variant) === false) {
+        return false;
+      }
+      this.viewVariant({
+        variant: variant,
+        success: success,
+        error: error
+      });
+      this.callback('afterSuggest').call(this, variant);
+      if (this.autoRecord()) {
+        this.record();
       }
     };
 
     BaseExperiment.prototype.view = function(variantId, success, error) {
-      var ans, exn, variant;
-
       if (success == null) {
         success = (function() {});
       }
       if (error == null) {
         error = (function() {});
       }
-      try {
-        Myna.log("Myna.BaseExperiment.view", this.id, variantId);
-        variant = this.variants[variantId];
-        if (this.callback('beforeView').call(this, variant) === false) {
-          return;
-        }
-        this.saveLastSuggestion(variant);
-        this.clearLastReward();
-        this.enqueueView(variant);
-        ans = success(variant);
-        this.callback('afterView').call(this, variant);
-        return ans;
-      } catch (_error) {
-        exn = _error;
-        return error(exn);
+      Myna.log("Myna.BaseExperiment.view", this.id, variantId);
+      if (this.viewVariant({
+        variant: this.variants[variantId],
+        success: success,
+        error: error
+      }) === false) {
+        return false;
       }
+      if (this.autoRecord()) {
+        this.record();
+      }
+    };
+
+    BaseExperiment.prototype.viewVariant = function(options) {
+      var args, error, otherArgs, success, variant, _ref, _ref1, _ref2;
+
+      Myna.log("Myna.BaseExperiment.viewVariant", this.id, options);
+      variant = options.variant;
+      success = (_ref = options.success) != null ? _ref : (function() {});
+      error = (_ref1 = options.error) != null ? _ref1 : (function() {});
+      otherArgs = (_ref2 = options.otherArgs) != null ? _ref2 : [];
+      args = [variant].concat(__slice.call(otherArgs));
+      if (this.callback('beforeView').apply(this, args) === false) {
+        return false;
+      }
+      this.saveLastSuggestion(variant);
+      this.clearLastReward();
+      this.enqueueView(variant);
+      success.apply(this, args);
+      this.callback('afterView').apply(this, args);
     };
 
     BaseExperiment.prototype.reward = function(amount, success, error) {
-      var ans, exn, variant;
+      var variant;
 
       if (amount == null) {
         amount = 1.0;
@@ -636,56 +657,61 @@
       if (error == null) {
         error = (function() {});
       }
-      try {
-        Myna.log("Myna.BaseExperiment.reward", this.id, amount);
-        variant = this.loadLastSuggestion();
-        if (variant != null) {
-          if (this.callback('beforeReward').call(this, variant, amount) === false) {
-            return;
-          }
-          ans = this.rewardVariant(variant, amount, success, error);
-          return this.callback('afterReward').call(this, variant, amount);
-        } else {
-          return error();
+      Myna.log("Myna.BaseExperiment.reward", this.id, amount);
+      variant = this.loadLastSuggestion();
+      if (variant != null) {
+        if (this.callback('beforeReward').call(this, variant, amount) === false) {
+          return false;
         }
-      } catch (_error) {
-        exn = _error;
-        return error(exn);
+        if (this.rewardVariant(variant, amount, success, error) === false) {
+          return false;
+        }
+        this.callback('afterReward').call(this, variant, amount);
+      } else {
+        error.call(this, Myna.problem("no-suggestion"));
+        return false;
       }
     };
 
-    BaseExperiment.prototype.rewardVariant = function(variant, amount, success, error) {
-      var exn, rewarded;
+    BaseExperiment.prototype.rewardVariant = function(options) {
+      var amount, args, error, otherArgs, rewarded, success, variant, _ref, _ref1, _ref2, _ref3, _ref4,
+        _this = this;
 
-      if (amount == null) {
-        amount = 1.0;
+      if (options == null) {
+        options = {};
       }
-      if (success == null) {
-        success = (function() {});
-      }
-      if (error == null) {
-        error = (function() {});
-      }
-      try {
-        Myna.log("Myna.BaseExperiment.rewardVariant", this.id, variant.id, amount);
-        rewarded = this.loadLastReward();
-        Myna.log(" - rewarded", rewarded);
-        if (rewarded != null) {
-          return error();
+      Myna.log("Myna.BaseExperiment.rewardVariant", this.id, options);
+      variant = (function() {
+        if ((_ref = options.variant) != null) {
+          return _ref;
         } else {
-          this.clearLastSuggestion();
-          this.saveLastReward(variant);
-          this.enqueueReward(variant, amount);
-          return success(variant);
+          throw "no variant specified";
         }
-      } catch (_error) {
-        exn = _error;
-        return error(exn);
+      })();
+      amount = (_ref1 = options.amount) != null ? _ref1 : 1.0;
+      success = (_ref2 = options.success) != null ? _ref2 : (function() {});
+      error = (_ref3 = options.error) != null ? _ref3 : (function() {});
+      otherArgs = (_ref4 = options.otherArgs) != null ? _ref4 : [];
+      args = [variant, amount].concat(__slice.call(otherArgs));
+      rewarded = this.loadLastReward();
+      if (rewarded != null) {
+        error.call(this, Myna.problem("already-rewarded"));
+      } else {
+        this.clearLastSuggestion();
+        this.saveLastReward(variant);
+        this.enqueueReward(variant, amount);
+        if (this.autoRecord()) {
+          this.record((function() {
+            return success.apply(_this, args);
+          }), error);
+        } else {
+          success.apply(this, args);
+        }
       }
     };
 
     BaseExperiment.prototype.record = function(success, error) {
-      var allError, allSuccess, callbacks, finish, recordAll, recordOne,
+      var callbacks, events, finish, recordAll, recordOne,
         _this = this;
 
       if (success == null) {
@@ -699,38 +725,16 @@
         error: error
       });
       if (this.recordSemaphore > 0) {
-        return Myna.log("Myna.Experiment.record", "queued");
+        return Myna.log("Myna.BaseExperiment.record", "queued");
       } else {
         this.recordSemaphore++;
         callbacks = this.waitingToRecord;
         this.waitingToRecord = [];
-        Myna.log("Myna.Experiment.record", "starting", callbacks.length);
-        allSuccess = function() {
-          var args, item, _i, _len, _results;
-
-          args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-          _results = [];
-          for (_i = 0, _len = callbacks.length; _i < _len; _i++) {
-            item = callbacks[_i];
-            _results.push(item.success.apply(item, args));
-          }
-          return _results;
-        };
-        allError = function() {
-          var args, item, _i, _len, _results;
-
-          args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-          _results = [];
-          for (_i = 0, _len = callbacks.length; _i < _len; _i++) {
-            item = callbacks[_i];
-            _results.push(item.error.apply(item, args));
-          }
-          return _results;
-        };
+        Myna.log("Myna.BaseExperiment.record", "starting", callbacks.length);
         recordAll = function(events, successEvents, errorEvents) {
           var head, tail;
 
-          Myna.log("Myna.Experiment.record.recordAll", events, successEvents, errorEvents);
+          Myna.log("Myna.BaseExperiment.record.recordAll", events, successEvents, errorEvents);
           if (events.length === 0) {
             return finish(successEvents, errorEvents);
           } else {
@@ -739,7 +743,7 @@
           }
         };
         recordOne = function(event, otherEvents, successEvents, errorEvents) {
-          Myna.log("Myna.Experiment.record.recordOne", event, otherEvents, successEvents, errorEvents);
+          Myna.log("Myna.BaseExperiment.record.recordOne", event, otherEvents, successEvents, errorEvents);
           return Myna.jsonp.request({
             url: "" + _this.apiRoot + "/v2/experiment/" + _this.uuid + "/record",
             success: function() {
@@ -748,26 +752,40 @@
             error: function() {
               return recordAll(otherEvents, successEvents, errorEvents.concat([event]));
             },
-            timeout: _this.timeout,
+            timeout: _this.timeout(),
             params: Myna.extend({}, event, {
               apikey: _this.apiKey
             })
           });
         };
         finish = function(successEvents, errorEvents) {
-          Myna.log("Myna.Experiment.record.finish", successEvents, errorEvents);
+          var item, _i, _j, _len, _len1;
+
+          Myna.log("Myna.BaseExperiment.record.finish", successEvents, errorEvents);
           if (errorEvents.length > 0) {
             _this.requeueEvents(errorEvents);
-            allError(errorEvents);
+            for (_i = 0, _len = callbacks.length; _i < _len; _i++) {
+              item = callbacks[_i];
+              item.error(successEvents, errorEvents);
+            }
           } else {
-            allSuccess(successEvents);
+            for (_j = 0, _len1 = callbacks.length; _j < _len1; _j++) {
+              item = callbacks[_j];
+              item.success(successEvents, errorEvents);
+            }
           }
+          _this.callback('afterRecord').call(_this, successEvents, errorEvents);
           _this.recordSemaphore--;
           if (_this.waitingToRecord.length > 0) {
             return _this.record();
           }
         };
-        return recordAll(this.clearQueuedEvents(), [], []);
+        events = this.clearQueuedEvents();
+        if (this.callback('beforeRecord').call(this, events) === false) {
+          return this.requeueEvents(events);
+        } else {
+          return recordAll(events, [], []);
+        }
       }
     };
 
@@ -806,7 +824,7 @@
       var ans;
 
       ans = this.callbacks[id];
-      Myna.log("Myna.BaseExperiment.callback", this.id, id, ans);
+      Myna.log("Myna.BaseExperiment.callback", this.id, id, ans != null);
       return ans != null ? ans : (function() {});
     };
 
@@ -973,7 +991,7 @@
     }
 
     Experiment.prototype.suggest = function(success, error) {
-      var ans, exn, sticky, suggested, variant;
+      var sticky, suggested, variant;
 
       if (success == null) {
         success = (function() {});
@@ -981,43 +999,44 @@
       if (error == null) {
         error = (function() {});
       }
-      try {
-        Myna.log("Myna.Experiment.suggest", this.id);
-        sticky = this.sticky();
+      Myna.log("Myna.Experiment.suggest", this.id);
+      sticky = this.sticky();
+      if (sticky) {
+        suggested = this.loadStickySuggestion();
+        variant = suggested != null ? suggested : this.randomVariant();
+      } else {
+        suggested = null;
+        variant = this.randomVariant();
+      }
+      if (this.callback('beforeSuggest').call(this, variant, !!suggested) === false) {
+        return false;
+      }
+      if (suggested != null) {
+        success.call(this, suggested, !!suggested);
+      } else if (variant != null) {
         if (sticky) {
-          suggested = this.loadStickySuggestion();
-          variant = suggested != null ? suggested : this.randomVariant();
-        } else {
-          suggested = null;
-          variant = this.randomVariant();
+          this.saveStickySuggestion(variant);
         }
-        Myna.log(" - suggest", suggested, variant);
-        if (this.callback('beforeSuggest').call(this, variant, !!suggested) === false) {
-          return;
+        if (this.viewVariant({
+          variant: variant,
+          success: success,
+          error: error,
+          otherArgs: [!!suggested]
+        }) === false) {
+          return false;
         }
-        Myna.log(" - suggest", "continuing");
-        if (suggested != null) {
-          ans = success(suggested);
-        } else if (variant != null) {
-          if (sticky) {
-            this.saveStickySuggestion(variant);
-          }
-          ans = this.view(variant.id, success, error);
-        } else {
-          error();
-          return;
-        }
-        Myna.log(" - suggest", "continued");
-        this.callback('afterSuggest').call(this, variant, !!suggested);
-        return ans;
-      } catch (_error) {
-        exn = _error;
-        return error(exn);
+      } else {
+        error.call(this, Myna.problem("no-variants"));
+        return false;
+      }
+      this.callback('afterSuggest').call(this, variant, !!suggested);
+      if (this.autoRecord()) {
+        this.record();
       }
     };
 
     Experiment.prototype.reward = function(amount, success, error) {
-      var ans, exn, rewarded, sticky, variant;
+      var rewarded, sticky, variant;
 
       if (amount == null) {
         amount = 1.0;
@@ -1028,45 +1047,44 @@
       if (error == null) {
         error = (function() {});
       }
-      try {
-        Myna.log("Myna.Experiment.reward", this.id, amount);
-        sticky = this.sticky();
-        if (sticky) {
-          rewarded = this.loadStickyReward();
-          variant = rewarded != null ? rewarded : this.loadLastSuggestion();
-        } else {
-          rewarded = null;
-          variant = this.loadLastSuggestion();
-        }
-        Myna.log(" - reward", rewarded, variant, this.callback('beforeReward'));
-        if (this.callback('beforeReward').call(this, variant, !!rewarded) === false) {
-          return;
-        }
-        Myna.log(" - reward", "continuing");
-        if (rewarded != null) {
-          ans = success();
-        } else if (variant != null) {
-          if (sticky) {
-            this.saveStickyReward(variant);
-          }
-          ans = this.rewardVariant(variant, amount, success, error);
-        } else {
-          error();
-          return;
-        }
-        Myna.log(" - reward", "continued");
-        this.callback('afterReward').call(this, variant, !!rewarded);
-        return ans;
-      } catch (_error) {
-        exn = _error;
-        return error(exn);
+      Myna.log("Myna.Experiment.reward", this.id, amount);
+      sticky = this.sticky();
+      if (sticky) {
+        rewarded = this.loadStickyReward();
+        variant = rewarded != null ? rewarded : this.loadLastSuggestion();
+      } else {
+        rewarded = null;
+        variant = this.loadLastSuggestion();
       }
+      if (this.callback('beforeReward').call(this, variant, amount, !!rewarded) === false) {
+        return false;
+      }
+      if (rewarded != null) {
+        success.call(this, variant, amount, !!rewarded);
+      } else if (variant != null) {
+        if (sticky) {
+          this.saveStickyReward(variant, amount, !!rewarded);
+        }
+        if (this.rewardVariant({
+          variant: variant,
+          amount: amount,
+          success: success,
+          error: error,
+          otherArgs: [!!rewarded]
+        }) === false) {
+          return false;
+        }
+      } else {
+        error.call(this, Myna.problem("no-suggestion"));
+        return false;
+      }
+      this.callback('afterReward').call(this, variant, amount, !!rewarded);
     };
 
     Experiment.prototype.sticky = function() {
       var ans;
 
-      ans = !!this.settings.get("myna.sticky", true);
+      ans = !!this.settings.get("myna.web.sticky", true);
       Myna.log("Myna.Experiment.sticky", this.id, ans);
       return ans;
     };

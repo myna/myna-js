@@ -22,6 +22,7 @@ module.exports = (grunt) ->
     'suggest-spec.coffee'
     'reward-spec.coffee'
     'record-spec.coffee'
+    'callback-spec.coffee'
   ]
 
   sources = (dir, sources, ext = null) ->

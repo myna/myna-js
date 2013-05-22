@@ -1,8 +1,8 @@
 expt = new Myna.Experiment
-  uuid:     "uuid"
+  uuid:     "45923780-80ed-47c6-aa46-15e2ae7a0e8c"
   id:       "id"
-  apiKey:   "key"
-  settings: "myna.sticky": true
+  apiKey:   "092c90f6-a8f2-11e2-a2b9-7c6d628b25f7"
+  settings: "myna.web.sticky": true
   variants:
     a: { settings: { buttons: "red"   }, weight: 0.2 }
     b: { settings: { buttons: "green" }, weight: 0.4 }
@@ -12,7 +12,7 @@ for sticky in [false, true]
   initialized = (fn) ->
     return ->
       expt.callbacks = {}
-      expt.settings.set("myna.sticky", sticky)
+      expt.settings.set("myna.web.sticky", sticky)
       expt.clearLastSuggestion()
       expt.unstick()
       expt.clearQueuedEvents()
@@ -32,7 +32,7 @@ for sticky in [false, true]
 
       withSuggestion expt, (variant) ->
         expect(eventSummaries(expt.loadQueuedEvents())).toEqual [
-          [ "view",   variant.id, null ],
+          [ "view", variant.id, null ],
         ]
         finished = true
 
@@ -98,77 +98,7 @@ for sticky in [false, true]
 
       runs -> expect(hasBeenDifferent).toEqual(true)
 
-    it "should call the error handler if an exeption is thrown", initialized ->
-      spyOn(expt, 'view').andCallFake(-> throw "spy exn")
+    it "should throw exceptions", initialized ->
+      spyOn(expt, 'viewVariant').andCallFake(-> throw "spy exn")
 
-      success = false
-      error = false
-
-      runs -> expt.suggest((-> success = false), (-> error = true))
-
-      waitsFor -> success || error
-
-      runs ->
-        expect(success).toEqual(false)
-        expect(error).toEqual(true)
-        @removeAllSpies()
-
-    it "should run beforeSuggest, afterSuggest, beforeView, and afterView event handlers", initialized ->
-      finished = false
-      variant  = null
-
-      beforeSuggest = jasmine.createSpy('beforeSuggest')
-      afterSuggest  = jasmine.createSpy('afterSuggest')
-      beforeView    = jasmine.createSpy('beforeView')
-      afterView     = jasmine.createSpy('afterView')
-
-      runs ->
-        expt.callbacks = { beforeSuggest, afterSuggest, beforeView, afterView }
-        expt.suggest (v) ->
-          variant = v
-          finished = true
-
-      waitsFor -> finished
-
-      runs ->
-        expect(variant).toBeInstanceOf(Myna.Variant)
-        expect(beforeSuggest).toHaveBeenCalledWith(variant, false)
-        expect(afterSuggest).toHaveBeenCalledWith(variant, false)
-        expect(beforeView).toHaveBeenCalledWith(variant)
-        expect(afterView).toHaveBeenCalledWith(variant)
-
-      runs ->
-        finished = false
-        expt.callbacks = { beforeSuggest, afterSuggest, beforeView, afterView }
-        expt.suggest (v) ->
-          variant = v
-          finished = true
-
-      waitsFor -> finished
-
-      runs ->
-        expect(variant).toBeInstanceOf(Myna.Variant)
-        expect(beforeSuggest).toHaveBeenCalledWith(variant, if sticky then true else false)
-        expect(afterSuggest).toHaveBeenCalledWith(variant, if sticky then true else false)
-        expect(beforeView).toHaveBeenCalledWith(variant)
-        expect(afterView).toHaveBeenCalledWith(variant)
-
-    it "should allow beforeSuggest to cancel the suggestion", initialized ->
-      finished = false
-      variant  = null
-
-      beforeSuggest = jasmine.createSpy('beforeSuggest').andCallFake ->
-        Myna.log("CALLBACK")
-        finished = true
-        false
-
-      runs ->
-        expt.callbacks = { beforeSuggest }
-        expt.suggest()
-
-      waitsFor -> finished
-
-      runs ->
-        expect(expt.loadLastSuggestion()).toEqual(null)
-        expect(expt.loadStickySuggestion()).toEqual(null)
-        expect(eventSummaries(expt.loadQueuedEvents())).toEqual []
+      expect(-> expt.suggest()).toThrow()

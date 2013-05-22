@@ -7,7 +7,7 @@ recordState = (expt) -> [
   expt.waitingToRecord.length     # the number of callbacks registered for future calls to record()
 ]
 
-for denyAccess in [ true ] # [ false, true ]
+for denyAccess in [ false, true ]
   apiKey = if denyAccess then badApiKey else goodApiKey
 
   accessStatus = if denyAccess then "deny access" else "allow access"
@@ -18,12 +18,14 @@ for denyAccess in [ true ] # [ false, true ]
     apiKey:   apiKey
     apiRoot:  "http://localhost:8080"
     timeout:  250
-    settings: "myna.sticky": false
+    settings:
+      "myna.web.sticky": false
+      "myna.web.autoRecord": false
     variants:
       variant1: weight: 0.5
       variant2: weight: 0.5
 
-  initialized = (apiKey, fn) ->
+  initialized = (fn) ->
     return ->
       expt.callbacks = {}
       expt.clearLastSuggestion()
@@ -34,7 +36,7 @@ for denyAccess in [ true ] # [ false, true ]
       fn()
 
   describe "Myna.Experiment.record (#{accessStatus})", ->
-    it "should record a single event", initialized apiKey, ->
+    it "should record a single event", initialized ->
       variant  = null
       success  = false
       error    = false
@@ -63,7 +65,7 @@ for denyAccess in [ true ] # [ false, true ]
 
         expect(recordState(expt)).toEqual(if denyAccess then [ 1, 0, 0 ] else [ 0, 0, 0 ])
 
-    it "should record multiple events (#{accessStatus})", initialized apiKey, ->
+    it "should record multiple events (#{accessStatus})", initialized ->
       variant1 = null
       variant2 = null
       success  = false
@@ -96,7 +98,7 @@ for denyAccess in [ true ] # [ false, true ]
         expect(error).toEqual(if denyAccess then true else false)
         expect(recordState(expt)).toEqual(if denyAccess then [ 4, 0, 0 ] else [ 0, 0, 0 ])
 
-    it "should handle multiple concurrent calls to record (#{accessStatus})", initialized apiKey, ->
+    it "should handle multiple concurrent calls to record (#{accessStatus})", initialized ->
       # Myna.log statements show the likely order of execution.
 
       variant1 = null
