@@ -8,7 +8,7 @@ class Myna.Client
       if data instanceof Myna.Experiment
         @experiments[data.id] = data
       else
-        @experiments[data.id] = @createExperiment(Myna.extend(data, { @apiKey, @apiRoot }))
+        @experiments[data.id] = new Myna.HtmlExperiment(Myna.extend(data, { @apiKey, @apiRoot }))
 
   suggest: (exptId, success = (->), error = (->)) =>
     @experiments[exptId].suggest(success, error)
@@ -18,6 +18,3 @@ class Myna.Client
 
   reward: (exptId, amount = 1.0, success = (->), error = (->)) =>
     @experiments[exptId].reward(amount, success, error)
-
-  createExperiment: (options) ->
-    new Myna.Experiment(options)

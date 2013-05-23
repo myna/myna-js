@@ -1,10 +1,10 @@
 window.Myna ?= {}
 
-Myna.debug = false
+Myna.debug = true
 
 Myna.log = (args...) ->
   if Myna.debug
-    window.console?.log(for item in args then JSON.stringify(item))
+    window.console?.log(args)
   return
 
 Myna.extend = (des, sources...) ->
@@ -32,3 +32,5 @@ Myna.dateToString = (date) ->
 
 Myna.problem = (msg) ->
   msg
+
+Myna.$ = window.jQuery ? null

@@ -1,14 +1,12 @@
-Javascript Client for Myna
-==========================
+Myna for Javascript
+===================
 
 Copyright 2012 Myna Ltd
 
 Released under the [BSD 3-clause license](http://opensource.org/licenses/BSD-3-Clause).
 See [LICENSE.md](https://github.com/myna/myna-js/blob/master/LICENSE.md) for the full text.
 
-# What is this?
-
-This is a Javascript client library for the [Myna](http://mynaweb.com) A/B testing platform.
+Myna for Javascript ("Myna JS") is a Javascript client library for the [Myna](http://mynaweb.com) A/B testing platform. It allows developers to quickly create A/B tests for rich, dynamic web applications.
 
 # Getting started
 

@@ -34,9 +34,6 @@ describe "Myna.jsonp.request", ->
         error:   (e) -> error = e
         timeout: 1
 
-      expect(Myna.jsonp.callbacks).not.toEqual({})
-      expect(document.getElementsByClassName('myna-jsonp').length).toEqual(1)
-
     waitsFor -> data || error
 
     runs ->

@@ -1,38 +1,38 @@
-# describe "Myna.initLocal", ->
-#   it "should create a client", ->
-#     client = Myna.initLocal
-#       apiKey:   "092c90f6-a8f2-11e2-a2b9-7c6d628b25f7"
-#       apiRoot:  "http://localhost:8080"
-#       experiments: [
-#         {
-#           uuid:     "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
-#           id:       "a"
-#           settings: "myna.web.sticky": false
-#           variants: [
-#             { id: variant1, weight: 0.4 }
-#             { id: variant2, weight: 0.6 }
-#           ]
-#         }
-#         {
-#           uuid:     "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
-#           id:       "b"
-#           settings: "myna.web.sticky": true
-#           variants: [
-#             { id: foo, weight: 0.2 }
-#             { id: bar, weight: 0.8 }
-#           ]
-#         }
-#       ]
+describe "Myna.initLocal", ->
+  it "should create a client", ->
+    client = Myna.initLocal
+      apiKey:   "092c90f6-a8f2-11e2-a2b9-7c6d628b25f7"
+      apiRoot:  "http://localhost:8080"
+      experiments: [
+        {
+          uuid:     "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+          id:       "a"
+          settings: "myna.web.sticky": false
+          variants: [
+            { id: variant1, weight: 0.4 }
+            { id: variant2, weight: 0.6 }
+          ]
+        }
+        {
+          uuid:     "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
+          id:       "b"
+          settings: "myna.web.sticky": true
+          variants: [
+            { id: foo, weight: 0.2 }
+            { id: bar, weight: 0.8 }
+          ]
+        }
+      ]
 
-#     expect(client).toBeInstanceOf(Myna.Client)
+    expect(client).toBeInstanceOf(Myna.Client)
 
-#     expect(client.experiments.a).toBeInstanceOf(Myna.Experiment)
-#     expect(client.experiments.b).toBeInstanceOf(Myna.Experiment)
+    expect(client.experiments.a).toBeInstanceOf(Myna.Experiment)
+    expect(client.experiments.b).toBeInstanceOf(Myna.Experiment)
 
-#     expect(client.experiments.a.variants.variant1).toBeInstanceOf(Myna.Variant)
-#     expect(client.experiments.a.variants.variant2).toBeInstanceOf(Myna.Variant)
-#     expect(client.experiments.b.variants.foo).toBeInstanceOf(Myna.Variant)
-#     expect(client.experiments.b.variants.bar).toBeInstanceOf(Myna.Variant)
+    expect(client.experiments.a.variants.variant1).toBeInstanceOf(Myna.Variant)
+    expect(client.experiments.a.variants.variant2).toBeInstanceOf(Myna.Variant)
+    expect(client.experiments.b.variants.foo).toBeInstanceOf(Myna.Variant)
+    expect(client.experiments.b.variants.bar).toBeInstanceOf(Myna.Variant)
 
 describe "Myna.initApi", ->
   it "should create a client", ->

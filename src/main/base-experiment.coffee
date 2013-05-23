@@ -31,8 +31,8 @@ class Myna.BaseExperiment
 
   # (variant -> void) (any -> void) -> void
   suggest: (success = (->), error = (->)) =>
-    Myna.log("Myna.BaseExperiment.suggest", @id)
     variant = @randomVariant()
+    Myna.log("Myna.BaseExperiment.suggest", @id, variant.id)
 
     if @callback('beforeSuggest').call(this, variant) == false then return false
 

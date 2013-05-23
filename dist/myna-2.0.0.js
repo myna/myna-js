@@ -1,6 +1,5 @@
-/*! myna - v2.0.0 - 2013-05-22 - http://mynaweb.com/
-* Copyright (c) 2013 Noel Welsh; Licensed BSD 2-Clause */(function() {
-  var _ref,
+(function() {
+  var _ref, _ref1,
     __slice = [].slice;
 
   if ((_ref = window.Myna) == null) {
@@ -70,6 +69,8 @@
   Myna.problem = function(msg) {
     return msg;
   };
+
+  Myna.$ = (_ref1 = window.jQuery) != null ? _ref1 : null;
 
 }).call(this);
 
@@ -1151,7 +1152,7 @@
         if (data instanceof Myna.Experiment) {
           this.experiments[data.id] = data;
         } else {
-          this.experiments[data.id] = new Myna.Experiment(Myna.extend(data, {
+          this.experiments[data.id] = this.createExperiment(Myna.extend(data, {
             apiKey: this.apiKey,
             apiRoot: this.apiRoot
           }));
@@ -1190,6 +1191,10 @@
         error = (function() {});
       }
       return this.experiments[exptId].reward(amount, success, error);
+    };
+
+    Client.prototype.createExperiment = function(options) {
+      return new Myna.Experiment(options);
     };
 
     return Client;
@@ -1249,10 +1254,5 @@
       error: error
     });
   };
-
-}).call(this);
-
-(function() {
-
 
 }).call(this);

@@ -10,8 +10,6 @@ class Myna.Experiment extends Myna.BaseExperiment
 
   # (variant -> void) (any -> void) -> void
   suggest: (success = (->), error = (->)) =>
-    Myna.log("Myna.Experiment.suggest", @id)
-
     sticky = @sticky()
 
     if sticky
@@ -20,6 +18,8 @@ class Myna.Experiment extends Myna.BaseExperiment
     else
       suggested = null
       variant = @randomVariant()
+
+    Myna.log("Myna.Experiment.suggest", @id, variant.id)
 
     if @callback('beforeSuggest').call(this, variant, !!suggested) == false then return false
 
