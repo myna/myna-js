@@ -1,6 +1,11 @@
 class Myna.Binder
-  bind: (expt, options = {}) =>
+  constructor: (options = {}) ->
+    @boundHandlers = []
+
+  bind: (expt, variant, options = {}) =>
     Myna.log("Myna.Binder.bind", expt, options)
+
+    @unbind()
 
     cssClass = expt.settings.get("myna.html.cssClass") ? "myna-#{expt.id}"
 
@@ -18,25 +23,28 @@ class Myna.Binder
     bindBind = options.bind ? true
     bindGoal = options.goal ? true
 
-    if bindShow then showElems.each (index, elem) => @bindShow(expt, dataShow, elem)
-    if bindBind then bindElems.each (index, elem) => @bindBind(expt, dataBind, elem)
-    if bindGoal then goalElems.each (index, elem) => @bindGoal(expt, dataGoal, elem)
+    if bindShow then showElems.each (index, elem) => @bindShow(expt, variant, dataShow, elem)
+    if bindBind then bindElems.each (index, elem) => @bindBind(expt, variant, dataBind, elem)
+    if bindGoal then goalElems.each (index, elem) => @bindGoal(expt, variant, dataGoal, elem)
 
-  bindShow: (expt, dataAttr, elem) =>
+  unbind: =>
+    Myna.log("Myna.Binder.unbind", @boundHandlers)
+    for [ elem, event, handler ] in @boundHandlers
+      Myna.log("Myna.Binder.unbind", elem, event, handler)
+      Myna.$(elem).off(event, handler)
+
+  bindShow: (expt, variant, dataAttr, elem) =>
     Myna.log("Myna.Binder.bindShow", expt, dataAttr, elem)
 
     self = Myna.$(elem)
     path = self.data(dataAttr)
 
-    unless path then return
+    if variant.id == path || variant.settings.get(path)
+      self.show()
+    else
+      self.hide()
 
-    expt.suggest (variant) ->
-      if variant.id == path || variant.settings.get(path)
-        self.show()
-      else
-        self.hide()
-
-  bindBind: (expt, dataAttr, elem) =>
+  bindBind: (expt, variant, dataAttr, elem) =>
     Myna.log("Myna.Binder.bindBind", expt, dataAttr, elem)
 
     self = Myna.$(elem)
@@ -44,16 +52,15 @@ class Myna.Binder
 
     unless lhs && rhs then return
 
-    expt.suggest (variant) ->
-      switch lhs
-        when "text"  then self.text(variant.settings.get(rhs) ? "")
-        when "html"  then self.html(variant.settings.get(rhs) ? "")
-        when "class" then self.addClass(variant.settings.get(rhs) ? "")
-        else
-          if lhs[0] == "@"
-            self.attr(lsh.substring(1), variant.settings.get(rhs) ? "")
+    switch lhs
+      when "text"  then self.text(variant.settings.get(rhs) ? "")
+      when "html"  then self.html(variant.settings.get(rhs) ? "")
+      when "class" then self.addClass(variant.settings.get(rhs) ? "")
+      else
+        if lhs[0] == "@"
+          self.attr(lsh.substring(1), variant.settings.get(rhs) ? "")
 
-  bindGoal: (expt, dataAttr, elem) =>
+  bindGoal: (expt, variant, dataAttr, elem) =>
     Myna.log("Myna.Binder.bindGoal", expt, dataAttr, elem)
 
     self  = Myna.$(elem)
@@ -62,14 +69,19 @@ class Myna.Binder
     unless event then return
 
     switch event
-      when "load"  then $(=> expt.reward())
-      when "click" then self.on("click", @createClickHandler(expt))
+      when "load"
+        $(=> expt.reward())
+      when "click"
+        handler = @createClickHandler(expt)
+        @boundHandlers.push([elem, "click", handler])
+        Myna.log("Myna.Binder.bindGoal", "attach", elem, "click", handler, @boundHandlers )
+        self.on("click", handler)
 
   # (event any ... -> void) -> (event any ... -> void)
-  createClickHandler: (expt, handler = (->)) =>
-    Myna.log("Myna.Binder.createClickHandler", expt, handler)
+  createClickHandler: (expt, innerHandler = (->)) =>
+    Myna.log("Myna.Binder.createClickHandler", expt, innerHandler)
 
-    (evt, args...) ->
+    handler = (evt, args...) ->
       myna.log("Myna.Binder.clickHandler", evt, args...)
 
       elem = this
@@ -80,7 +92,7 @@ class Myna.Binder
       if rewarded?
         myna.log("Myna.Binder.clickHandler", "pass-through")
 
-        handler.call(this, evt, args...)
+        innerHandler.call(this, evt, args...)
       else
         myna.log("Myna.Binder.clickHandler", "pass-through")
 

@@ -10797,15 +10797,20 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
     __slice = [].slice;
 
   Myna.Binder = (function() {
-    function Binder() {
+    function Binder(options) {
+      if (options == null) {
+        options = {};
+      }
       this.createClickHandler = __bind(this.createClickHandler, this);
       this.bindGoal = __bind(this.bindGoal, this);
       this.bindBind = __bind(this.bindBind, this);
       this.bindShow = __bind(this.bindShow, this);
+      this.unbind = __bind(this.unbind, this);
       this.bind = __bind(this.bind, this);
+      this.boundHandlers = [];
     }
 
-    Binder.prototype.bind = function(expt, options) {
+    Binder.prototype.bind = function(expt, variant, options) {
       var allElems, bindBind, bindElems, bindGoal, bindShow, cssClass, dataBind, dataGoal, dataPrefix, dataShow, goalElems, showElems, _ref, _ref1, _ref2, _ref3, _ref4,
         _this = this;
 
@@ -10813,6 +10818,7 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
         options = {};
       }
       Myna.log("Myna.Binder.bind", expt, options);
+      this.unbind();
       cssClass = (_ref = expt.settings.get("myna.html.cssClass")) != null ? _ref : "myna-" + expt.id;
       dataPrefix = (_ref1 = expt.settings.get("myna.html.dataPrefix")) != null ? _ref1 : null;
       dataShow = dataPrefix ? "" + this.dataPrefix + "-show" : "show";
@@ -10827,41 +10833,50 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
       bindGoal = (_ref4 = options.goal) != null ? _ref4 : true;
       if (bindShow) {
         showElems.each(function(index, elem) {
-          return _this.bindShow(expt, dataShow, elem);
+          return _this.bindShow(expt, variant, dataShow, elem);
         });
       }
       if (bindBind) {
         bindElems.each(function(index, elem) {
-          return _this.bindBind(expt, dataBind, elem);
+          return _this.bindBind(expt, variant, dataBind, elem);
         });
       }
       if (bindGoal) {
         return goalElems.each(function(index, elem) {
-          return _this.bindGoal(expt, dataGoal, elem);
+          return _this.bindGoal(expt, variant, dataGoal, elem);
         });
       }
     };
 
-    Binder.prototype.bindShow = function(expt, dataAttr, elem) {
+    Binder.prototype.unbind = function() {
+      var elem, event, handler, _i, _len, _ref, _ref1, _results;
+
+      Myna.log("Myna.Binder.unbind", this.boundHandlers);
+      _ref = this.boundHandlers;
+      _results = [];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        _ref1 = _ref[_i], elem = _ref1[0], event = _ref1[1], handler = _ref1[2];
+        Myna.log("Myna.Binder.unbind", elem, event, handler);
+        _results.push(Myna.$(elem).off(event, handler));
+      }
+      return _results;
+    };
+
+    Binder.prototype.bindShow = function(expt, variant, dataAttr, elem) {
       var path, self;
 
       Myna.log("Myna.Binder.bindShow", expt, dataAttr, elem);
       self = Myna.$(elem);
       path = self.data(dataAttr);
-      if (!path) {
-        return;
+      if (variant.id === path || variant.settings.get(path)) {
+        return self.show();
+      } else {
+        return self.hide();
       }
-      return expt.suggest(function(variant) {
-        if (variant.id === path || variant.settings.get(path)) {
-          return self.show();
-        } else {
-          return self.hide();
-        }
-      });
     };
 
-    Binder.prototype.bindBind = function(expt, dataAttr, elem) {
-      var lhs, rhs, self, _ref;
+    Binder.prototype.bindBind = function(expt, variant, dataAttr, elem) {
+      var lhs, rhs, self, _ref, _ref1, _ref2, _ref3, _ref4;
 
       Myna.log("Myna.Binder.bindBind", expt, dataAttr, elem);
       self = Myna.$(elem);
@@ -10869,26 +10884,22 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
       if (!(lhs && rhs)) {
         return;
       }
-      return expt.suggest(function(variant) {
-        var _ref1, _ref2, _ref3, _ref4;
-
-        switch (lhs) {
-          case "text":
-            return self.text((_ref1 = variant.settings.get(rhs)) != null ? _ref1 : "");
-          case "html":
-            return self.html((_ref2 = variant.settings.get(rhs)) != null ? _ref2 : "");
-          case "class":
-            return self.addClass((_ref3 = variant.settings.get(rhs)) != null ? _ref3 : "");
-          default:
-            if (lhs[0] === "@") {
-              return self.attr(lsh.substring(1), (_ref4 = variant.settings.get(rhs)) != null ? _ref4 : "");
-            }
-        }
-      });
+      switch (lhs) {
+        case "text":
+          return self.text((_ref1 = variant.settings.get(rhs)) != null ? _ref1 : "");
+        case "html":
+          return self.html((_ref2 = variant.settings.get(rhs)) != null ? _ref2 : "");
+        case "class":
+          return self.addClass((_ref3 = variant.settings.get(rhs)) != null ? _ref3 : "");
+        default:
+          if (lhs[0] === "@") {
+            return self.attr(lsh.substring(1), (_ref4 = variant.settings.get(rhs)) != null ? _ref4 : "");
+          }
+      }
     };
 
-    Binder.prototype.bindGoal = function(expt, dataAttr, elem) {
-      var event, self,
+    Binder.prototype.bindGoal = function(expt, variant, dataAttr, elem) {
+      var event, handler, self,
         _this = this;
 
       Myna.log("Myna.Binder.bindGoal", expt, dataAttr, elem);
@@ -10903,16 +10914,21 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
             return expt.reward();
           });
         case "click":
-          return self.on("click", this.createClickHandler(expt));
+          handler = this.createClickHandler(expt);
+          this.boundHandlers.push([elem, "click", handler]);
+          Myna.log("Myna.Binder.bindGoal", "attach", elem, "click", handler, this.boundHandlers);
+          return self.on("click", handler);
       }
     };
 
-    Binder.prototype.createClickHandler = function(expt, handler) {
-      if (handler == null) {
-        handler = (function() {});
+    Binder.prototype.createClickHandler = function(expt, innerHandler) {
+      var handler;
+
+      if (innerHandler == null) {
+        innerHandler = (function() {});
       }
-      Myna.log("Myna.Binder.createClickHandler", expt, handler);
-      return function() {
+      Myna.log("Myna.Binder.createClickHandler", expt, innerHandler);
+      return handler = function() {
         var args, complete, elem, evt, rewarded, self;
 
         evt = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
@@ -10922,7 +10938,7 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
         rewarded = expt.loadStickyReward() || expt.loadLastReward();
         if (rewarded != null) {
           myna.log("Myna.Binder.clickHandler", "pass-through");
-          handler.call.apply(handler, [this, evt].concat(__slice.call(args)));
+          innerHandler.call.apply(innerHandler, [this, evt].concat(__slice.call(args)));
         } else {
           myna.log("Myna.Binder.clickHandler", "pass-through");
           evt.stopPropagation();
@@ -10962,6 +10978,7 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
       if (options == null) {
         options = {};
       }
+      this.preview = __bind(this.preview, this);
       this.bind = __bind(this.bind, this);
       Myna.log("Myna.HtmlExperiment.constructor", options);
       HtmlExperiment.__super__.constructor.call(this, options);
@@ -10969,8 +10986,28 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
     }
 
     HtmlExperiment.prototype.bind = function() {
+      var _this = this;
+
       Myna.log("Myna.HtmlExperiment.bind");
-      this.binder.bind(this);
+      this.suggest(function(variant, options) {
+        if (options == null) {
+          options = {};
+        }
+        return _this.binder.bind(_this, variant, options);
+      });
+    };
+
+    HtmlExperiment.prototype.preview = function(variant, options) {
+      if (options == null) {
+        options = {
+          goal: false
+        };
+      }
+      Myna.log("Myna.HtmlExperiment.preview", variant);
+      if (typeof variant === "string") {
+        variant = this.variants[variant];
+      }
+      this.binder.bind(this, variant, options);
     };
 
     return HtmlExperiment;
@@ -10981,6 +11018,7 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
     __extends(HtmlClient, _super);
 
     function HtmlClient() {
+      this.preview = __bind(this.preview, this);
       this.bind = __bind(this.bind, this);      _ref = HtmlClient.__super__.constructor.apply(this, arguments);
       return _ref;
     }
@@ -10998,6 +11036,17 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
         expt = _ref1[id];
         expt.bind();
       }
+    };
+
+    HtmlClient.prototype.preview = function(exptId, variantId, options) {
+      var _ref1;
+
+      if (options == null) {
+        options = {
+          goal: false
+        };
+      }
+      return (_ref1 = this.experiments[exptId]) != null ? _ref1.preview(variantId, options) : void 0;
     };
 
     return HtmlClient;

@@ -6,7 +6,14 @@ class Myna.HtmlExperiment extends Myna.Experiment
 
   bind: =>
     Myna.log("Myna.HtmlExperiment.bind")
-    @binder.bind(this)
+    @suggest (variant, options = {}) =>
+      @binder.bind(this, variant, options)
+    return
+
+  preview: (variant, options = { goal: false }) =>
+    Myna.log("Myna.HtmlExperiment.preview", variant)
+    if typeof variant == "string" then variant = @variants[variant]
+    @binder.bind(this, variant, options)
     return
 
 class Myna.HtmlClient extends Myna.Client
@@ -17,6 +24,9 @@ class Myna.HtmlClient extends Myna.Client
     Myna.log("Myna.HtmlClient.bind")
     for id, expt of @experiments then expt.bind()
     return
+
+  preview: (exptId, variantId, options = { goal: false }) =>
+    @experiments[exptId]?.preview(variantId, options)
 
 Myna.initLocal = (options) ->
   Myna.log("Myna.initLocal", options)
