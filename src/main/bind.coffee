@@ -14,10 +14,14 @@ class Myna.Binder
     dataBind = if dataPrefix then "#{@dataPrefix}-bind" else "bind"
     dataGoal = if dataPrefix then "#{@dataPrefix}-goal" else "goal"
 
+    Myna.log("Myna.Binder.bind", "searchParams", cssClass, dataShow, dataBind, dataGoal)
+
     allElems  = if cssClass then Myna.$(".#{cssClass}") else null
     showElems = if cssClass then allElems.filter("[data-#{dataShow}]") else $("[data-#{dataShow}]")
     bindElems = if cssClass then allElems.filter("[data-#{dataBind}]") else $("[data-#{dataBind}]")
     goalElems = if cssClass then allElems.filter("[data-#{dataGoal}]") else $("[data-#{dataGoal}]")
+
+    Myna.log("Myna.Binder.bind", "elements", allElems, showElems, bindElems, goalElems)
 
     bindShow = options.show ? true
     bindBind = options.bind ? true

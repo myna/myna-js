@@ -21,7 +21,7 @@ class Myna.Experiment extends Myna.BaseExperiment
 
     Myna.log("Myna.Experiment.suggest", @id, variant.id)
 
-    if @callback('beforeSuggest').call(this, variant, !!suggested) == false then return false
+    if @trigger('beforeSuggest', variant, !!suggested) == false then return false
 
     if suggested?
       success.call(this, suggested, !!suggested)
@@ -32,7 +32,7 @@ class Myna.Experiment extends Myna.BaseExperiment
       error.call(this, Myna.problem("no-variants"))
       return false
 
-    @callback('afterSuggest').call(this, variant, !!suggested)
+    @trigger('afterSuggest', variant, !!suggested)
 
     if @autoRecord() then @record()
 
@@ -51,11 +51,11 @@ class Myna.Experiment extends Myna.BaseExperiment
       rewarded = null
       variant = @loadLastSuggestion()
 
-    if @callback('beforeReward').call(this, variant, amount, !!rewarded) == false then return false
+    if @trigger('beforeReward', variant, amount, !!rewarded) == false then return false
 
     wrappedSuccess = =>
       success.call(this, variant, amount, !!rewarded)
-      @callback('afterReward').call(this, variant, amount, !!rewarded)
+      @trigger('afterReward', variant, amount, !!rewarded)
 
     if rewarded?
       wrappedSuccess()
@@ -81,6 +81,7 @@ class Myna.Experiment extends Myna.BaseExperiment
     @clearLastSuggestion()
     @clearLastReward()
     @clearStickySuggestion()
+    @clearStickyReward()
 
   # => U(variant null)
   loadStickySuggestion: =>

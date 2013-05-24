@@ -104,8 +104,10 @@ describe "callbacks", ->
         "suggestCallback"
         "afterView"
         "afterSuggest"
+
         "beforeRecord"
         "afterRecord"
+
         "beforeReward"
         "beforeRecord"
         "rewardCallback"

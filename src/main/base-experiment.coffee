@@ -34,11 +34,11 @@ class Myna.BaseExperiment
     variant = @randomVariant()
     Myna.log("Myna.BaseExperiment.suggest", @id, variant.id)
 
-    if @callback('beforeSuggest').call(this, variant) == false then return false
+    if @trigger('beforeSuggest', variant) == false then return false
 
     @viewVariant({ variant, success, error })
 
-    @callback('afterSuggest').call(this, variant)
+    @trigger('afterSuggest', variant)
 
     return
 
@@ -59,7 +59,7 @@ class Myna.BaseExperiment
 
     args      = [ variant, otherArgs... ]
 
-    if @callback('beforeView').apply(this, args) == false then return false
+    if @trigger('beforeView', args) == false then return false
 
     @saveLastSuggestion(variant)
     @clearLastReward()
@@ -67,7 +67,7 @@ class Myna.BaseExperiment
 
     success.apply(this, args)
 
-    @callback('afterView').apply(this, args)
+    @trigger.apply(this, [ 'afterView', args... ])
 
     return
 
@@ -81,11 +81,11 @@ class Myna.BaseExperiment
     variant = @loadLastSuggestion()
 
     if variant?
-      if @callback('beforeReward').call(this, variant, amount) == false then return false
+      if @trigger('beforeReward', variant, amount) == false then return false
 
       if @rewardVariant(variant, amount, success, error) == false then return false
 
-      @callback('afterReward').call(this, variant, amount)
+      @trigger('afterReward', variant, amount)
     else
       error.call(this, Myna.problem("no-suggestion"))
       return false
@@ -131,10 +131,10 @@ class Myna.BaseExperiment
     else
       @recordSemaphore++
 
-      callbacks = @waitingToRecord
+      waiting = @waitingToRecord
       @waitingToRecord = []
 
-      Myna.log("Myna.BaseExperiment.record", "starting", callbacks.length)
+      Myna.log("Myna.BaseExperiment.record", "starting", waiting.length)
 
       recordAll = (events, successEvents, errorEvents) =>
         Myna.log("Myna.BaseExperiment.record.recordAll", events, successEvents, errorEvents)
@@ -157,13 +157,13 @@ class Myna.BaseExperiment
         Myna.log("Myna.BaseExperiment.record.finish", successEvents, errorEvents)
         if errorEvents.length > 0
           @requeueEvents(errorEvents)
-          for item in callbacks
+          for item in waiting
             item.error(successEvents, errorEvents)
         else
-          for item in callbacks
+          for item in waiting
             item.success(successEvents, errorEvents)
 
-        @callback('afterRecord').call(this, successEvents, errorEvents)
+        @trigger('afterRecord', successEvents, errorEvents)
 
         @recordSemaphore--
 
@@ -171,7 +171,7 @@ class Myna.BaseExperiment
           @record() # spawn another record process
 
       events = @clearQueuedEvents()
-      if @callback('beforeRecord').call(this, events) == false
+      if @trigger('beforeRecord', events) == false
         @requeueEvents(events)
       else
         recordAll(events, [], [])
@@ -198,6 +198,24 @@ class Myna.BaseExperiment
     ans = @callbacks[id]
     Myna.log("Myna.BaseExperiment.callback", @id, id, ans?)
     ans ? (->)
+
+  trigger: (id, args...) =>
+    cancel = false
+
+    for callback in (@callbacks[id] ? [])
+      cancel = cancel || (callback.apply(this, args) == false)
+
+    if cancel then false else undefined
+
+  on: (event, handler) =>
+    current = @callbacks[event] ? []
+    @callbacks[event] = current.concat([ handler ])
+
+  off: (event, handler = null) =>
+    if handler
+      @callbacks[event] = for callback in @callbacks[event] when callback != handler then callback
+    else
+      delete @callbacks[event]
 
   # => U(variant null)
   loadLastSuggestion: =>

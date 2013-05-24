@@ -4,11 +4,8 @@ class Myna.HtmlExperiment extends Myna.Experiment
     super(options)
     @binder = options.binder ? new Myna.Binder()
 
-  bind: =>
-    Myna.log("Myna.HtmlExperiment.bind")
-    @suggest (variant, options = {}) =>
+    @on 'afterView', (variant) =>
       @binder.bind(this, variant, options)
-    return
 
   preview: (variant, options = { goal: false }) =>
     Myna.log("Myna.HtmlExperiment.preview", variant)
@@ -16,14 +13,21 @@ class Myna.HtmlExperiment extends Myna.Experiment
     @binder.bind(this, variant, options)
     return
 
+
 class Myna.HtmlClient extends Myna.Client
   createExperiment: (options) ->
     new Myna.HtmlExperiment(options)
 
-  bind: =>
-    Myna.log("Myna.HtmlClient.bind")
-    for id, expt of @experiments then expt.bind()
+  onload: =>
+    Myna.log("Myna.HtmlClient.onload")
+    if window.location.hash == "#debug" then @showToolbar()
+    for id, expt of @experiments then expt.suggest()
     return
+
+  showToolbar: =>
+    Myna.log("Myna.HtmlClient.showToolbar")
+    @toolbar = new Myna.Toolbar(this)
+    @toolbar.show()
 
   preview: (exptId, variantId, options = { goal: false }) =>
     @experiments[exptId]?.preview(variantId, options)
@@ -51,6 +55,6 @@ Myna.initApi = (options) ->
     success: (json) ->
       Myna.log("Myna.initRemote", "response", json)
       client = Myna.initLocal({ apiKey, apiRoot, experiments: json.results })
-      Myna.$(-> client.bind())
+      Myna.$(client.onload)
       success(client)
     error:   error
