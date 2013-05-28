@@ -2,8 +2,17 @@ class Myna.Binder
   constructor: (options = {}) ->
     @boundHandlers = []
 
-  bind: (expt, variant, options = {}) =>
-    Myna.log("Myna.Binder.bind", expt, options)
+  listenTo: (expt) =>
+    Myna.log("Myna.Binder.listenTo", expt)
+    expt.on 'view', (variant) => @bind(expt, variant)
+
+  # experiment -> boolean
+  detect: (expt) =>
+    cssClass = expt.settings.get("myna.html.cssClass") ? "myna-#{expt.id}"
+    $(".#{cssClass}").length > 0
+
+  bind: (expt, variant) =>
+    Myna.log("Myna.Binder.bind", expt)
 
     @unbind()
 
@@ -23,13 +32,9 @@ class Myna.Binder
 
     Myna.log("Myna.Binder.bind", "elements", allElems, showElems, bindElems, goalElems)
 
-    bindShow = options.show ? true
-    bindBind = options.bind ? true
-    bindGoal = options.goal ? true
-
-    if bindShow then showElems.each (index, elem) => @bindShow(expt, variant, dataShow, elem)
-    if bindBind then bindElems.each (index, elem) => @bindBind(expt, variant, dataBind, elem)
-    if bindGoal then goalElems.each (index, elem) => @bindGoal(expt, variant, dataGoal, elem)
+    showElems.each (index, elem) => @bindShow(expt, variant, dataShow, elem)
+    bindElems.each (index, elem) => @bindBind(expt, variant, dataBind, elem)
+    goalElems.each (index, elem) => @bindGoal(expt, variant, dataGoal, elem)
 
   unbind: =>
     Myna.log("Myna.Binder.unbind", @boundHandlers)

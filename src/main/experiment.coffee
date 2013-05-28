@@ -2,83 +2,38 @@ class Myna.Experiment extends Myna.BaseExperiment
 
   # -> boolean
   sticky: =>
-    !!@settings.get("myna.web.sticky", true)
+    !!@settings.get("myna.js.sticky", true)
 
   # -> boolean
-  autoRecord: =>
-    !!@settings.get("myna.web.autoRecord", true)
-
-  # (variant -> void) (any -> void) -> void
-  suggest: (success = (->), error = (->)) =>
-    sticky = @sticky()
-
-    if sticky
-      suggested = @loadStickySuggestion()
-      variant = suggested ? @randomVariant()
+  loadVariantsForSuggest: =>
+    if @sticky()
+      sticky = @loadStickySuggestion()
+      { variant: sticky ? @randomVariant(), viewed: sticky }
     else
-      suggested = null
-      variant = @randomVariant()
+      super()
 
-    Myna.log("Myna.Experiment.suggest", @id, variant.id)
+  loadVariantsForView: (variant) =>
+    super(variant)
 
-    if @trigger('beforeSuggest', variant, !!suggested) == false then return false
+  saveVariantFromView: (variant) =>
+    if @sticky()
+      @saveStickySuggestion(variant)
+    super(variant)
 
-    if suggested?
-      success.call(this, suggested, !!suggested)
-    else if variant?
-      if sticky then @saveStickySuggestion(variant)
-      if @viewVariant({ variant, success, error, otherArgs: [ !!suggested ] }) == false then return false
+  loadVariantsForReward: =>
+    if @sticky()
+      { variant: @loadLastView(), rewarded: @loadStickyReward() }
     else
-      error.call(this, Myna.problem("no-variants"))
-      return false
+      super()
 
-    @trigger('afterSuggest', variant, !!suggested)
-
-    if @autoRecord() then @record()
-
-    return
-
-  # number-between-0-and-1 (variant amount boolean -> void) (any -> void) -> void
-  reward: (amount = 1.0, success = (->), error = (->)) =>
-    Myna.log("Myna.Experiment.reward", @id, amount)
-
-    sticky = @sticky()
-
-    if sticky
-      rewarded = @loadStickyReward()
-      variant = rewarded ? @loadLastSuggestion()
-    else
-      rewarded = null
-      variant = @loadLastSuggestion()
-
-    if @trigger('beforeReward', variant, amount, !!rewarded) == false then return false
-
-    wrappedSuccess = =>
-      success.call(this, variant, amount, !!rewarded)
-      @trigger('afterReward', variant, amount, !!rewarded)
-
-    if rewarded?
-      wrappedSuccess()
-    else if variant?
-      if sticky then @saveStickyReward(variant, amount, !!rewarded)
-
-      delayedSuccess = =>
-        if @autoRecord()
-          # Call our success/error callbacks once the record is complete:
-          @record(wrappedSuccess, error)
-        else
-          wrappedSuccess()
-
-      if @rewardVariant({ variant, amount, success: delayedSuccess, error, otherArgs: [ !!rewarded ] }) == false then return false
-    else
-      error.call(this, Myna.problem("no-suggestion"))
-      return false
-
-    return
+  saveVariantFromReward: (variant) =>
+    if @sticky()
+      @saveStickyReward(variant)
+    super(variant)
 
   unstick: =>
     Myna.log("Myna.Experiment.unstick", @id)
-    @clearLastSuggestion()
+    @clearLastView()
     @clearLastReward()
     @clearStickySuggestion()
     @clearStickyReward()

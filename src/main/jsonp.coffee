@@ -14,7 +14,7 @@ Myna.jsonp =
   #   undefined
   # )
   request: (options = {}) ->
-    urlRoot      = options.url     ? throw "no URL specified"
+    urlRoot      = options.url     ? Myna.error("Myna.jsonp.request", "no url in options", options)
     success      = options.success ? (->)
     error        = options.error   ? (->)
     timeout      = options.timeout ? 0 # 0 means no timeout

@@ -63,17 +63,17 @@ class Myna.Settings
 
   set: =>
     switch arguments.length
-      when 2
-        key = arguments[0]
-        value = arguments[1]
-        Myna.log("Myna.Settings.set", key, value)
-        @data = @parse(key).set(@data, value)
+      when 0
+        Myna.error("Myna.Settings.set", "not enough arguments", arguments)
       when 1
         for key, value of arguments[0]
           Myna.log("Myna.Settings.set", key, value)
           @data = @parse(key).set(@data, value)
       else
-        throw ["wrong number of arguments", arguments]
+        key = arguments[0]
+        value = arguments[1]
+        Myna.log("Myna.Settings.set", key, value)
+        @data = @parse(key).set(@data, value)
     this
 
   parse: (path) =>

@@ -6,6 +6,8 @@ beforeEach ->
       this.message = -> "#{this.actual} has not been written yet."
       false
 
+window.testApiRoot = "http://localhost:8080"
+
 # Helper function - grab a suggestion and pass it to the argument:
 window.withSuggestion = (expt, fn) ->
   done    = false
@@ -21,8 +23,7 @@ window.withSuggestion = (expt, fn) ->
         done = true
     )
   waitsFor -> done
-  runs ->
-    fn(variant)
+  runs -> fn(variant)
 
 # Helper function - grab a suggestion and pass it to the argument:
 window.withView = (expt, id, fn) ->
@@ -40,8 +41,7 @@ window.withView = (expt, id, fn) ->
         done = true
     )
   waitsFor -> done
-  runs ->
-    fn(variant)
+  runs -> fn(variant)
 
 # Helper function - record a reward and call the argument:
 window.withReward = (expt, amount, fn) ->
@@ -53,8 +53,7 @@ window.withReward = (expt, amount, fn) ->
       -> done = true
     )
   waitsFor -> done
-  runs ->
-    fn()
+  runs -> fn()
 
 # Helper function - strip the timestamps from the supplied events making them easier to test:
 window.eventSummaries = (events) ->

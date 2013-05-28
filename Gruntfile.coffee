@@ -29,8 +29,10 @@ module.exports = (grunt) ->
       'settings.coffee'
       'cache.coffee'
       'variant.coffee'
+      'events.coffee'
       'base-experiment.coffee'
       'experiment.coffee'
+      'recorder.coffee'
       'client.coffee'
       outro...
     ]
@@ -38,14 +40,15 @@ module.exports = (grunt) ->
   testSources = (outro) ->
     [
       'common.coffee'
+      'core-spec.coffee'
       'jsonp-spec.coffee'
       'settings-spec.coffee'
       'variant-spec.coffee'
       'experiment-spec.coffee'
       'suggest-spec.coffee'
       'reward-spec.coffee'
-      'record-spec.coffee'
-      'callback-spec.coffee'
+      'recorder-spec.coffee'
+      'event-spec.coffee'
       outro...
     ]
 
@@ -59,6 +62,7 @@ module.exports = (grunt) ->
 
   mynaHtmlMainSources = mainSources [ 'jquery-1.9.1.js' ], [
     'bind.coffee'
+    'toolbar.coffee'
     'html-init.coffee'
   ]
 
@@ -128,6 +132,9 @@ module.exports = (grunt) ->
       mynaJsLatest:   { src: [ mynaJsDistLatest   ], dest: mynaJsDistLatestMin   }
       mynaHtmlDist:   { src: [ mynaHtmlDistMain   ], dest: mynaHtmlDistMainMin   }
       mynaHtmlLatest: { src: [ mynaHtmlDistLatest ], dest: mynaHtmlDistLatestMin }
+
+    watch:
+      main: { files: sources('src/maintest', mynaJsMainSources, '.coffee'), tasls: [ 'myna-js', 'myna-html' ] }
   })
 
   grunt.loadNpmTasks 'grunt-contrib-coffee'

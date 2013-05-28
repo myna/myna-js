@@ -2,12 +2,12 @@ describe "Myna.initLocal", ->
   it "should create a client", ->
     client = Myna.initLocal
       apiKey:   "092c90f6-a8f2-11e2-a2b9-7c6d628b25f7"
-      apiRoot:  "http://localhost:8080"
+      apiRoot:  testApiRoot
       experiments: [
         {
           uuid:     "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
           id:       "a"
-          settings: "myna.web.sticky": false
+          settings: "myna.js.sticky": false
           variants: [
             { id: variant1, weight: 0.4 }
             { id: variant2, weight: 0.6 }
@@ -16,7 +16,7 @@ describe "Myna.initLocal", ->
         {
           uuid:     "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
           id:       "b"
-          settings: "myna.web.sticky": true
+          settings: "myna.js.sticky": true
           variants: [
             { id: foo, weight: 0.2 }
             { id: bar, weight: 0.8 }
@@ -41,7 +41,7 @@ describe "Myna.initApi", ->
     runs ->
       Myna.initApi
         apiKey:  "092c90f6-a8f2-11e2-a2b9-7c6d628b25f7"
-        apiRoot: "http://localhost:8080"
+        apiRoot: testApiRoot
         success: (c) -> client = c
 
     waitsFor -> client

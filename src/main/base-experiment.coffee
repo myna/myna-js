@@ -1,180 +1,117 @@
-class Myna.BaseExperiment
+class Myna.BaseExperiment extends Myna.Events
   constructor: (options = {}) ->
+    super(options)
     Myna.log("Myna.BaseExperiment.constructor", options)
-    @uuid      = options.uuid   ? Myna.error("Myna.BaseExperiment.constructor", @id, "no uuid in options", options)
-    @id        = options.id     ? Myna.error("Myna.BaseExperiment.constructor", @id, "no id in options", options)
-    @apiKey    = options.apiKey ? Myna.error("Myna.BaseExperiment.constructor", @id, "no apiKey in options", options)
-    @apiRoot   = options.apiRoot ? "//api.mynaweb.com"
+    @uuid      = options.uuid ? Myna.error("Myna.BaseExperiment.constructor", @id, "no uuid in options", options)
+    @id        = options.id   ? Myna.error("Myna.BaseExperiment.constructor", @id, "no id in options", options)
     @settings  = new Myna.Settings(options.settings ? {})
-
-    @callbacks = options.callbacks ? {}
 
     @variants = {}
     for data in (options.variants ? [])
       @variants[data.id] = new Myna.Variant(data)
 
-    # The number of record requests currently in progress. Should be 0 or 1.
-    # The value is used to prevent multiple record requests being submitted concurrently.
-    @recordSemaphore = 0
-
-    # Callbacks passed to record that *aren't* part of a current request.
-    #
-    # These callbacks are cached until the current record request is over,
-    # at which point the record method retriggers itself.
-    @waitingToRecord = []
-
-  # Timeout (in milliseconds) for API requests made by this experiment.
-  #
-  # -> number
-  timeout: =>
-    @settings.get("myna.web.timeout", 1000) # milliseconds
-
   # (variant -> void) (any -> void) -> void
   suggest: (success = (->), error = (->)) =>
-    variant = @randomVariant()
-    Myna.log("Myna.BaseExperiment.suggest", @id, variant.id)
-
-    if @trigger('beforeSuggest', variant) == false then return false
-
-    @viewVariant({ variant, success, error })
-
-    @trigger('afterSuggest', variant)
-
+    variants = @loadVariantsForSuggest()
+    Myna.log("Myna.BaseExperiment.suggest", @id, variants.variant?.id, variants.viewed?.id)
+    @viewVariant(Myna.extend({ success, error }, variants))
     return
 
-  view: (variantId, success = (->), error = (->)) =>
-    Myna.log("Myna.BaseExperiment.view", @id, variantId)
+  loadVariantsForSuggest: =>
+    { variant: @randomVariant(), viewed: @loadLastView() }
 
-    if @viewVariant({ variant: @variants[variantId], success, error }) == false then return false
-
+  # or(string, variant) -> { variant: variant, viewed: or(variant, undefined) } -> undefined
+  view: (variantOrId, success = (->), error = (->)) =>
+    variants = @loadVariantsForView(variantOrId)
+    Myna.log("Myna.BaseExperiment.view", @id, variants.variant?.id, variants.viewed?.id)
+    @viewVariant(Myna.extend({ success, error }, variants))
     return
 
+  # or(string, variant) -> { variant: variant, viewed: or(variant, undefined) } -> undefined
+  loadVariantsForView: (variantOrId) =>
+    variant: if variantOrId instanceof Myna.Variant then variantOrId else @variants[variantOrId]
+    viewed:  null
+
+  # object -> undefined
   viewVariant: (options) =>
-    Myna.log("Myna.BaseExperiment.viewVariant", @id, options)
-
     variant   = options.variant
-    success   = options.success   ? (->)
-    error     = options.error     ? (->)
-    otherArgs = options.otherArgs ? []
+    viewed    = options.viewed
+    success   = options.success ? (->)
+    error     = options.error   ? (->)
 
-    args      = [ variant, otherArgs... ]
+    Myna.log("Myna.BaseExperiment.viewVariant", @id, variant?.id, viewed?.id)
 
-    if @trigger('beforeView', args) == false then return false
-
-    @saveLastSuggestion(variant)
-    @clearLastReward()
-    @enqueueView(variant)
-
-    success.apply(this, args)
-
-    @trigger.apply(this, [ 'afterView', args... ])
+    if viewed? # TODO: Do we need this conditional? Why not just save every time?
+      # The comparison to false is important here as it distringuishes from undefined:
+      unless @trigger('beforeView', viewed, false) == false
+        success.call(this, viewed, false)
+        @trigger('view', viewed, false)
+    else if variant?
+      # The comparison to false is important here as it distringuishes from undefined:
+      unless @trigger('beforeView', variant, true) == false
+        @saveVariantFromView(variant)
+        success.call(this, variant, true)
+        @trigger('view', variant, true)
+        @trigger('recordView', variant)
+    else
+      error(Myna.problem("no-variant"))
 
     return
+
+  # variant -> undefined
+  saveVariantFromView: (variant) =>
+    @saveLastView(variant)
+    @clearLastReward()
 
   # Reward the last page view. A `reward` event is queued in local storage
   # ready to be submitted to the servers.
   #
-  # number-between-0-and-1 (variant -> void) (any -> void) -> void
+  # 0-to-1 (variant boolean -> undefined) (any -> undefined) -> undefined
   reward: (amount = 1.0, success = (->), error = (->)) =>
-    Myna.log("Myna.BaseExperiment.reward", @id, amount)
-
-    variant = @loadLastSuggestion()
-
-    if variant?
-      if @trigger('beforeReward', variant, amount) == false then return false
-
-      if @rewardVariant(variant, amount, success, error) == false then return false
-
-      @trigger('afterReward', variant, amount)
-    else
-      error.call(this, Myna.problem("no-suggestion"))
-      return false
-
+    variants = @loadVariantsForReward()
+    Myna.log("Myna.BaseExperiment.reward", @id, variants.variant?.id, variants.rewarded?.id, amount)
+    @rewardVariant(Myna.extend({ amount, success, error }, variants))
     return
 
-  # variant number-between-0-and-1 (variant -> void) (any -> void) -> void
+  # -> { variant: variant, rewarded: or(variant, null) }
+  loadVariantsForReward: =>
+    variant:  @loadLastView()
+    rewarded: @loadLastReward()
+
+  # object -> undefined
   rewardVariant: (options = {}) =>
     Myna.log("Myna.BaseExperiment.rewardVariant", @id, options)
 
-    variant   = options.variant   ? throw "no variant specified"
+    variant   = options.variant
+    rewarded  = options.rewarded
     amount    = options.amount    ? 1.0
     success   = options.success   ? (->)
     error     = options.error     ? (->)
-    otherArgs = options.otherArgs ? []
-    args      = [ variant, amount, otherArgs... ]
-    rewarded  = @loadLastReward()
 
     if rewarded?
-      error.call(this, Myna.problem("already-rewarded"))
+      # The comparison to false is important here as it distringuishes from undefined:
+      unless @trigger('beforeReward', rewarded, amount, false) == false
+        success.call(this, rewarded, amount, false)
+        @trigger('reward', rewarded, amount, false)
+    else if variant?
+      # The comparison to false is important here as it distringuishes from undefined:
+      unless @trigger('beforeReward', variant, amount, true) == false
+        @triggerAsync 'recordReward', variant, amount,
+          =>
+            @saveVariantFromReward(variant)
+            success.call(this, variant, amount, true)
+            @trigger('reward', variant, amount, true)
+          (args...) =>
+            error.call(this, args...)
     else
-      @clearLastSuggestion()
-      @saveLastReward(variant)
-      @enqueueReward(variant, amount)
-
-      success.apply(this, args)
+      error(Myna.problem("no-variant"))
 
     return
 
-  # Call the `record` endpoint on the Myna API servers,
-  # recording any view/reward events that are queued up in local storage.
-  #
-  # If the submission of any events fails, they are requeued for future submission.
-  # The callbacks are passed two arguments: an array of successfully submitted events,
-  # and an array of requeued events.
-  #
-  # (arrayOf(event) arrayOf(event) -> void) (arrayOf(event) arrayOf(event) -> void) -> void
-  record: (success = (->), error = (->)) =>
-    @waitingToRecord.push({ success, error })
-
-    if @recordSemaphore > 0
-      Myna.log("Myna.BaseExperiment.record", "queued")
-    else
-      @recordSemaphore++
-
-      waiting = @waitingToRecord
-      @waitingToRecord = []
-
-      Myna.log("Myna.BaseExperiment.record", "starting", waiting.length)
-
-      recordAll = (events, successEvents, errorEvents) =>
-        Myna.log("Myna.BaseExperiment.record.recordAll", events, successEvents, errorEvents)
-        if events.length == 0
-          finish(successEvents, errorEvents)
-        else
-          [ head, tail ... ] = events
-          recordOne(head, tail, successEvents, errorEvents)
-
-      recordOne = (event, otherEvents, successEvents, errorEvents) =>
-        Myna.log("Myna.BaseExperiment.record.recordOne", event, otherEvents, successEvents, errorEvents)
-        Myna.jsonp.request
-          url:     "#{@apiRoot}/v2/experiment/#{@uuid}/record"
-          success: -> recordAll(otherEvents, successEvents.concat([ event ]), errorEvents)
-          error:   -> recordAll(otherEvents, successEvents, errorEvents.concat([ event ]))
-          timeout: @timeout()
-          params:  Myna.extend({}, event, { apikey: @apiKey })
-
-      finish = (successEvents, errorEvents) =>
-        Myna.log("Myna.BaseExperiment.record.finish", successEvents, errorEvents)
-        if errorEvents.length > 0
-          @requeueEvents(errorEvents)
-          for item in waiting
-            item.error(successEvents, errorEvents)
-        else
-          for item in waiting
-            item.success(successEvents, errorEvents)
-
-        @trigger('afterRecord', successEvents, errorEvents)
-
-        @recordSemaphore--
-
-        if @waitingToRecord.length > 0
-          @record() # spawn another record process
-
-      events = @clearQueuedEvents()
-      if @trigger('beforeRecord', events) == false
-        @requeueEvents(events)
-      else
-        recordAll(events, [], [])
+  # variant -> undefined
+  saveVariantFromReward: (variant) =>
+    @clearLastView()
+    @saveLastReward(variant)
 
   # -> double
   totalWeight: =>
@@ -182,8 +119,8 @@ class Myna.BaseExperiment
     for id, variant of @variants then ans += variant.weight
     ans
 
+  # -> variant
   randomVariant: =>
-    Myna.log("Myna.BaseExperiment.randomVariant", @id)
     total = @totalWeight()
     random = Math.random() * total
     for id, variant of @variants
@@ -194,42 +131,18 @@ class Myna.BaseExperiment
     Myna.log("Myna.BaseExperiment.randomVariant", @id, null)
     return null
 
-  callback: (id) =>
-    ans = @callbacks[id]
-    Myna.log("Myna.BaseExperiment.callback", @id, id, ans?)
-    ans ? (->)
-
-  trigger: (id, args...) =>
-    cancel = false
-
-    for callback in (@callbacks[id] ? [])
-      cancel = cancel || (callback.apply(this, args) == false)
-
-    if cancel then false else undefined
-
-  on: (event, handler) =>
-    current = @callbacks[event] ? []
-    @callbacks[event] = current.concat([ handler ])
-
-  off: (event, handler = null) =>
-    if handler
-      @callbacks[event] = for callback in @callbacks[event] when callback != handler then callback
-    else
-      delete @callbacks[event]
-
   # => U(variant null)
-  loadLastSuggestion: =>
-    @loadVariant('lastSuggestion')
+  loadLastView: =>
+    @loadVariant('lastView')
 
   # variant => void
-  saveLastSuggestion: (variant) =>
-    @saveVariant('lastSuggestion', variant)
+  saveLastView: (variant) =>
+    @saveVariant('lastView', variant)
     @clearVariant('lastReward')
 
   # => void
-  clearLastSuggestion: =>
-    @clearVariant('lastSuggestion')
-    # @clearVariant('lastReward')
+  clearLastView: =>
+    @clearVariant('lastView')
 
   # => U(variant null)
   loadLastReward: =>
@@ -249,7 +162,7 @@ class Myna.BaseExperiment
     if id? then @variants[id] else null
 
   saveVariant: (cacheKey, variant) =>
-    @loadAndSave (saved) ->
+    @loadAndSave (saved) =>
       Myna.log("Myna.BaseExperiment.saveVariant", @id, cacheKey, variant, saved)
       if variant?
         saved[cacheKey] = variant.id
@@ -259,53 +172,6 @@ class Myna.BaseExperiment
 
   clearVariant: (cacheKey) =>
     @saveVariant(cacheKey, null)
-
-  loadQueuedEvents: =>
-    ans = @load().queuedEvents ? []
-    Myna.log("Myna.BaseExperiment.loadQueuedEvents", @id, ans)
-    ans
-
-  clearQueuedEvents: =>
-    Myna.log("Myna.BaseExperiment.clearQueuedEvents", @id)
-    ans = []
-    @loadAndSave (saved) ->
-      ans = saved.queuedEvents ? []
-      delete saved.queuedEvents
-      saved
-    ans
-
-  enqueueEvent: (event) =>
-    Myna.log("Myna.BaseExperiment.enqueueEvent", @id, event)
-    @loadAndSave (saved) ->
-      if saved.queuedEvents?
-        saved.queuedEvents.push(event)
-      else
-        saved.queuedEvents = [ event ]
-      saved
-
-  requeueEvents: (events) =>
-    Myna.log("Myna.BaseExperiment.requeueEvents", @id, events)
-    @loadAndSave (saved) ->
-      if saved.queuedEvents?
-        saved.queuedEvents = events.concat(saved.queuedEvents)
-      else
-        saved.queuedEvents = events
-      saved
-
-  enqueueView: (variant) =>
-    Myna.log("Myna.BaseExperiment.enqueueView", @id, variant)
-    @enqueueEvent
-      typename:  "view"
-      variant:   variant.id
-      timestamp: Myna.dateToString(new Date())
-
-  enqueueReward: (variant, amount) =>
-    Myna.log("Myna.BaseExperiment.enqueueReward", @id, variant, amount)
-    @enqueueEvent
-      typename:  "reward"
-      variant:   variant.id
-      amount:    amount
-      timestamp: Myna.dateToString(new Date())
 
   loadAndSave: (func) =>
     @save(func(@load() ? {}))
