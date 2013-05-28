@@ -2,7 +2,8 @@ temp
 node_modules
 
 .grunt
-_SpecRunner.html
+myna-js-specrunner.html
+myna-html-specrunner.html
 
 *.sublime-project
 *.sublime-workspace

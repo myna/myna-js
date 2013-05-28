@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <title>Monique Myna's Typewriter Travels</title>
+
+    <link rel="stylesheet" href="styles/screen.css">
+
+    <!-- Start of Myna snippet -->
+    <script src="../dist/myna-html-2.0.0.js" data-apikey="092c90f6-a8f2-11e2-a2b9-7c6d628b25f7"></script>
+    <script>
+      Myna.initApi({
+        apiKey:  "092c90f6-a8f2-11e2-a2b9-7c6d628b25f7",
+        apiRoot: "http://localhost:8080",
+        success: function(client) {
+          window.client = client
+        }
+      });
+    </script>
+    <!-- End of Myna snippet -->
+  </head>
+
+  <body>
+    <div class="container">
+      <h1>Monique Myna's Typewriter Travels</h1>
+
+      <div class="hero">
+        <img class="myna-jshero" data-show="hero1" src="images/hero1.jpg" alt="A typewriter">
+        <img class="myna-jshero" data-show="hero2" src="images/hero2.jpg" alt="A typewriter">
+        <img class="myna-jshero" data-show="hero3" src="images/hero3.jpg" alt="A typewriter">
+      </div>
+
+      <div class="row">
+        <div class="wide-column">
+          <p>
+            The picture above is of a beautiful turn-of-the-century black and gold Royal typewriter.<br>
+            It's in need of a little restoration but it's still able to get out and about!
+          </p>
+        </div>
+
+        <div class="narrow-column">
+          <a class="button myna-jshero" data-goal="click" href="success.html">
+            For more typewriter news<br>
+            Join our mailing list
+          </a>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

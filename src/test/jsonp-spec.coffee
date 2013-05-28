@@ -5,7 +5,7 @@ describe "Myna.jsonp.request", ->
 
     runs ->
       Myna.jsonp.request
-        url: "http://localhost:8080/v1/version"
+        url: "#{testApiRoot}/v1/version"
         success: (d) -> data  = d
         error:   (e) -> error = e
 
@@ -29,13 +29,10 @@ describe "Myna.jsonp.request", ->
 
     runs ->
       Myna.jsonp.request
-        url:     "http://localhost:8080/v1/version"
+        url:     "#{testApiRoot}/v1/version"
         success: (d) -> data  = d
         error:   (e) -> error = e
         timeout: 1
-
-      expect(Myna.jsonp.callbacks).not.toEqual({})
-      expect(document.getElementsByClassName('myna-jsonp').length).toEqual(1)
 
     waitsFor -> data || error
 

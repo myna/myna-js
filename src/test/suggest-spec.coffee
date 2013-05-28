@@ -1,22 +1,27 @@
 expt = new Myna.Experiment
   uuid:     "45923780-80ed-47c6-aa46-15e2ae7a0e8c"
   id:       "id"
-  apiKey:   "092c90f6-a8f2-11e2-a2b9-7c6d628b25f7"
-  settings: "myna.web.sticky": true
+  settings: "myna.js.sticky": true
   variants: [
     { id: "a", settings: { buttons: "red"   }, weight: 0.2 }
     { id: "b", settings: { buttons: "green" }, weight: 0.4 }
     { id: "c", settings: { buttons: "blue"  }, weight: 0.6 }
   ]
 
+recorder = new Myna.Recorder
+  apiKey:   "092c90f6-a8f2-11e2-a2b9-7c6d628b25f7"
+  apiRoot:  testApiRoot
+  autoSync: false
+
+recorder.listenTo(expt)
+
 for sticky in [false, true]
   initialized = (fn) ->
     return ->
       expt.callbacks = {}
-      expt.settings.set("myna.web.sticky", sticky)
-      expt.clearLastSuggestion()
+      expt.settings.set("myna.js.sticky", sticky)
       expt.unstick()
-      expt.clearQueuedEvents()
+      recorder.clearQueuedEvents()
       fn()
 
   describe "Myna.Experiment.suggest (#{(if sticky then 'sticky' else 'non-sticky')})", ->
@@ -26,13 +31,13 @@ for sticky in [false, true]
 
     it "should save the last suggestion", initialized ->
       withSuggestion expt, (variant) ->
-        expect(expt.loadLastSuggestion()).toBe(variant)
+        expect(expt.loadLastView()).toBe(variant)
 
     it "should queue an event for upload", initialized ->
       finished = false
 
       withSuggestion expt, (variant) ->
-        expect(eventSummaries(expt.loadQueuedEvents())).toEqual [
+        expect(eventSummaries(recorder.queuedEvents())).toEqual [
           [ "view", variant.id, null ],
         ]
         finished = true
@@ -53,11 +58,11 @@ for sticky in [false, true]
       withSuggestion expt, (v1) ->
         withSuggestion expt, (v2) ->
           if sticky
-            expect(eventSummaries(expt.loadQueuedEvents())).toEqual [
+            expect(eventSummaries(recorder.queuedEvents())).toEqual [
               [ "view", v1.id, null ]
             ]
           else
-            expect(eventSummaries(expt.loadQueuedEvents())).toEqual [
+            expect(eventSummaries(recorder.queuedEvents())).toEqual [
               [ "view", v1.id, null ],
               [ "view", v2.id, null ]
             ]

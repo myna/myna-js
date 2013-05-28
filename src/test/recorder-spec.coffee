@@ -1,10 +1,10 @@
 goodApiKey = "092c90f6-a8f2-11e2-a2b9-7c6d628b25f7"
 badApiKey  = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
 
-recordState = (expt) -> [
-  expt.loadQueuedEvents().length, # the number of events waiting to be sent by the next call to record()
-  expt.recordSemaphore,           # the number of record() methods that are currently running
-  expt.waitingToRecord.length     # the number of callbacks registered for future calls to record()
+recorderState = (recorder) -> [
+  recorder.queuedEvents().length, # the number of events waiting to be sent by the next call to record()
+  recorder.semaphore,             # the number of record() methods that are currently running
+  recorder.waiting.length         # the number of callbacks registered for future calls to record()
 ]
 
 for denyAccess in [ false, true ]
@@ -15,24 +15,26 @@ for denyAccess in [ false, true ]
   expt = new Myna.Experiment
     uuid:     "45923780-80ed-47c6-aa46-15e2ae7a0e8c"
     id:       "id"
-    apiKey:   apiKey
-    apiRoot:  "http://localhost:8080"
-    settings:
-      "myna.web.sticky": false
-      "myna.web.autoRecord": false
+    settings: "myna.js.sticky": false
     variants: [
       { id: "variant1", weight: 0.5 }
       { id: "variant2", weight: 0.5 }
     ]
 
+  recorder = new Myna.Recorder
+    apiKey:   apiKey
+    apiRoot:  testApiRoot
+    autoSync: false
+
   initialized = (fn) ->
     return ->
-      expt.callbacks = {}
-      expt.clearLastSuggestion()
+      expt.off()
       expt.unstick()
-      expt.clearQueuedEvents()
-      expt.recordInProgress = false
-      expt.waitingToRecord = []
+      recorder.off()
+      recorder.listenTo(expt)
+      recorder.clearQueuedEvents()
+      recorder.semaphore = 0
+      recorder.waiting = []
       fn()
 
   describe "Myna.Experiment.record (#{accessStatus})", ->
@@ -47,13 +49,13 @@ for denyAccess in [ false, true ]
       waitsFor -> variant
 
       runs ->
-        expect(recordState(expt)).toEqual([ 1, 0, 0 ])
-        expt.record(
+        expect(recorderState(recorder)).toEqual([ 1, 0, 0 ])
+        recorder.sync(
           ->
-            expect(recordState(expt)).toEqual([ 0, 1, 0 ])
+            expect(recorderState(recorder)).toEqual([ 0, 1, 0 ])
             success = true
           ->
-            expect(recordState(expt)).toEqual([ 1, 1, 0 ])
+            expect(recorderState(recorder)).toEqual([ 1, 1, 0 ])
             error = true
         )
 
@@ -63,7 +65,7 @@ for denyAccess in [ false, true ]
         expect(success).toEqual(if denyAccess then false else true)
         expect(error).toEqual(if denyAccess then true else false)
 
-        expect(recordState(expt)).toEqual(if denyAccess then [ 1, 0, 0 ] else [ 0, 0, 0 ])
+        expect(recorderState(recorder)).toEqual(if denyAccess then [ 1, 0, 0 ] else [ 0, 0, 0 ])
 
     it "should record multiple events (#{accessStatus})", initialized ->
       variant1 = null
@@ -81,13 +83,13 @@ for denyAccess in [ false, true ]
       waitsFor -> variant1 && variant2
 
       runs ->
-        expect(recordState(expt)).toEqual([ 4, 0, 0 ])
-        expt.record(
+        expect(recorderState(recorder)).toEqual([ 4, 0, 0 ])
+        recorder.sync(
           ->
-            expect(recordState(expt)).toEqual([ 0, 1, 0 ])
+            expect(recorderState(recorder)).toEqual([ 0, 1, 0 ])
             success = true
           ->
-            expect(recordState(expt)).toEqual([ 4, 1, 0 ])
+            expect(recorderState(recorder)).toEqual([ 4, 1, 0 ])
             error = true
         )
 
@@ -96,7 +98,7 @@ for denyAccess in [ false, true ]
       runs ->
         expect(success).toEqual(if denyAccess then false else true)
         expect(error).toEqual(if denyAccess then true else false)
-        expect(recordState(expt)).toEqual(if denyAccess then [ 4, 0, 0 ] else [ 0, 0, 0 ])
+        expect(recorderState(recorder)).toEqual(if denyAccess then [ 4, 0, 0 ] else [ 0, 0, 0 ])
 
     it "should handle multiple concurrent calls to record (#{accessStatus})", initialized ->
       # Myna.log statements show the likely order of execution.
@@ -116,17 +118,17 @@ for denyAccess in [ false, true ]
 
       runs ->
         Myna.log("BLOCK 1")
-        expect(recordState(expt)).toEqual([ 2, 0, 0 ])
-        expt.record(
+        expect(recorderState(recorder)).toEqual([ 2, 0, 0 ])
+        recorder.sync(
           ->
             Myna.log("BLOCK 4a")
             expect(denyAccess).toEqual(false)
-            expect(recordState(expt)).toEqual([ 2, 1, 1 ])
+            expect(recorderState(recorder)).toEqual([ 2, 1, 1 ])
             success1 = true
           ->
             Myna.log("BLOCK 4b")
             expect(denyAccess).toEqual(true)
-            expect(recordState(expt)).toEqual([ 4, 1, 1 ])
+            expect(recorderState(recorder)).toEqual([ 4, 1, 1 ])
             error1 = true
         )
 
@@ -138,17 +140,17 @@ for denyAccess in [ false, true ]
 
       runs ->
         Myna.log("BLOCK 3")
-        expect(recordState(expt)).toEqual([ 2, 1, 0 ])
-        expt.record(
+        expect(recorderState(recorder)).toEqual([ 2, 1, 0 ])
+        recorder.sync(
           ->
             Myna.log("BLOCK 5a")
             expect(denyAccess).toEqual(false)
-            expect(recordState(expt)).toEqual([ 0, 1, 0 ])
+            expect(recorderState(recorder)).toEqual([ 0, 1, 0 ])
             success2 = true
           ->
             Myna.log("BLOCK 5b")
             expect(denyAccess).toEqual(true)
-            expect(recordState(expt)).toEqual([ 4, 1, 0 ])
+            expect(recorderState(recorder)).toEqual([ 4, 1, 0 ])
             error2 = true
         )
 
@@ -161,4 +163,4 @@ for denyAccess in [ false, true ]
         expect(success2).toEqual(if denyAccess then false else true)
         expect(error1).toEqual(if denyAccess then true else false)
         expect(error2).toEqual(if denyAccess then true else false)
-        expect(recordState(expt)).toEqual(if denyAccess then [ 4, 0, 0 ] else [ 0, 0, 0 ])
+        expect(recorderState(recorder)).toEqual(if denyAccess then [ 4, 0, 0 ] else [ 0, 0, 0 ])
