@@ -5,6 +5,44 @@ beforeEach ->
     toBeImplemented: ->
       this.message = -> "#{this.actual} has not been written yet."
       false
+    toBeDeeplyEqualTo: (expected) ->
+      differingPath = null
+      compare = (x, y, path = '') ->
+        if typeof x != typeof y
+          differingPath = "#{path}: #{x} vs #{y}"
+          return false
+        switch typeof x
+          when 'object'
+            for key, value of x
+              unless compare(value, y[key], "#{path}.#{key}")
+                return false
+
+            for key, value of y
+              if typeof value != 'undefined' && typeof x[key] == 'undefined'
+                differingPath = "#{path}.#{key}: #{value} vs #{x[key]}"
+                return false
+
+            return true
+
+          when 'function'
+            if x.toString() == y.toString()
+              true
+            else
+              differingPath = "#{path}: #{x} vs #{y}"
+              false
+
+          else
+            if x == y
+              true
+            else
+              differingPath = "#{path}: #{x} vs #{y}"
+              false
+
+      if compare(this.actual, expected)
+        true
+      else
+        this.message = -> "arguments differ at path: #{differingPath}:\n#{this.actual}\n#{expected}"
+        false
 
 window.testApiRoot = "http://localhost:8080"
 

@@ -1,9 +1,11 @@
 class Myna.ExperimentBase extends Myna.Events
+  directAttributes: [ "uuid", "id" ]
+
   constructor: (options = {}) ->
     super(options)
     @log("constructor", options)
     @id         = options.id   ? @error("constructor", @id, "no id in options", options)
-    @uuid       = options.uuid ? @error("constructor", @id, "no uuid in options", options)
+    @uuid       = options.uuid ? undefined
     @settings   = new Myna.Settings(options.settings ? {})
 
     @variants = {}
@@ -135,6 +137,25 @@ class Myna.ExperimentBase extends Myna.Events
   createVariant: (data) =>
     new Myna.VariantSummary(data)
 
+  # string => any
+  getCustom: (name) =>
+    if ( [ _, path ] = name.match /^settings[.](.*)$/ )
+      @settings.get(path)
+    else
+      super(name)
+
+  # string any -> this
+  setCustom: (name, value) =>
+    match = name.match /^settings[.](.*)$/
+    if match
+      path = match[1]
+      @settings.set(path, value)
+      for prefix in @settings.constructor.parse(path).prefixes() by -1
+        @trigger("change:settings.#{prefix}", this, @settings.get(prefix))
+      @trigger("change:settings", this, @settings.data)
+    else
+      super(name, value)
+
   # => U(variant null)
   loadLastView: =>
     @loadVariant('lastView')
@@ -185,4 +206,3 @@ class Myna.ExperimentBase extends Myna.Events
 
   save: (state) =>
     Myna.cache.save(@uuid, state)
-

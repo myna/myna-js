@@ -1653,56 +1653,119 @@
 }).call(this);
 
 (function() {
-  Myna.initLocal = function(options) {
-    var apiKey, apiRoot, debug, experiments, expt, id, _ref, _ref1, _ref2, _ref3, _ref4;
+  var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
+    __hasProp = {}.hasOwnProperty,
+    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
-    Myna.log("Myna.initLocal", options);
-    apiKey = (_ref = options.apiKey) != null ? _ref : Myna.error("Myna.initLocal", "no apiKey in options", options);
-    apiRoot = (_ref1 = options.apiRoot) != null ? _ref1 : "//api.mynaweb.com";
-    debug = (_ref2 = options.debug) != null ? _ref2 : window.location.hash === "#debug";
-    experiments = (_ref3 = options.experiments) != null ? _ref3 : [];
-    Myna.client = new Myna.Client({
-      apiKey: apiKey,
-      apiRoot: apiRoot,
-      experiments: experiments
-    });
-    if (debug) {
-      Myna.client.toolbar = new Myna.Toolbar(Myna.client);
-      Myna.$(Myna.client.toolbar.init);
-    } else {
-      Myna.client.recorder = new Myna.Recorder(options);
-      _ref4 = Myna.client.experiments;
-      for (id in _ref4) {
-        expt = _ref4[id];
-        Myna.client.recorder.listenTo(expt);
+  Myna.Variant = (function(_super) {
+    __extends(Variant, _super);
+
+    Variant.prototype.directAttributes = ["id", "name", "views", "totalReward", "weight"];
+
+    function Variant(options) {
+      var _ref, _ref1, _ref2;
+
+      if (options == null) {
+        options = {};
       }
+      this.toJSON = __bind(this.toJSON, this);
+      this.averageReward = __bind(this.averageReward, this);
+      Variant.__super__.constructor.call(this, options);
+      this.name = (_ref = options.name) != null ? _ref : void 0;
+      this.views = (_ref1 = options.views) != null ? _ref1 : void 0;
+      this.totalReward = (_ref2 = options.totalReward) != null ? _ref2 : void 0;
     }
-    return Myna.client;
-  };
 
-  Myna.initApi = function(options) {
-    var apiKey, apiRoot, error, success, _ref, _ref1, _ref2, _ref3;
+    Variant.prototype.averageReward = function() {
+      if ((this.views != null) && (this.totalReward != null)) {
+        if (this.views === 0) {
+          return 1.0;
+        } else {
+          return this.totalReward / this.views;
+        }
+      } else {
+        return void 0;
+      }
+    };
 
-    Myna.log("Myna.initRemote", options);
-    apiKey = (_ref = options.apiKey) != null ? _ref : Myna.error("Myna.Client.initApi", "no apiKey in options", options);
-    apiRoot = (_ref1 = options.apiRoot) != null ? _ref1 : "//api.mynaweb.com";
-    success = (_ref2 = options.success) != null ? _ref2 : (function() {});
-    error = (_ref3 = options.error) != null ? _ref3 : (function() {});
-    return Myna.jsonp.request({
-      url: "" + apiRoot + "/v2/experiment",
-      params: {
-        apikey: apiKey
-      },
-      success: function(json) {
-        Myna.log("Myna.initRemote", "response", json);
-        return success(Myna.initLocal({
-          apiKey: apiKey,
-          apiRoot: apiRoot,
-          experiments: json.results
-        }));
-      },
-      error: error
-    });
-  };
+    Variant.prototype.toJSON = function() {
+      var settingsJSON;
+
+      settingsJSON = Myna.extend({
+        "": null
+      }, this.settings.data);
+      return {
+        typename: "variant",
+        id: this.id,
+        name: this.name,
+        views: this.views,
+        totalReward: this.totalReward,
+        weight: this.weight,
+        settings: settingsJSON
+      };
+    };
+
+    return Variant;
+
+  })(Myna.VariantSummary);
+
+}).call(this);
+
+(function() {
+  var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
+    __hasProp = {}.hasOwnProperty,
+    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+  Myna.Experiment = (function(_super) {
+    __extends(Experiment, _super);
+
+    Experiment.prototype.directAttributes = ["uuid", "id", "accountId", "name", "visibility", "created"];
+
+    function Experiment(options) {
+      var _ref, _ref1, _ref2;
+
+      if (options == null) {
+        options = {};
+      }
+      this.toJSON = __bind(this.toJSON, this);
+      Experiment.__super__.constructor.call(this, options);
+      this.accountId = (_ref = options.accountId) != null ? _ref : void 0;
+      this.name = (_ref1 = options.name) != null ? _ref1 : void 0;
+      this.visibility = (_ref2 = options.visibility) != null ? _ref2 : "draft";
+      this.created = options.created != null ? Myna.stringToDate(options.created) : new Date();
+    }
+
+    Experiment.prototype.createVariant = function(data) {
+      return new Myna.Variant(data);
+    };
+
+    Experiment.prototype.toJSON = function() {
+      var id, settingsJSON, variant, variantJSON, _ref;
+
+      settingsJSON = Myna.extend({
+        "": null
+      }, this.settings.data);
+      variantJSON = {};
+      _ref = this.variants;
+      for (id in _ref) {
+        variant = _ref[id];
+        variantJSON[id] = variant.toJSON();
+      }
+      return {
+        typename: "experiment",
+        uuid: this.uuid,
+        id: this.id,
+        accountId: this.accountId,
+        name: this.name,
+        visibility: this.visibility,
+        created: this.created ? Myna.dateToString(this.created) : null,
+        settings: settingsJSON,
+        variants: variantJSON
+      };
+    };
+
+    return Experiment;
+
+  })(Myna.ExperimentSummary);
 
 }).call(this);

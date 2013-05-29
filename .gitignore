@@ -4,6 +4,7 @@ node_modules
 .grunt
 myna-js-specrunner.html
 myna-html-specrunner.html
+myna-full-specrunner.html
 
 *.sublime-project
 *.sublime-workspace

@@ -3,21 +3,31 @@ module.exports = (grunt) ->
 
   pkg = grunt.file.readJSON('package.json')
 
+  today    = grunt.template.today("yyyy-mm-dd")
+  thisYear = grunt.template.today("yyyy")
   licenses = for license in pkg.licenses then license.type
 
   mynaJsBanner =
     """
-    /*! Myna JS v#{pkg.version} - #{grunt.template.today("yyyy-mm-dd")}
+    /*! Myna JS v#{pkg.version} - #{today}
      * #{pkg.homepage}
-     * Copyright (c) #{grunt.template.today("yyyy")} #{pkg.maintainers[0].name}; Licensed #{licenses.join(", ")}
+     * Copyright (c) #{thisYear} Myna Limited; Licensed #{licenses.join(", ")}
      */
     """
 
   mynaHtmlBanner =
     """
-    /*! Myna HTML v#{pkg.version} - #{grunt.template.today("yyyy-mm-dd")}
+    /*! Myna HTML v#{pkg.version} - #{today}
      * #{pkg.homepage}
-     * Copyright (c) #{grunt.template.today("yyyy")} #{pkg.maintainers[0].name}; Licensed #{licenses.join(", ")}
+     * Copyright (c) #{thisYear} Myna Limited; Licensed #{licenses.join(", ")}
+     */
+    """
+
+  mynaFullBanner =
+    """
+    /*! Myna JS Full v#{pkg.version} - #{today}
+     * #{pkg.homepage}
+     * Copyright (c) #{thisYear} Myna Limited; Licensed #{licenses.join(", ")}
      */
     """
 
@@ -38,14 +48,15 @@ module.exports = (grunt) ->
       outro...
     ]
 
-  testSources = (outro) ->
+  testSources = (intro, outro) ->
     [
+      intro...
       'common.coffee'
       'core-spec.coffee'
       'jsonp-spec.coffee'
       'settings-spec.coffee'
-      'variant-spec.coffee'
-      'experiment-spec.coffee'
+      'variant-summary-spec.coffee'
+      'experiment-summary-spec.coffee'
       'suggest-spec.coffee'
       'reward-spec.coffee'
       'recorder-spec.coffee'
@@ -53,11 +64,11 @@ module.exports = (grunt) ->
       outro...
     ]
 
-  mynaJsMainSources   = mainSources [ ], [
+  mynaJsMainSources = mainSources [ ], [
     'js-init.coffee'
   ]
 
-  mynaJsTestSources   = testSources [ ], [
+  mynaJsTestSources = testSources [ ], [
     'js-init-spec.coffee'
   ]
 
@@ -69,6 +80,16 @@ module.exports = (grunt) ->
 
   mynaHtmlTestSources = testSources [ ], [
     'html-init-spec.coffee'
+  ]
+
+  mynaFullMainSources = mainSources [ ], [
+    'variant.coffee'
+    'experiment.coffee'
+  ]
+
+  mynaFullTestSources = testSources [ ], [
+    'variant-spec.coffee'
+    'experiment-spec.coffee'
   ]
 
   sources = (dir, sources, ext = null) ->
@@ -87,6 +108,11 @@ module.exports = (grunt) ->
   mynaHtmlDistLatest    = "dist/myna-html-#{pkg.series}.latest.js"
   mynaHtmlDistLatestMin = "dist/myna-html-#{pkg.series}.latest.min.js"
 
+  mynaFullDistMain      = "dist/myna-full-#{pkg.version}.js"
+  mynaFullDistMainMin   = "dist/myna-full-#{pkg.version}.min.js"
+  mynaFullDistLatest    = "dist/myna-full-#{pkg.series}.latest.js"
+  mynaFullDistLatestMin = "dist/myna-full-#{pkg.series}.latest.min.js"
+
   # Project configuration.
   grunt.initConfig({
     pkg: pkg
@@ -104,8 +130,10 @@ module.exports = (grunt) ->
     concat:
       mynaJsDist:     { src: sources('temp/main', mynaJsMainSources,   '.js'), dest: mynaJsDistMain,     options: { mynaJsBanner } }
       mynaJsLatest:   { src: sources('temp/main', mynaJsMainSources,   '.js'), dest: mynaJsDistLatest,   options: { mynaJsBanner } }
-      mynaHtmlDist:   { src: sources('temp/main', mynaHtmlMainSources, '.js'), dest: mynaHtmlDistMain,   options: { mynaJsBanner } }
-      mynaHtmlLatest: { src: sources('temp/main', mynaHtmlMainSources, '.js'), dest: mynaHtmlDistLatest, options: { mynaJsBanner } }
+      mynaHtmlDist:   { src: sources('temp/main', mynaHtmlMainSources, '.js'), dest: mynaHtmlDistMain,   options: { mynaHtmlBanner } }
+      mynaHtmlLatest: { src: sources('temp/main', mynaHtmlMainSources, '.js'), dest: mynaHtmlDistLatest, options: { mynaHtmlBanner } }
+      mynaFullDist:   { src: sources('temp/main', mynaFullMainSources, '.js'), dest: mynaFullDistMain,   options: { mynaFullBanner } }
+      mynaFullLatest: { src: sources('temp/main', mynaFullMainSources, '.js'), dest: mynaFullDistLatest, options: { mynaFullBanner } }
 
     jshint:
       options: { asi: true, eqnull: true, eqeqeq: false }
@@ -113,6 +141,8 @@ module.exports = (grunt) ->
       mynaJsTest:   { src: sources('temp/test', mynaJsTestSources, '.js') }
       mynaHtmlMain: { src: mynaHtmlDistMain }
       mynaHtmlTest: { src: sources('temp/test', mynaHtmlTestSources, '.js') }
+      mynaFullMain: { src: mynaFullDistMain }
+      mynaFullTest: { src: sources('temp/test', mynaFullTestSources, '.js') }
 
     jasmine:
       mynaJs:
@@ -127,15 +157,31 @@ module.exports = (grunt) ->
           specs:      sources('temp/test', mynaHtmlTestSources, '.js')
           outfile:    'myna-html-specrunner.html'
           keepRunner: true
+      mynaFull:
+        src: mynaFullDistMain
+        options:
+          specs:      sources('temp/test', mynaFullTestSources, '.js')
+          outfile:    'myna-full-specrunner.html'
+          keepRunner: true
 
     uglify:
       mynaJsDist:     { src: [ mynaJsDistMain     ], dest: mynaJsDistMainMin     }
       mynaJsLatest:   { src: [ mynaJsDistLatest   ], dest: mynaJsDistLatestMin   }
       mynaHtmlDist:   { src: [ mynaHtmlDistMain   ], dest: mynaHtmlDistMainMin   }
       mynaHtmlLatest: { src: [ mynaHtmlDistLatest ], dest: mynaHtmlDistLatestMin }
+      mynaFullDist:   { src: [ mynaFullDistMain   ], dest: mynaFullDistMainMin   }
+      mynaFullLatest: { src: [ mynaFullDistLatest ], dest: mynaFullDistLatestMin }
 
     watch:
-      main: { files: sources('src/maintest', mynaJsMainSources, '.coffee'), tasls: [ 'myna-js', 'myna-html' ] }
+      mynaJs:
+        files: sources('src/main', mynaJsMainSources, '.coffee').concat(sources('src/test', mynaJsTestSources, '.coffee'))
+        tasks: [ 'myna-js' ]
+      mynaHtml:
+        files: sources('src/main', mynaHtmlMainSources, '.coffee').concat(sources('src/test', mynaHtmlTestSources, '.coffee'))
+        tasks: [ 'myna-html' ]
+      mynaFull:
+        files: sources('src/main', mynaFullMainSources, '.coffee').concat(sources('src/test', mynaFullTestSources, '.coffee'))
+        tasks: [ 'myna-full' ]
   })
 
   grunt.loadNpmTasks 'grunt-contrib-coffee'
@@ -170,7 +216,20 @@ module.exports = (grunt) ->
     'uglify:mynaHtmlLatest'
   ]
 
+  grunt.registerTask 'myna-full', [
+    'coffee'
+    'copy'
+    'concat:mynaFullDist'
+    'concat:mynaFullLatest'
+    # 'jshint:mynaFullMain'
+    # 'jshint:mynaFullTest'
+    'jasmine:mynaFull'
+    'uglify:mynaFullDist'
+    'uglify:mynaFullLatest'
+  ]
+
   grunt.registerTask 'default', [
     'myna-js'
     'myna-html'
+    'myna-full'
   ]

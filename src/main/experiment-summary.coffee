@@ -1,5 +1,4 @@
 class Myna.ExperimentSummary extends Myna.ExperimentBase
-
   # -> boolean
   sticky: =>
     !!@settings.get("myna.js.sticky", true)

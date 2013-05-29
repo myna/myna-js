@@ -9641,28 +9641,62 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
   };
 
   Myna.dateToString = function(date) {
-    var day, hour, milli, minute, month, pad, second, year;
+    var day, exn, hour, milli, minute, month, pad, second, year;
 
-    if (Date.prototype.toISOString) {
-      return date.toISOString();
-    } else {
-      pad = function(num, len) {
-        var str;
+    Myna.log("Myna.dateToString", date);
+    try {
+      if (Date.prototype.toISOString) {
+        return date.toISOString();
+      } else {
+        pad = function(num, len) {
+          var str;
 
-        str = "" + num;
-        while (str.length < len) {
-          str = '0' + str;
-        }
+          str = "" + num;
+          while (str.length < len) {
+            str = '0' + str;
+          }
+          return str;
+        };
+        year = pad(date.getUTCFullYear(), 4);
+        month = pad(date.getUTCMonth() + 1, 2);
+        day = pad(date.getUTCDate(), 2);
+        hour = pad(date.getUTCHours(), 2);
+        minute = pad(date.getUTCMinutes(), 2);
+        second = pad(date.getUTCSeconds(), 2);
+        milli = pad(date.getUTCMilliseconds(), 2);
+        return "" + year + "-" + month + "-" + day + "T" + hour + ":" + minute + ":" + second + "." + milli + "Z";
+      }
+    } catch (_error) {
+      exn = _error;
+      return null;
+    }
+  };
+
+  Myna.stringToDate = function(str) {
+    var day, exn, hour, millisecond, minute, month, safeParseInt, second, year, _, _ref1;
+
+    Myna.log("Myna.stringToDate", str);
+    try {
+      if (str instanceof Date) {
         return str;
-      };
-      year = pad(date.getUTCFullYear(), 4);
-      month = pad(date.getUTCMonth() + 1, 2);
-      day = pad(date.getUTCDate(), 2);
-      hour = pad(date.getUTCHours(), 2);
-      minute = pad(date.getUTCMinutes(), 2);
-      second = pad(date.getUTCSeconds(), 2);
-      milli = pad(date.getUTCMilliseconds(), 2);
-      return "" + year + "-" + month + "-" + day + "T" + hour + ":" + minute + ":" + second + "." + milli + "Z";
+      } else {
+        _ref1 = str.match(/([0-9]{4})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2}).([0-9]{3})Z/), _ = _ref1[0], year = _ref1[1], month = _ref1[2], day = _ref1[3], hour = _ref1[4], minute = _ref1[5], second = _ref1[6], millisecond = _ref1[7];
+        if (!(year && month && day && hour && minute && second && millisecond)) {
+          return null;
+        }
+        safeParseInt = function(str) {
+          if (str[0] === '0') {
+            return safeParseInt(str.substring(1));
+          } else {
+            return parseInt(str);
+          }
+        };
+        return new Date(Date.UTC(safeParseInt(year), safeParseInt(month) - 1, safeParseInt(day), safeParseInt(hour), safeParseInt(minute), safeParseInt(second), safeParseInt(millisecond)));
+      }
+    } catch (_error) {
+      exn = _error;
+      Myna.log(exn);
+      return null;
     }
   };
 
@@ -9739,7 +9773,8 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
 }).call(this);
 
 (function() {
-  var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
+  var _ref,
+    __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
     __slice = [].slice;
@@ -9751,18 +9786,72 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
       this.off = __bind(this.off, this);
       this.on = __bind(this.on, this);
       this.triggerAsync = __bind(this.triggerAsync, this);
-      this.trigger = __bind(this.trigger, this);      this.eventHandlers = {};
+      this.trigger = __bind(this.trigger, this);
+      this.setCustom = __bind(this.setCustom, this);
+      this.set = __bind(this.set, this);
+      this.getCustom = __bind(this.getCustom, this);
+      this.get = __bind(this.get, this);      _ref = Events.__super__.constructor.apply(this, arguments);
+      return _ref;
     }
 
+    Events.prototype.directAttributes = [];
+
+    Events.prototype.get = function(name) {
+      if (this.constructor.prototype.directAttributes.indexOf(name) >= 0) {
+        return this[name];
+      } else {
+        return this.getCustom(name);
+      }
+    };
+
+    Events.prototype.getCustom = function(name) {
+      return this.error("get", "property not found: " + name);
+    };
+
+    Events.prototype.set = function(arg1, arg2) {
+      var name, setDirect, setOne, value,
+        _this = this;
+
+      setDirect = function(name, value) {
+        _this[name] = value;
+        return _this.trigger("change:" + name, _this, value);
+      };
+      setOne = function(name, value) {
+        if (_this.constructor.prototype.directAttributes.indexOf(name) >= 0) {
+          _this[name] = value;
+          return _this.trigger("change:" + name, _this, value);
+        } else {
+          return _this.setCustom(name, value);
+        }
+      };
+      if (typeof arg1 === "object") {
+        for (name in arg1) {
+          value = arg1[name];
+          setOne(name, value);
+        }
+      } else {
+        setOne(arg1, arg2);
+      }
+      this.trigger("change", this);
+      return this;
+    };
+
+    Events.prototype.setCustom = function(name, value) {
+      return this.error("set", "property not found: " + name);
+    };
+
     Events.prototype.trigger = function() {
-      var args, cancel, event, handler, _i, _len, _ref, _ref1;
+      var args, cancel, event, handler, _i, _len, _ref1, _ref2, _ref3;
 
       event = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
       this.log.apply(this, ["trigger", event].concat(__slice.call(args)));
+      if (!this.eventHandlers) {
+        this.eventHandlers = {};
+      }
       cancel = false;
-      _ref1 = (_ref = this.eventHandlers[event]) != null ? _ref : [];
-      for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-        handler = _ref1[_i];
+      _ref3 = (_ref1 = (_ref2 = this.eventHandlers) != null ? _ref2[event] : void 0) != null ? _ref1 : [];
+      for (_i = 0, _len = _ref3.length; _i < _len; _i++) {
+        handler = _ref3[_i];
         cancel = cancel || (handler.apply(this, args) === false);
       }
       if (cancel) {
@@ -9773,11 +9862,14 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
     };
 
     Events.prototype.triggerAsync = function() {
-      var args, error, event, success, triggerAll, _i, _ref,
+      var args, error, event, success, triggerAll, _i, _ref1,
         _this = this;
 
       event = arguments[0], args = 4 <= arguments.length ? __slice.call(arguments, 1, _i = arguments.length - 2) : (_i = 1, []), success = arguments[_i++], error = arguments[_i++];
       this.log.apply(this, ["triggerAsync", event].concat(__slice.call(args)));
+      if (!this.eventHandlers) {
+        this.eventHandlers = {};
+      }
       triggerAll = function(handlers) {
         var head, rest;
 
@@ -9791,46 +9883,61 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
           })], [error]));
         }
       };
-      return triggerAll((_ref = this.eventHandlers[event]) != null ? _ref : []);
+      return triggerAll((_ref1 = this.eventHandlers[event]) != null ? _ref1 : []);
     };
 
-    Events.prototype.on = function(event, handler) {
-      var _ref;
+    Events.prototype.on = function(events, handler) {
+      var event, handlers, _i, _len, _ref1, _ref2;
 
-      this.eventHandlers[event] = ((_ref = this.eventHandlers[event]) != null ? _ref : []).concat([handler]);
-      return this.log("on", event, handler, this.eventHandlers[event]);
-    };
-
-    Events.prototype.off = function(event, handler) {
-      var h;
-
-      if (handler == null) {
-        handler = null;
+      if (!this.eventHandlers) {
+        this.eventHandlers = {};
       }
-      switch (arguments.length) {
-        case 0:
-          this.eventHandlers = {};
-          break;
-        case 1:
-          delete this.eventHandlers[arguments[0]];
-          break;
-        default:
-          event = arguments[0], handler = arguments[1];
-          this.eventHandlers[event] = (function() {
-            var _i, _len, _ref, _results;
+      _ref1 = events.split(/[ ]+/);
+      for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+        event = _ref1[_i];
+        handlers = (_ref2 = this.eventHandlers[event]) != null ? _ref2 : [];
+        this.eventHandlers[event] = handlers.concat([handler]);
+        this.log("on", event, handler, this.eventHandlers[event]);
+      }
+    };
 
-            _ref = this.eventHandlers[event];
-            _results = [];
-            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-              h = _ref[_i];
-              if (h !== handler) {
-                _results.push(h);
+    Events.prototype.off = function(events, handler) {
+      var event, h, handlers, _i, _len, _ref1;
+
+      if (!this.eventHandlers) {
+        this.eventHandlers = {};
+      }
+      if (events != null) {
+        _ref1 = events.split(/[ ]+/);
+        for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+          event = _ref1[_i];
+          switch (arguments.length) {
+            case 1:
+              delete this.eventHandlers[arguments[0]];
+              break;
+            default:
+              event = arguments[0], handler = arguments[1];
+              if ((handlers = this.eventHandlers[event])) {
+                this.eventHandlers[event] = (function() {
+                  var _j, _len1, _results;
+
+                  _results = [];
+                  for (_j = 0, _len1 = handlers.length; _j < _len1; _j++) {
+                    h = handlers[_j];
+                    if (h !== handler) {
+                      _results.push(h);
+                    }
+                  }
+                  return _results;
+                })();
               }
-            }
-            return _results;
-          }).call(this);
+          }
+          this.log("off", event, handler, this.eventHandlers[event]);
+        }
+      } else {
+        this.eventHandlers = {};
+        this.log("off", "all");
       }
-      return this.log("off", event, handler, this.eventHandlers[event]);
     };
 
     return Events;
@@ -10319,11 +10426,14 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
 }).call(this);
 
 (function() {
-  var __hasProp = {}.hasOwnProperty,
+  var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
+    __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
   Myna.VariantSummary = (function(_super) {
     __extends(VariantSummary, _super);
+
+    VariantSummary.prototype.directAttributes = ["id", "weight"];
 
     function VariantSummary(options) {
       var _ref, _ref1, _ref2;
@@ -10331,14 +10441,44 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
       if (options == null) {
         options = {};
       }
+      this.setCustom = __bind(this.setCustom, this);
+      this.getCustom = __bind(this.getCustom, this);
       this.id = (_ref = options.id) != null ? _ref : this.error("constructor", "no id in options", options);
       this.weight = (_ref1 = options.weight) != null ? _ref1 : this.error("constructor", "no weight in options", options);
       this.settings = new Myna.Settings((_ref2 = options.settings) != null ? _ref2 : {});
     }
 
+    VariantSummary.prototype.getCustom = function(name) {
+      var path, _, _ref;
+
+      if ((_ref = name.match(/^settings[.](.*)$/), _ = _ref[0], path = _ref[1], _ref)) {
+        return this.settings.get(path);
+      } else {
+        return VariantSummary.__super__.getCustom.call(this, name);
+      }
+    };
+
+    VariantSummary.prototype.setCustom = function(name, value) {
+      var match, path, prefix, _i, _ref;
+
+      match = name.match(/^settings[.](.*)$/);
+      if (match) {
+        path = match[1];
+        this.settings.set(path, value);
+        _ref = this.settings.constructor.parse(path).prefixes();
+        for (_i = _ref.length - 1; _i >= 0; _i += -1) {
+          prefix = _ref[_i];
+          this.trigger("change:settings." + prefix, this, this.settings.get(prefix));
+        }
+        return this.trigger("change:settings", this, this.settings.data);
+      } else {
+        return VariantSummary.__super__.setCustom.call(this, name, value);
+      }
+    };
+
     return VariantSummary;
 
-  })(Myna.Logging);
+  })(Myna.Events);
 
 }).call(this);
 
@@ -10350,6 +10490,8 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
 
   Myna.ExperimentBase = (function(_super) {
     __extends(ExperimentBase, _super);
+
+    ExperimentBase.prototype.directAttributes = ["uuid", "id"];
 
     function ExperimentBase(options) {
       var data, _i, _len, _ref, _ref1, _ref2, _ref3, _ref4;
@@ -10369,6 +10511,8 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
       this.clearLastView = __bind(this.clearLastView, this);
       this.saveLastView = __bind(this.saveLastView, this);
       this.loadLastView = __bind(this.loadLastView, this);
+      this.setCustom = __bind(this.setCustom, this);
+      this.getCustom = __bind(this.getCustom, this);
       this.createVariant = __bind(this.createVariant, this);
       this.randomVariant = __bind(this.randomVariant, this);
       this.totalWeight = __bind(this.totalWeight, this);
@@ -10385,7 +10529,7 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
       ExperimentBase.__super__.constructor.call(this, options);
       this.log("constructor", options);
       this.id = (_ref = options.id) != null ? _ref : this.error("constructor", this.id, "no id in options", options);
-      this.uuid = (_ref1 = options.uuid) != null ? _ref1 : this.error("constructor", this.id, "no uuid in options", options);
+      this.uuid = (_ref1 = options.uuid) != null ? _ref1 : void 0;
       this.settings = new Myna.Settings((_ref2 = options.settings) != null ? _ref2 : {});
       this.variants = {};
       _ref4 = (_ref3 = options.variants) != null ? _ref3 : [];
@@ -10574,6 +10718,34 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
 
     ExperimentBase.prototype.createVariant = function(data) {
       return new Myna.VariantSummary(data);
+    };
+
+    ExperimentBase.prototype.getCustom = function(name) {
+      var path, _, _ref;
+
+      if ((_ref = name.match(/^settings[.](.*)$/), _ = _ref[0], path = _ref[1], _ref)) {
+        return this.settings.get(path);
+      } else {
+        return ExperimentBase.__super__.getCustom.call(this, name);
+      }
+    };
+
+    ExperimentBase.prototype.setCustom = function(name, value) {
+      var match, path, prefix, _i, _ref;
+
+      match = name.match(/^settings[.](.*)$/);
+      if (match) {
+        path = match[1];
+        this.settings.set(path, value);
+        _ref = this.settings.constructor.parse(path).prefixes();
+        for (_i = _ref.length - 1; _i >= 0; _i += -1) {
+          prefix = _ref[_i];
+          this.trigger("change:settings." + prefix, this, this.settings.get(prefix));
+        }
+        return this.trigger("change:settings", this, this.settings.data);
+      } else {
+        return ExperimentBase.__super__.setCustom.call(this, name, value);
+      }
     };
 
     ExperimentBase.prototype.loadLastView = function() {
@@ -10821,17 +10993,19 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
         error = (function() {});
       }
       this.log("recordView", expt.id, variant.id);
-      this.queueEvent({
-        typename: "view",
-        experiment: expt.uuid,
-        variant: variant.id,
-        timestamp: Myna.dateToString(new Date())
-      });
-      this.log("recordReward", "aboutToSync", this.autoSync);
-      if (this.autoSync) {
-        return this.sync(success, error);
-      } else {
-        return success();
+      if (expt.uuid != null) {
+        this.queueEvent({
+          typename: "view",
+          experiment: expt.uuid,
+          variant: variant.id,
+          timestamp: Myna.dateToString(new Date())
+        });
+        this.log("recordReward", "aboutToSync", this.autoSync);
+        if (this.autoSync) {
+          return this.sync(success, error);
+        } else {
+          return success();
+        }
       }
     };
 
@@ -10843,18 +11017,20 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
         error = (function() {});
       }
       this.log("recordReward", expt.id, variant.id, amount);
-      this.queueEvent({
-        typename: "reward",
-        experiment: expt.uuid,
-        variant: variant.id,
-        amount: amount,
-        timestamp: Myna.dateToString(new Date())
-      });
-      this.log("recordReward", "aboutToSync", this.autoSync);
-      if (this.autoSync) {
-        return this.sync(success, error);
-      } else {
-        return success();
+      if (expt.uuid != null) {
+        this.queueEvent({
+          typename: "reward",
+          experiment: expt.uuid,
+          variant: variant.id,
+          amount: amount,
+          timestamp: Myna.dateToString(new Date())
+        });
+        this.log("recordReward", "aboutToSync", this.autoSync);
+        if (this.autoSync) {
+          return this.sync(success, error);
+        } else {
+          return success();
+        }
       }
     };
 

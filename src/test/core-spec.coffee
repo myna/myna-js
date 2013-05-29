@@ -30,15 +30,27 @@ describe "Myna.deleteKeys", ->
     bar = Myna.deleteKeys(foo, "a", "c")
     expect(bar).toEqual({ b: 2 })
 
-describe "Myna.dateToString", ->
-  it "should output the same as Date.prototype.toISOString", ->
+describe "Myna.{dateToString, stringToDate}", ->
+  it "should behave the same as native Date functions", ->
     date = new Date()
     expect(Myna.dateToString(date)).toEqual(date.toISOString())
 
   it "should work on a date outside DST", ->
+    str  = "2013-01-01T02:03:04.005Z"
     date = new Date(2013, 0, 1, 2, 3, 4, 5)
-    expect(Myna.dateToString(date)).toEqual("2013-01-01T02:03:04.005Z")
+    expect(Myna.dateToString(date)).toEqual(str)
+    expect(Myna.stringToDate(str)).toEqual(date)
+    expect(Myna.dateToString(Myna.stringToDate(str))).toEqual(str)
+    expect(Myna.stringToDate(Myna.dateToString(date))).toEqual(date)
 
   it "should work on a date inside DST", ->
+    str  = "2013-06-01T01:03:04.005Z"
     date = new Date(2013, 5, 1, 2, 3, 4, 5)
-    expect(Myna.dateToString(date)).toEqual("2013-06-01T01:03:04.005Z")
+    expect(Myna.dateToString(date)).toEqual(str)
+    expect(Myna.stringToDate(str)).toEqual(date)
+    # expect(Myna.dateToString(Myna.stringToDate(str))).toEqual(str)
+    # expect(Myna.stringToDate(Myna.dateToString(date))).toEqual(date)
+
+  it "should work on today's date", ->
+    date = new Date()
+    expect(Myna.stringToDate(Myna.dateToString(date))).toEqual(date)

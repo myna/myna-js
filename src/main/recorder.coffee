@@ -32,26 +32,28 @@ class Myna.Recorder extends Myna.Events
   # synchronising it to the Myna servers before calling the success callback.
   recordView: (expt, variant, success = (->), error = (->)) =>
     @log("recordView", expt.id, variant.id)
-    @queueEvent
-      typename:   "view"
-      experiment: expt.uuid
-      variant:    variant.id
-      timestamp:  Myna.dateToString(new Date())
-    @log("recordReward", "aboutToSync", @autoSync)
-    if @autoSync then @sync(success, error) else success()
+    if expt.uuid?
+      @queueEvent
+        typename:   "view"
+        experiment: expt.uuid
+        variant:    variant.id
+        timestamp:  Myna.dateToString(new Date())
+      @log("recordReward", "aboutToSync", @autoSync)
+      if @autoSync then @sync(success, error) else success()
 
   # Record a reward event, caching it in local storage and possibly
   # synchronising it to the Myna servers before calling the success callback.
   recordReward: (expt, variant, amount, success = (->), error = (->)) =>
     @log("recordReward", expt.id, variant.id, amount)
-    @queueEvent
-      typename:   "reward"
-      experiment: expt.uuid
-      variant:    variant.id
-      amount:     amount
-      timestamp:  Myna.dateToString(new Date())
-    @log("recordReward", "aboutToSync", @autoSync)
-    if @autoSync then @sync(success, error) else success()
+    if expt.uuid?
+      @queueEvent
+        typename:   "reward"
+        experiment: expt.uuid
+        variant:    variant.id
+        amount:     amount
+        timestamp:  Myna.dateToString(new Date())
+      @log("recordReward", "aboutToSync", @autoSync)
+      if @autoSync then @sync(success, error) else success()
 
   # Call the `record` endpoint on the Myna API servers, synchronising view/reward
   # events from local storage.
