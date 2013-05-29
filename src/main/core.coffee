@@ -12,6 +12,12 @@ Myna.error = (args...) ->
     window.console?.error(args)
   throw args
 
+Myna.trim = (str) ->
+  if String.prototype.trim
+    str.trim()
+  else
+    str.replace(/^\s+|\s+$/g, '')
+
 Myna.extend = (des, sources...) ->
   for src in sources
     for key, value of src

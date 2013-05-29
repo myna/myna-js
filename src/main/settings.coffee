@@ -1,3 +1,5 @@
+'use strict'
+
 class Path
   constructor: (next = null) ->
     @next = next
@@ -13,7 +15,16 @@ class Root extends Path
     @next.get(data)
 
   set: (data, value) =>
-    @next.set(data, value)
+    if value?
+      @next.set(data, value)
+    else
+      @next.unset(data)
+
+  unset: (data) =>
+    @next.unset(data)
+
+  prefixes: =>
+    @next.prefixes()
 
 class Field extends Path
   constructor: (next, name) ->
@@ -35,6 +46,23 @@ class Field extends Path
     ans[@name] = @next.set(ans[@name], value)
     ans
 
+  unset: (data) =>
+    # Clone data:
+    ans = {}
+    for k, v of data then ans[k] = v
+
+    # Delete new property:
+    modified = @next.unset(ans[@name])
+    if @next.unset(ans[@name])?
+      ans[@name] = modified
+    else
+      delete ans[@name]
+
+    ans
+
+  prefixes: =>
+    [ @name, (for prefix in @next.prefixes() then "#{@name}.#{prefix}")... ]
+
 class Nil extends Path
   constructor: () ->
     super(null)
@@ -48,39 +76,50 @@ class Nil extends Path
   set: (data, value) ->
     value
 
+  unset: (data) ->
+    undefined
+
+  prefixes: ->
+    []
+
 nil = new Nil()
 
-class Myna.Settings
+class Settings
   constructor: (data = {}) ->
     @data = {}
     @set(data)
 
-  get: (path, orElse = null) =>
-    ans = @parse(path).get(@data) ? orElse
-    Myna.log("Myna.Settings.get", path, ans)
-    ans
+  @ast: { Root, Field, Nil, nil }
 
+  @parse: (path) =>
+    path = Myna.trim(path)
+    memo = nil
+    unless path == ""
+      for name in path.split(".") by -1
+        memo = new Field(memo, name)
+    new Root(memo)
+
+  get: (path, orElse = null) =>
+    Settings.parse(path).get(@data) ? orElse
 
   set: =>
     switch arguments.length
       when 0
-        Myna.error("Myna.Settings.set", "not enough arguments", arguments)
+        throw [ "Settings.set", "not enough arguments", arguments ]
       when 1
         for key, value of arguments[0]
-          Myna.log("Myna.Settings.set", key, value)
-          @data = @parse(key).set(@data, value)
+          @data = Settings.parse(key).set(@data, value)
       else
         key = arguments[0]
         value = arguments[1]
-        Myna.log("Myna.Settings.set", key, value)
-        @data = @parse(key).set(@data, value)
+        @data = Settings.parse(key).set(@data, value)
     this
 
-  parse: (path) =>
-    memo = nil
-    for name in path.split(".") by -1
-      memo = new Field(memo, name)
-    new Root(memo)
+  unset: (path) =>
+    @data = Settings.parse(path).unset(@data)
+    this
 
   toJson: =>
     @data
+
+Myna.Settings = Settings

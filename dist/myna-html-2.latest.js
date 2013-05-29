@@ -9793,10 +9793,14 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
 }).call(this);
 
 (function() {
-  var Field, Nil, Path, Root, nil,
+  'use strict';
+  var Field, Nil, Path, Root, Settings, logging, nil,
     __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
     __hasProp = {}.hasOwnProperty,
-    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
+    __slice = [].slice;
+
+  logging = require('lib/logging');
 
   Path = (function() {
     function Path(next) {
@@ -9814,6 +9818,8 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
     __extends(Root, _super);
 
     function Root(next) {
+      this.prefixes = __bind(this.prefixes, this);
+      this.unset = __bind(this.unset, this);
       this.set = __bind(this.set, this);
       this.get = __bind(this.get, this);
       this.path = __bind(this.path, this);      Root.__super__.constructor.call(this, next);
@@ -9828,7 +9834,19 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
     };
 
     Root.prototype.set = function(data, value) {
-      return this.next.set(data, value);
+      if (value != null) {
+        return this.next.set(data, value);
+      } else {
+        return this.next.unset(data);
+      }
+    };
+
+    Root.prototype.unset = function(data) {
+      return this.next.unset(data);
+    };
+
+    Root.prototype.prefixes = function() {
+      return this.next.prefixes();
     };
 
     return Root;
@@ -9839,6 +9857,8 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
     __extends(Field, _super);
 
     function Field(next, name) {
+      this.prefixes = __bind(this.prefixes, this);
+      this.unset = __bind(this.unset, this);
       this.set = __bind(this.set, this);
       this.get = __bind(this.get, this);
       this.path = __bind(this.path, this);      Field.__super__.constructor.call(this, next);
@@ -9865,6 +9885,36 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
       return ans;
     };
 
+    Field.prototype.unset = function(data) {
+      var ans, k, v;
+
+      ans = {};
+      for (k in data) {
+        v = data[k];
+        ans[k] = v;
+      }
+      if (this.next.unset(ans[this.name]) === false) {
+        delete ans[this.name];
+      }
+      return ans;
+    };
+
+    Field.prototype.prefixes = function() {
+      var prefix;
+
+      return [this.name].concat(__slice.call((function() {
+          var _i, _len, _ref, _results;
+
+          _ref = this.next.prefixes();
+          _results = [];
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            prefix = _ref[_i];
+            _results.push("" + this.name + "." + prefix);
+          }
+          return _results;
+        }).call(this)));
+    };
+
     return Field;
 
   })(Path);
@@ -9888,61 +9938,33 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
       return value;
     };
 
+    Nil.prototype.unset = function(data) {
+      return false;
+    };
+
+    Nil.prototype.prefixes = function() {
+      return [];
+    };
+
     return Nil;
 
   })(Path);
 
   nil = new Nil();
 
-  Myna.Settings = (function() {
+  Settings = (function() {
     function Settings(data) {
       if (data == null) {
         data = {};
       }
       this.toJson = __bind(this.toJson, this);
-      this.parse = __bind(this.parse, this);
       this.set = __bind(this.set, this);
       this.get = __bind(this.get, this);
       this.data = {};
       this.set(data);
     }
 
-    Settings.prototype.get = function(path, orElse) {
-      var ans, _ref;
-
-      if (orElse == null) {
-        orElse = null;
-      }
-      ans = (_ref = this.parse(path).get(this.data)) != null ? _ref : orElse;
-      Myna.log("Myna.Settings.get", path, ans);
-      return ans;
-    };
-
-    Settings.prototype.set = function() {
-      var key, value, _ref;
-
-      switch (arguments.length) {
-        case 0:
-          Myna.error("Myna.Settings.set", "not enough arguments", arguments);
-          break;
-        case 1:
-          _ref = arguments[0];
-          for (key in _ref) {
-            value = _ref[key];
-            Myna.log("Myna.Settings.set", key, value);
-            this.data = this.parse(key).set(this.data, value);
-          }
-          break;
-        default:
-          key = arguments[0];
-          value = arguments[1];
-          Myna.log("Myna.Settings.set", key, value);
-          this.data = this.parse(key).set(this.data, value);
-      }
-      return this;
-    };
-
-    Settings.prototype.parse = function(path) {
+    Settings.parse = function(path) {
       var memo, name, _i, _ref;
 
       memo = nil;
@@ -9954,13 +9976,46 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
       return new Root(memo);
     };
 
+    Settings.prototype.get = function(path, orElse) {
+      var _ref;
+
+      if (orElse == null) {
+        orElse = null;
+      }
+      return (_ref = Settings.parse(path).get(this.data)) != null ? _ref : orElse;
+    };
+
+    Settings.prototype.set = function() {
+      var key, value, _ref;
+
+      switch (arguments.length) {
+        case 0:
+          throw ["Settings.set", "not enough arguments", arguments];
+          break;
+        case 1:
+          _ref = arguments[0];
+          for (key in _ref) {
+            value = _ref[key];
+            this.data = Settings.parse(key).set(this.data, value);
+          }
+          break;
+        default:
+          key = arguments[0];
+          value = arguments[1];
+          this.data = Settings.parse(key).set(this.data, value);
+      }
+      return this;
+    };
+
     Settings.prototype.toJson = function() {
       return this.data;
     };
 
     return Settings;
 
-  })();
+  }).call(this);
+
+  Myna.Settings = Settings;
 
 }).call(this);
 

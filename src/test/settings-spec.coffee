@@ -1,3 +1,10 @@
+describe "Myna.Settings.parse", ->
+  it "should produce a Path", ->
+    expect(Myna.Settings.parse("a.b.c").path()).toEqual("a.b.c")
+
+  it "should produce an empty Path", ->
+    expect(Myna.Settings.parse("").path()).toEqual("")
+
 describe "Myna.Settings.constructor", ->
   it "should create a new settings object", ->
     settings = new Myna.Settings { a: 1, b: 2, c: 3 }
@@ -52,6 +59,9 @@ describe "Myna.Settings.set(key, value)", ->
   it "should overwrite part of an existing value", ->
     expect((new Myna.Settings a: b: c: 1).set("a.b", 2).data).toEqual({ a: b: 2 })
 
+  it "should call unset when the value is null", ->
+    expect((new Myna.Settings a: b: c: 1).set("a.b", null).data).toEqual({ a: {} })
+
 describe "Myna.Settings.set(object)", ->
   it "should set a new value", ->
     expect((new Myna.Settings a: 1).set(b: 2).data).toEqual({ a: 1, b: 2 })
@@ -64,3 +74,24 @@ describe "Myna.Settings.set(object)", ->
 
   it "should set multiple values", ->
     expect((new Myna.Settings a: b: c: 1).set({ "a.b": 2, d: 3 }).data).toEqual({ a: { b: 2 }, d: 3 })
+
+  it "should call unset when a value is null", ->
+    expect((new Myna.Settings a: b: c: 1).set({ "a.b": null, d: 3 }).data).toEqual({ a: {}, d: 3 })
+
+describe "Myna.Settings.unset(key, value)", ->
+  it "should unset a value", ->
+    expect((new Myna.Settings { a: 1, b: 2 }).unset("b").data).toEqual({ a: 1 })
+
+  it "should unset only the relevant portion of a path", ->
+    expect((new Myna.Settings { a: { b: 1, c: 2 } }).unset("a.b").data).toEqual({ a: c: 2 })
+    expect((new Myna.Settings { a: b: 1 }).unset("a.b").data).toEqual({ a: {} })
+
+describe "Path.prefixes(key)", ->
+  it "should return the prefixes of a path", ->
+    expect(Myna.Settings.parse("a.b.c").prefixes()).toEqual([ "a", "a.b", "a.b.c" ])
+
+  it "should return one prefix if the path has one component", ->
+    expect(Myna.Settings.parse("a").prefixes()).toEqual([ "a" ])
+
+  it "should return no prefixes if the path is empty", ->
+    expect(Myna.Settings.parse("").prefixes()).toEqual([])

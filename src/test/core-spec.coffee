@@ -1,3 +1,10 @@
+describe "Myna.trim", ->
+  it "should trim a string", ->
+    expect(Myna.trim("a")).toEqual("a")
+    expect(Myna.trim("a ")).toEqual("a")
+    expect(Myna.trim(" a")).toEqual("a")
+    expect(Myna.trim("\t\r\n a \t\r\n")).toEqual("a")
+
 describe "Myna.extend", ->
   it "should add keys to an object", ->
     expect(Myna.extend({ a: 1 }, { b: 2 }, { c: 3 })).toEqual({ a: 1, b: 2, c: 3 })

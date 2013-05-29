@@ -190,6 +190,6 @@ describe "beforeReward event", ->
       expect(findCall(calls, "view",            0)).toEqual([ "view",            variant, true ])
       expect(findCall(calls, "beforeSync",      0)).toEqual([ "beforeSync",      [[ 'view', variant.id, null ]] ])
       expect(findCall(calls, "beforeReward",    0)).toEqual([ "beforeReward",    variant, 0.8, true ])
-      expect(findCall(calls, "afterSync",       0)).toEqual([ "afterSync",       [[ 'view', variant.id, null ]], [] ])
+      expect(findCall(calls, "afterSync",       0)).toEqual([ "afterSync",       [], [[ 'view', variant.id, null ]] ])
 
       @removeAllSpies()

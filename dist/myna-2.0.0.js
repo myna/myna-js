@@ -31,6 +31,14 @@
     throw args;
   };
 
+  Myna.trim = function(str) {
+    if (String.prototype.trim) {
+      return str.trim();
+    } else {
+      return str.replace(/^\s+|\s+$/g, '');
+    }
+  };
+
   Myna.extend = function() {
     var des, key, sources, src, value, _i, _len;
 
@@ -195,10 +203,12 @@
 }).call(this);
 
 (function() {
-  var Field, Nil, Path, Root, nil,
+  'use strict';
+  var Field, Nil, Path, Root, Settings, nil,
     __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
     __hasProp = {}.hasOwnProperty,
-    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
+    __slice = [].slice;
 
   Path = (function() {
     function Path(next) {
@@ -216,6 +226,8 @@
     __extends(Root, _super);
 
     function Root(next) {
+      this.prefixes = __bind(this.prefixes, this);
+      this.unset = __bind(this.unset, this);
       this.set = __bind(this.set, this);
       this.get = __bind(this.get, this);
       this.path = __bind(this.path, this);      Root.__super__.constructor.call(this, next);
@@ -230,7 +242,19 @@
     };
 
     Root.prototype.set = function(data, value) {
-      return this.next.set(data, value);
+      if (value != null) {
+        return this.next.set(data, value);
+      } else {
+        return this.next.unset(data);
+      }
+    };
+
+    Root.prototype.unset = function(data) {
+      return this.next.unset(data);
+    };
+
+    Root.prototype.prefixes = function() {
+      return this.next.prefixes();
     };
 
     return Root;
@@ -241,6 +265,8 @@
     __extends(Field, _super);
 
     function Field(next, name) {
+      this.prefixes = __bind(this.prefixes, this);
+      this.unset = __bind(this.unset, this);
       this.set = __bind(this.set, this);
       this.get = __bind(this.get, this);
       this.path = __bind(this.path, this);      Field.__super__.constructor.call(this, next);
@@ -267,6 +293,39 @@
       return ans;
     };
 
+    Field.prototype.unset = function(data) {
+      var ans, k, modified, v;
+
+      ans = {};
+      for (k in data) {
+        v = data[k];
+        ans[k] = v;
+      }
+      modified = this.next.unset(ans[this.name]);
+      if (this.next.unset(ans[this.name]) != null) {
+        ans[this.name] = modified;
+      } else {
+        delete ans[this.name];
+      }
+      return ans;
+    };
+
+    Field.prototype.prefixes = function() {
+      var prefix;
+
+      return [this.name].concat(__slice.call((function() {
+          var _i, _len, _ref, _results;
+
+          _ref = this.next.prefixes();
+          _results = [];
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            prefix = _ref[_i];
+            _results.push("" + this.name + "." + prefix);
+          }
+          return _results;
+        }).call(this)));
+    };
+
     return Field;
 
   })(Path);
@@ -290,34 +349,62 @@
       return value;
     };
 
+    Nil.prototype.unset = function(data) {
+      return void 0;
+    };
+
+    Nil.prototype.prefixes = function() {
+      return [];
+    };
+
     return Nil;
 
   })(Path);
 
   nil = new Nil();
 
-  Myna.Settings = (function() {
+  Settings = (function() {
     function Settings(data) {
       if (data == null) {
         data = {};
       }
       this.toJson = __bind(this.toJson, this);
-      this.parse = __bind(this.parse, this);
+      this.unset = __bind(this.unset, this);
       this.set = __bind(this.set, this);
       this.get = __bind(this.get, this);
       this.data = {};
       this.set(data);
     }
 
+    Settings.ast = {
+      Root: Root,
+      Field: Field,
+      Nil: Nil,
+      nil: nil
+    };
+
+    Settings.parse = function(path) {
+      var memo, name, _i, _ref;
+
+      path = Myna.trim(path);
+      memo = nil;
+      if (path !== "") {
+        _ref = path.split(".");
+        for (_i = _ref.length - 1; _i >= 0; _i += -1) {
+          name = _ref[_i];
+          memo = new Field(memo, name);
+        }
+      }
+      return new Root(memo);
+    };
+
     Settings.prototype.get = function(path, orElse) {
-      var ans, _ref;
+      var _ref;
 
       if (orElse == null) {
         orElse = null;
       }
-      ans = (_ref = this.parse(path).get(this.data)) != null ? _ref : orElse;
-      Myna.log("Myna.Settings.get", path, ans);
-      return ans;
+      return (_ref = Settings.parse(path).get(this.data)) != null ? _ref : orElse;
     };
 
     Settings.prototype.set = function() {
@@ -325,35 +412,26 @@
 
       switch (arguments.length) {
         case 0:
-          Myna.error("Myna.Settings.set", "not enough arguments", arguments);
+          throw ["Settings.set", "not enough arguments", arguments];
           break;
         case 1:
           _ref = arguments[0];
           for (key in _ref) {
             value = _ref[key];
-            Myna.log("Myna.Settings.set", key, value);
-            this.data = this.parse(key).set(this.data, value);
+            this.data = Settings.parse(key).set(this.data, value);
           }
           break;
         default:
           key = arguments[0];
           value = arguments[1];
-          Myna.log("Myna.Settings.set", key, value);
-          this.data = this.parse(key).set(this.data, value);
+          this.data = Settings.parse(key).set(this.data, value);
       }
       return this;
     };
 
-    Settings.prototype.parse = function(path) {
-      var memo, name, _i, _ref;
-
-      memo = nil;
-      _ref = path.split(".");
-      for (_i = _ref.length - 1; _i >= 0; _i += -1) {
-        name = _ref[_i];
-        memo = new Field(memo, name);
-      }
-      return new Root(memo);
+    Settings.prototype.unset = function(path) {
+      this.data = Settings.parse(path).unset(this.data);
+      return this;
     };
 
     Settings.prototype.toJson = function() {
@@ -362,7 +440,9 @@
 
     return Settings;
 
-  })();
+  }).call(this);
+
+  Myna.Settings = Settings;
 
 }).call(this);
 
@@ -1359,7 +1439,7 @@
       _ref4 = Myna.client.experiments;
       for (id in _ref4) {
         expt = _ref4[id];
-        Myna.client.records.listenTo(expt);
+        Myna.client.recorder.listenTo(expt);
       }
     }
     return Myna.client;

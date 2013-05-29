@@ -152,7 +152,7 @@ module.exports = (grunt) ->
     'concat:mynaJsLatest'
     # 'jshint:mynaJsMain'
     # 'jshint:mynaJsTest'
-    # 'jasmine:mynaJs'
+    'jasmine:mynaJs'
     'uglify:mynaJsDist'
     'uglify:mynaJsLatest'
   ]
@@ -164,7 +164,7 @@ module.exports = (grunt) ->
     'concat:mynaHtmlLatest'
     # 'jshint:mynaHtmlMain'
     # 'jshint:mynaHtmlTest'
-    # 'jasmine:mynaHtml'
+    'jasmine:mynaHtml'
     'uglify:mynaHtmlDist'
     'uglify:mynaHtmlLatest'
   ]
