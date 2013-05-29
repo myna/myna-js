@@ -2,16 +2,6 @@ window.Myna ?= {}
 
 Myna.debug = true
 
-Myna.log = (args...) ->
-  if Myna.debug
-    window.console?.log(args)
-  return
-
-Myna.error = (args...) ->
-  if Myna.debug
-    window.console?.error(args)
-  throw args
-
 Myna.trim = (str) ->
   if String.prototype.trim
     str.trim()

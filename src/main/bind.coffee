@@ -3,7 +3,7 @@ class Myna.Binder
     @boundHandlers = []
 
   listenTo: (expt) =>
-    Myna.log("Myna.Binder.listenTo", expt)
+    @log("listenTo", expt)
     expt.on 'view', (variant) => @bind(expt, variant)
 
   # experiment -> boolean
@@ -12,7 +12,7 @@ class Myna.Binder
     $(".#{cssClass}").length > 0
 
   bind: (expt, variant) =>
-    Myna.log("Myna.Binder.bind", expt)
+    @log("bind", expt)
 
     @unbind()
 
@@ -23,27 +23,27 @@ class Myna.Binder
     dataBind = if dataPrefix then "#{@dataPrefix}-bind" else "bind"
     dataGoal = if dataPrefix then "#{@dataPrefix}-goal" else "goal"
 
-    Myna.log("Myna.Binder.bind", "searchParams", cssClass, dataShow, dataBind, dataGoal)
+    @log("bind", "searchParams", cssClass, dataShow, dataBind, dataGoal)
 
     allElems  = if cssClass then Myna.$(".#{cssClass}") else null
     showElems = if cssClass then allElems.filter("[data-#{dataShow}]") else $("[data-#{dataShow}]")
     bindElems = if cssClass then allElems.filter("[data-#{dataBind}]") else $("[data-#{dataBind}]")
     goalElems = if cssClass then allElems.filter("[data-#{dataGoal}]") else $("[data-#{dataGoal}]")
 
-    Myna.log("Myna.Binder.bind", "elements", allElems, showElems, bindElems, goalElems)
+    @log("bind", "elements", allElems, showElems, bindElems, goalElems)
 
     showElems.each (index, elem) => @bindShow(expt, variant, dataShow, elem)
     bindElems.each (index, elem) => @bindBind(expt, variant, dataBind, elem)
     goalElems.each (index, elem) => @bindGoal(expt, variant, dataGoal, elem)
 
   unbind: =>
-    Myna.log("Myna.Binder.unbind", @boundHandlers)
+    @log("unbind", @boundHandlers)
     for [ elem, event, handler ] in @boundHandlers
-      Myna.log("Myna.Binder.unbind", elem, event, handler)
+      @log("unbind", elem, event, handler)
       Myna.$(elem).off(event, handler)
 
   bindShow: (expt, variant, dataAttr, elem) =>
-    Myna.log("Myna.Binder.bindShow", expt, dataAttr, elem)
+    @log("bindShow", expt, dataAttr, elem)
 
     self = Myna.$(elem)
     path = self.data(dataAttr)
@@ -54,7 +54,7 @@ class Myna.Binder
       self.hide()
 
   bindBind: (expt, variant, dataAttr, elem) =>
-    Myna.log("Myna.Binder.bindBind", expt, dataAttr, elem)
+    @log("bindBind", expt, dataAttr, elem)
 
     self = Myna.$(elem)
     [ lhs, rhs ] = attrString.split("=")
@@ -70,7 +70,7 @@ class Myna.Binder
           self.attr(lsh.substring(1), variant.settings.get(rhs) ? "")
 
   bindGoal: (expt, variant, dataAttr, elem) =>
-    Myna.log("Myna.Binder.bindGoal", expt, dataAttr, elem)
+    @log("bindGoal", expt, dataAttr, elem)
 
     self  = Myna.$(elem)
     event = self.data(dataAttr)
@@ -83,12 +83,12 @@ class Myna.Binder
       when "click"
         handler = @createClickHandler(expt)
         @boundHandlers.push([elem, "click", handler])
-        Myna.log("Myna.Binder.bindGoal", "attach", elem, "click", handler, @boundHandlers )
+        @log("bindGoal", "attach", elem, "click", handler, @boundHandlers )
         self.on("click", handler)
 
   # (event any ... -> void) -> (event any ... -> void)
   createClickHandler: (expt, innerHandler = (->)) =>
-    Myna.log("Myna.Binder.createClickHandler", expt, innerHandler)
+    @log("createClickHandler", expt, innerHandler)
 
     handler = (evt, args...) ->
       myna.log("Myna.Binder.clickHandler", evt, args...)

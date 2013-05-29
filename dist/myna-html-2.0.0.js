@@ -9606,27 +9606,12 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
 
   Myna.debug = true;
 
-  Myna.log = function() {
-    var args, _ref1;
-
-    args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-    if (Myna.debug) {
-      if ((_ref1 = window.console) != null) {
-        _ref1.log(args);
-      }
+  Myna.trim = function(str) {
+    if (String.prototype.trim) {
+      return str.trim();
+    } else {
+      return str.replace(/^\s+|\s+$/g, '');
     }
-  };
-
-  Myna.error = function() {
-    var args, _ref1;
-
-    args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-    if (Myna.debug) {
-      if ((_ref1 = window.console) != null) {
-        _ref1.error(args);
-      }
-    }
-    throw args;
   };
 
   Myna.extend = function() {
@@ -9686,6 +9671,171 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
   };
 
   Myna.$ = (_ref1 = window.jQuery) != null ? _ref1 : null;
+
+}).call(this);
+
+(function() {
+  var __slice = [].slice,
+    __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+
+  Myna.phantomJs = /PhantomJS/.test(navigator.userAgent);
+
+  Myna.log = function() {
+    var args, _ref, _ref1;
+
+    args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+    if (Myna.debug) {
+      if (Myna.phantomJs) {
+        if ((_ref = window.console) != null) {
+          _ref.log(JSON.stringify(args));
+        }
+      } else {
+        if ((_ref1 = window.console) != null) {
+          _ref1.log(args);
+        }
+      }
+    }
+  };
+
+  Myna.error = function() {
+    var args;
+
+    args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+    if (Myna.phantomJs) {
+      throw JSON.stringify(args);
+    } else {
+      throw args;
+    }
+  };
+
+  Myna.Logging = (function() {
+    function Logging() {
+      this.error = __bind(this.error, this);
+      this.log = __bind(this.log, this);
+    }
+
+    Logging.prototype.logEnabled = true;
+
+    Logging.prototype.log = function() {
+      var args, method;
+
+      method = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
+      if (this.logEnabled) {
+        return Myna.log.apply(Myna, ["" + this.constructor.name + "." + method].concat(__slice.call(args)));
+      }
+    };
+
+    Logging.prototype.error = function() {
+      var args, method;
+
+      method = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
+      return Myna.error.apply(Myna, ["" + this.constructor.name + "." + method].concat(__slice.call(args)));
+    };
+
+    return Logging;
+
+  })();
+
+}).call(this);
+
+(function() {
+  var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
+    __hasProp = {}.hasOwnProperty,
+    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
+    __slice = [].slice;
+
+  Myna.Events = (function(_super) {
+    __extends(Events, _super);
+
+    function Events() {
+      this.off = __bind(this.off, this);
+      this.on = __bind(this.on, this);
+      this.triggerAsync = __bind(this.triggerAsync, this);
+      this.trigger = __bind(this.trigger, this);      this.eventHandlers = {};
+    }
+
+    Events.prototype.trigger = function() {
+      var args, cancel, event, handler, _i, _len, _ref, _ref1;
+
+      event = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
+      this.log.apply(this, ["trigger", event].concat(__slice.call(args)));
+      cancel = false;
+      _ref1 = (_ref = this.eventHandlers[event]) != null ? _ref : [];
+      for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+        handler = _ref1[_i];
+        cancel = cancel || (handler.apply(this, args) === false);
+      }
+      if (cancel) {
+        return false;
+      } else {
+        return void 0;
+      }
+    };
+
+    Events.prototype.triggerAsync = function() {
+      var args, error, event, success, triggerAll, _i, _ref,
+        _this = this;
+
+      event = arguments[0], args = 4 <= arguments.length ? __slice.call(arguments, 1, _i = arguments.length - 2) : (_i = 1, []), success = arguments[_i++], error = arguments[_i++];
+      this.log.apply(this, ["triggerAsync", event].concat(__slice.call(args)));
+      triggerAll = function(handlers) {
+        var head, rest;
+
+        _this.log("triggerAsync.triggerAll", handlers);
+        if (handlers.length === 0) {
+          return success();
+        } else {
+          head = handlers[0], rest = 2 <= handlers.length ? __slice.call(handlers, 1) : [];
+          return head.call.apply(head, [_this].concat(__slice.call(args), [(function() {
+            return triggerAll(rest);
+          })], [error]));
+        }
+      };
+      return triggerAll((_ref = this.eventHandlers[event]) != null ? _ref : []);
+    };
+
+    Events.prototype.on = function(event, handler) {
+      var _ref;
+
+      this.eventHandlers[event] = ((_ref = this.eventHandlers[event]) != null ? _ref : []).concat([handler]);
+      return this.log("on", event, handler, this.eventHandlers[event]);
+    };
+
+    Events.prototype.off = function(event, handler) {
+      var h;
+
+      if (handler == null) {
+        handler = null;
+      }
+      switch (arguments.length) {
+        case 0:
+          this.eventHandlers = {};
+          break;
+        case 1:
+          delete this.eventHandlers[arguments[0]];
+          break;
+        default:
+          event = arguments[0], handler = arguments[1];
+          this.eventHandlers[event] = (function() {
+            var _i, _len, _ref, _results;
+
+            _ref = this.eventHandlers[event];
+            _results = [];
+            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+              h = _ref[_i];
+              if (h !== handler) {
+                _results.push(h);
+              }
+            }
+            return _results;
+          }).call(this);
+      }
+      return this.log("off", event, handler, this.eventHandlers[event]);
+    };
+
+    return Events;
+
+  })(Myna.Logging);
 
 }).call(this);
 
@@ -9794,13 +9944,11 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
 
 (function() {
   'use strict';
-  var Field, Nil, Path, Root, Settings, logging, nil,
+  var Field, Nil, Path, Root, Settings, nil,
     __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
     __slice = [].slice;
-
-  logging = require('lib/logging');
 
   Path = (function() {
     function Path(next) {
@@ -9886,14 +10034,17 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
     };
 
     Field.prototype.unset = function(data) {
-      var ans, k, v;
+      var ans, k, modified, v;
 
       ans = {};
       for (k in data) {
         v = data[k];
         ans[k] = v;
       }
-      if (this.next.unset(ans[this.name]) === false) {
+      modified = this.next.unset(ans[this.name]);
+      if (this.next.unset(ans[this.name]) != null) {
+        ans[this.name] = modified;
+      } else {
         delete ans[this.name];
       }
       return ans;
@@ -9939,7 +10090,7 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
     };
 
     Nil.prototype.unset = function(data) {
-      return false;
+      return void 0;
     };
 
     Nil.prototype.prefixes = function() {
@@ -9958,20 +10109,31 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
         data = {};
       }
       this.toJson = __bind(this.toJson, this);
+      this.unset = __bind(this.unset, this);
       this.set = __bind(this.set, this);
       this.get = __bind(this.get, this);
       this.data = {};
       this.set(data);
     }
 
+    Settings.ast = {
+      Root: Root,
+      Field: Field,
+      Nil: Nil,
+      nil: nil
+    };
+
     Settings.parse = function(path) {
       var memo, name, _i, _ref;
 
+      path = Myna.trim(path);
       memo = nil;
-      _ref = path.split(".");
-      for (_i = _ref.length - 1; _i >= 0; _i += -1) {
-        name = _ref[_i];
-        memo = new Field(memo, name);
+      if (path !== "") {
+        _ref = path.split(".");
+        for (_i = _ref.length - 1; _i >= 0; _i += -1) {
+          name = _ref[_i];
+          memo = new Field(memo, name);
+        }
       }
       return new Root(memo);
     };
@@ -10004,6 +10166,11 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
           value = arguments[1];
           this.data = Settings.parse(key).set(this.data, value);
       }
+      return this;
+    };
+
+    Settings.prototype.unset = function(path) {
+      this.data = Settings.parse(path).unset(this.data);
       return this;
     };
 
@@ -10152,118 +10319,26 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
 }).call(this);
 
 (function() {
-  Myna.Variant = (function() {
-    function Variant(options) {
+  var __hasProp = {}.hasOwnProperty,
+    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+  Myna.VariantSummary = (function(_super) {
+    __extends(VariantSummary, _super);
+
+    function VariantSummary(options) {
       var _ref, _ref1, _ref2;
 
       if (options == null) {
         options = {};
       }
-      this.id = (_ref = options.id) != null ? _ref : Myna.error("Myna.Variant.constructor", "no id in options", options);
-      this.weight = (_ref1 = options.weight) != null ? _ref1 : Myna.error("Myna.Variant.constructor", "no weight in options", options);
+      this.id = (_ref = options.id) != null ? _ref : this.error("constructor", "no id in options", options);
+      this.weight = (_ref1 = options.weight) != null ? _ref1 : this.error("constructor", "no weight in options", options);
       this.settings = new Myna.Settings((_ref2 = options.settings) != null ? _ref2 : {});
     }
 
-    return Variant;
+    return VariantSummary;
 
-  })();
-
-}).call(this);
-
-(function() {
-  var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
-    __slice = [].slice;
-
-  Myna.Events = (function() {
-    function Events() {
-      this.off = __bind(this.off, this);
-      this.on = __bind(this.on, this);
-      this.triggerAsync = __bind(this.triggerAsync, this);
-      this.trigger = __bind(this.trigger, this);      this.eventHandlers = {};
-    }
-
-    Events.prototype.trigger = function() {
-      var args, cancel, event, handler, _i, _len, _ref, _ref1;
-
-      event = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
-      Myna.log.apply(Myna, ["Myna.Events.trigger", event].concat(__slice.call(args)));
-      cancel = false;
-      _ref1 = (_ref = this.eventHandlers[event]) != null ? _ref : [];
-      for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-        handler = _ref1[_i];
-        cancel = cancel || (handler.apply(this, args) === false);
-      }
-      if (cancel) {
-        return false;
-      } else {
-        return void 0;
-      }
-    };
-
-    Events.prototype.triggerAsync = function() {
-      var args, error, event, success, triggerAll, _i, _ref,
-        _this = this;
-
-      event = arguments[0], args = 4 <= arguments.length ? __slice.call(arguments, 1, _i = arguments.length - 2) : (_i = 1, []), success = arguments[_i++], error = arguments[_i++];
-      Myna.log.apply(Myna, ["Myna.Events.triggerAsync", event].concat(__slice.call(args)));
-      triggerAll = function(handlers) {
-        var head, rest;
-
-        Myna.log("Myna.Events.triggerAsync.triggerAll", handlers);
-        if (handlers.length === 0) {
-          return success();
-        } else {
-          head = handlers[0], rest = 2 <= handlers.length ? __slice.call(handlers, 1) : [];
-          return head.call.apply(head, [_this].concat(__slice.call(args), [(function() {
-            return triggerAll(rest);
-          })], [error]));
-        }
-      };
-      return triggerAll((_ref = this.eventHandlers[event]) != null ? _ref : []);
-    };
-
-    Events.prototype.on = function(event, handler) {
-      var _ref;
-
-      this.eventHandlers[event] = ((_ref = this.eventHandlers[event]) != null ? _ref : []).concat([handler]);
-      return Myna.log("Myna.Events.on", event, handler, this.eventHandlers[event]);
-    };
-
-    Events.prototype.off = function(event, handler) {
-      var h;
-
-      if (handler == null) {
-        handler = null;
-      }
-      switch (arguments.length) {
-        case 0:
-          this.eventHandlers = {};
-          break;
-        case 1:
-          delete this.eventHandlers[arguments[0]];
-          break;
-        default:
-          event = arguments[0], handler = arguments[1];
-          this.eventHandlers[event] = (function() {
-            var _i, _len, _ref, _results;
-
-            _ref = this.eventHandlers[event];
-            _results = [];
-            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-              h = _ref[_i];
-              if (h !== handler) {
-                _results.push(h);
-              }
-            }
-            return _results;
-          }).call(this);
-      }
-      return Myna.log("Myna.Events.off", event, handler, this.eventHandlers[event]);
-    };
-
-    return Events;
-
-  })();
+  })(Myna.Logging);
 
 }).call(this);
 
@@ -10273,10 +10348,10 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
     __slice = [].slice;
 
-  Myna.BaseExperiment = (function(_super) {
-    __extends(BaseExperiment, _super);
+  Myna.ExperimentBase = (function(_super) {
+    __extends(ExperimentBase, _super);
 
-    function BaseExperiment(options) {
+    function ExperimentBase(options) {
       var data, _i, _len, _ref, _ref1, _ref2, _ref3, _ref4;
 
       if (options == null) {
@@ -10294,6 +10369,7 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
       this.clearLastView = __bind(this.clearLastView, this);
       this.saveLastView = __bind(this.saveLastView, this);
       this.loadLastView = __bind(this.loadLastView, this);
+      this.createVariant = __bind(this.createVariant, this);
       this.randomVariant = __bind(this.randomVariant, this);
       this.totalWeight = __bind(this.totalWeight, this);
       this.saveVariantFromReward = __bind(this.saveVariantFromReward, this);
@@ -10306,20 +10382,20 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
       this.view = __bind(this.view, this);
       this.loadVariantsForSuggest = __bind(this.loadVariantsForSuggest, this);
       this.suggest = __bind(this.suggest, this);
-      BaseExperiment.__super__.constructor.call(this, options);
-      Myna.log("Myna.BaseExperiment.constructor", options);
-      this.uuid = (_ref = options.uuid) != null ? _ref : Myna.error("Myna.BaseExperiment.constructor", this.id, "no uuid in options", options);
-      this.id = (_ref1 = options.id) != null ? _ref1 : Myna.error("Myna.BaseExperiment.constructor", this.id, "no id in options", options);
+      ExperimentBase.__super__.constructor.call(this, options);
+      this.log("constructor", options);
+      this.id = (_ref = options.id) != null ? _ref : this.error("constructor", this.id, "no id in options", options);
+      this.uuid = (_ref1 = options.uuid) != null ? _ref1 : this.error("constructor", this.id, "no uuid in options", options);
       this.settings = new Myna.Settings((_ref2 = options.settings) != null ? _ref2 : {});
       this.variants = {};
       _ref4 = (_ref3 = options.variants) != null ? _ref3 : [];
       for (_i = 0, _len = _ref4.length; _i < _len; _i++) {
         data = _ref4[_i];
-        this.variants[data.id] = new Myna.Variant(data);
+        this.variants[data.id] = this.createVariant(data);
       }
     }
 
-    BaseExperiment.prototype.suggest = function(success, error) {
+    ExperimentBase.prototype.suggest = function(success, error) {
       var variants, _ref, _ref1;
 
       if (success == null) {
@@ -10329,21 +10405,21 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
         error = (function() {});
       }
       variants = this.loadVariantsForSuggest();
-      Myna.log("Myna.BaseExperiment.suggest", this.id, (_ref = variants.variant) != null ? _ref.id : void 0, (_ref1 = variants.viewed) != null ? _ref1.id : void 0);
+      this.log("suggest", this.id, (_ref = variants.variant) != null ? _ref.id : void 0, (_ref1 = variants.viewed) != null ? _ref1.id : void 0);
       this.viewVariant(Myna.extend({
         success: success,
         error: error
       }, variants));
     };
 
-    BaseExperiment.prototype.loadVariantsForSuggest = function() {
+    ExperimentBase.prototype.loadVariantsForSuggest = function() {
       return {
         variant: this.randomVariant(),
         viewed: this.loadLastView()
       };
     };
 
-    BaseExperiment.prototype.view = function(variantOrId, success, error) {
+    ExperimentBase.prototype.view = function(variantOrId, success, error) {
       var variants, _ref, _ref1;
 
       if (success == null) {
@@ -10353,28 +10429,28 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
         error = (function() {});
       }
       variants = this.loadVariantsForView(variantOrId);
-      Myna.log("Myna.BaseExperiment.view", this.id, (_ref = variants.variant) != null ? _ref.id : void 0, (_ref1 = variants.viewed) != null ? _ref1.id : void 0);
+      this.log("view", this.id, (_ref = variants.variant) != null ? _ref.id : void 0, (_ref1 = variants.viewed) != null ? _ref1.id : void 0);
       this.viewVariant(Myna.extend({
         success: success,
         error: error
       }, variants));
     };
 
-    BaseExperiment.prototype.loadVariantsForView = function(variantOrId) {
+    ExperimentBase.prototype.loadVariantsForView = function(variantOrId) {
       return {
-        variant: variantOrId instanceof Myna.Variant ? variantOrId : this.variants[variantOrId],
+        variant: variantOrId instanceof Myna.VariantSummary ? variantOrId : this.variants[variantOrId],
         viewed: null
       };
     };
 
-    BaseExperiment.prototype.viewVariant = function(options) {
+    ExperimentBase.prototype.viewVariant = function(options) {
       var error, success, variant, viewed, _ref, _ref1;
 
       variant = options.variant;
       viewed = options.viewed;
       success = (_ref = options.success) != null ? _ref : (function() {});
       error = (_ref1 = options.error) != null ? _ref1 : (function() {});
-      Myna.log("Myna.BaseExperiment.viewVariant", this.id, variant != null ? variant.id : void 0, viewed != null ? viewed.id : void 0);
+      this.log("viewVariant", this.id, variant != null ? variant.id : void 0, viewed != null ? viewed.id : void 0);
       if (viewed != null) {
         if (this.trigger('beforeView', viewed, false) !== false) {
           success.call(this, viewed, false);
@@ -10392,12 +10468,12 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
       }
     };
 
-    BaseExperiment.prototype.saveVariantFromView = function(variant) {
+    ExperimentBase.prototype.saveVariantFromView = function(variant) {
       this.saveLastView(variant);
       return this.clearLastReward();
     };
 
-    BaseExperiment.prototype.reward = function(amount, success, error) {
+    ExperimentBase.prototype.reward = function(amount, success, error) {
       var variants, _ref, _ref1;
 
       if (amount == null) {
@@ -10410,7 +10486,7 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
         error = (function() {});
       }
       variants = this.loadVariantsForReward();
-      Myna.log("Myna.BaseExperiment.reward", this.id, (_ref = variants.variant) != null ? _ref.id : void 0, (_ref1 = variants.rewarded) != null ? _ref1.id : void 0, amount);
+      this.log("reward", this.id, (_ref = variants.variant) != null ? _ref.id : void 0, (_ref1 = variants.rewarded) != null ? _ref1.id : void 0, amount);
       this.rewardVariant(Myna.extend({
         amount: amount,
         success: success,
@@ -10418,21 +10494,21 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
       }, variants));
     };
 
-    BaseExperiment.prototype.loadVariantsForReward = function() {
+    ExperimentBase.prototype.loadVariantsForReward = function() {
       return {
         variant: this.loadLastView(),
         rewarded: this.loadLastReward()
       };
     };
 
-    BaseExperiment.prototype.rewardVariant = function(options) {
+    ExperimentBase.prototype.rewardVariant = function(options) {
       var amount, error, rewarded, success, variant, _ref, _ref1, _ref2,
         _this = this;
 
       if (options == null) {
         options = {};
       }
-      Myna.log("Myna.BaseExperiment.rewardVariant", this.id, options);
+      this.log("rewardVariant", this.id, options);
       variant = options.variant;
       rewarded = options.rewarded;
       amount = (_ref = options.amount) != null ? _ref : 1.0;
@@ -10461,12 +10537,12 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
       }
     };
 
-    BaseExperiment.prototype.saveVariantFromReward = function(variant) {
+    ExperimentBase.prototype.saveVariantFromReward = function(variant) {
       this.clearLastView();
       return this.saveLastReward(variant);
     };
 
-    BaseExperiment.prototype.totalWeight = function() {
+    ExperimentBase.prototype.totalWeight = function() {
       var ans, id, variant, _ref;
 
       ans = 0.0;
@@ -10478,7 +10554,7 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
       return ans;
     };
 
-    BaseExperiment.prototype.randomVariant = function() {
+    ExperimentBase.prototype.randomVariant = function() {
       var id, random, total, variant, _ref;
 
       total = this.totalWeight();
@@ -10488,44 +10564,48 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
         variant = _ref[id];
         total -= variant.weight;
         if (total <= random) {
-          Myna.log("Myna.BaseExperiment.randomVariant", this.id, variant.id);
+          this.log("randomVariant", this.id, variant.id);
           return variant;
         }
       }
-      Myna.log("Myna.BaseExperiment.randomVariant", this.id, null);
+      this.log("randomVariant", this.id, null);
       return null;
     };
 
-    BaseExperiment.prototype.loadLastView = function() {
+    ExperimentBase.prototype.createVariant = function(data) {
+      return new Myna.VariantSummary(data);
+    };
+
+    ExperimentBase.prototype.loadLastView = function() {
       return this.loadVariant('lastView');
     };
 
-    BaseExperiment.prototype.saveLastView = function(variant) {
+    ExperimentBase.prototype.saveLastView = function(variant) {
       this.saveVariant('lastView', variant);
       return this.clearVariant('lastReward');
     };
 
-    BaseExperiment.prototype.clearLastView = function() {
+    ExperimentBase.prototype.clearLastView = function() {
       return this.clearVariant('lastView');
     };
 
-    BaseExperiment.prototype.loadLastReward = function() {
+    ExperimentBase.prototype.loadLastReward = function() {
       return this.loadVariant('lastReward');
     };
 
-    BaseExperiment.prototype.saveLastReward = function(variant) {
+    ExperimentBase.prototype.saveLastReward = function(variant) {
       return this.saveVariant('lastReward', variant);
     };
 
-    BaseExperiment.prototype.clearLastReward = function() {
+    ExperimentBase.prototype.clearLastReward = function() {
       return this.clearVariant('lastReward');
     };
 
-    BaseExperiment.prototype.loadVariant = function(cacheKey) {
+    ExperimentBase.prototype.loadVariant = function(cacheKey) {
       var id, _ref;
 
       id = (_ref = this.load()) != null ? _ref[cacheKey] : void 0;
-      Myna.log("Myna.BaseExperiment.loadVariant", this.id, cacheKey, id);
+      this.log("loadVariant", this.id, cacheKey, id);
       if (id != null) {
         return this.variants[id];
       } else {
@@ -10533,11 +10613,11 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
       }
     };
 
-    BaseExperiment.prototype.saveVariant = function(cacheKey, variant) {
+    ExperimentBase.prototype.saveVariant = function(cacheKey, variant) {
       var _this = this;
 
       return this.loadAndSave(function(saved) {
-        Myna.log("Myna.BaseExperiment.saveVariant", _this.id, cacheKey, variant, saved);
+        _this.log("saveVariant", _this.id, cacheKey, variant, saved);
         if (variant != null) {
           saved[cacheKey] = variant.id;
         } else {
@@ -10547,25 +10627,25 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
       });
     };
 
-    BaseExperiment.prototype.clearVariant = function(cacheKey) {
+    ExperimentBase.prototype.clearVariant = function(cacheKey) {
       return this.saveVariant(cacheKey, null);
     };
 
-    BaseExperiment.prototype.loadAndSave = function(func) {
+    ExperimentBase.prototype.loadAndSave = function(func) {
       var _ref;
 
       return this.save(func((_ref = this.load()) != null ? _ref : {}));
     };
 
-    BaseExperiment.prototype.load = function() {
+    ExperimentBase.prototype.load = function() {
       return Myna.cache.load(this.uuid);
     };
 
-    BaseExperiment.prototype.save = function(state) {
+    ExperimentBase.prototype.save = function(state) {
       return Myna.cache.save(this.uuid, state);
     };
 
-    return BaseExperiment;
+    return ExperimentBase;
 
   })(Myna.Events);
 
@@ -10577,10 +10657,10 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
-  Myna.Experiment = (function(_super) {
-    __extends(Experiment, _super);
+  Myna.ExperimentSummary = (function(_super) {
+    __extends(ExperimentSummary, _super);
 
-    function Experiment() {
+    function ExperimentSummary() {
       this.clearStickyReward = __bind(this.clearStickyReward, this);
       this.saveStickyReward = __bind(this.saveStickyReward, this);
       this.loadStickyReward = __bind(this.loadStickyReward, this);
@@ -10593,15 +10673,15 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
       this.saveVariantFromView = __bind(this.saveVariantFromView, this);
       this.loadVariantsForView = __bind(this.loadVariantsForView, this);
       this.loadVariantsForSuggest = __bind(this.loadVariantsForSuggest, this);
-      this.sticky = __bind(this.sticky, this);      _ref = Experiment.__super__.constructor.apply(this, arguments);
+      this.sticky = __bind(this.sticky, this);      _ref = ExperimentSummary.__super__.constructor.apply(this, arguments);
       return _ref;
     }
 
-    Experiment.prototype.sticky = function() {
+    ExperimentSummary.prototype.sticky = function() {
       return !!this.settings.get("myna.js.sticky", true);
     };
 
-    Experiment.prototype.loadVariantsForSuggest = function() {
+    ExperimentSummary.prototype.loadVariantsForSuggest = function() {
       var sticky;
 
       if (this.sticky()) {
@@ -10611,76 +10691,76 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
           viewed: sticky
         };
       } else {
-        return Experiment.__super__.loadVariantsForSuggest.call(this);
+        return ExperimentSummary.__super__.loadVariantsForSuggest.call(this);
       }
     };
 
-    Experiment.prototype.loadVariantsForView = function(variant) {
-      return Experiment.__super__.loadVariantsForView.call(this, variant);
+    ExperimentSummary.prototype.loadVariantsForView = function(variant) {
+      return ExperimentSummary.__super__.loadVariantsForView.call(this, variant);
     };
 
-    Experiment.prototype.saveVariantFromView = function(variant) {
+    ExperimentSummary.prototype.saveVariantFromView = function(variant) {
       if (this.sticky()) {
         this.saveStickySuggestion(variant);
       }
-      return Experiment.__super__.saveVariantFromView.call(this, variant);
+      return ExperimentSummary.__super__.saveVariantFromView.call(this, variant);
     };
 
-    Experiment.prototype.loadVariantsForReward = function() {
+    ExperimentSummary.prototype.loadVariantsForReward = function() {
       if (this.sticky()) {
         return {
           variant: this.loadLastView(),
           rewarded: this.loadStickyReward()
         };
       } else {
-        return Experiment.__super__.loadVariantsForReward.call(this);
+        return ExperimentSummary.__super__.loadVariantsForReward.call(this);
       }
     };
 
-    Experiment.prototype.saveVariantFromReward = function(variant) {
+    ExperimentSummary.prototype.saveVariantFromReward = function(variant) {
       if (this.sticky()) {
         this.saveStickyReward(variant);
       }
-      return Experiment.__super__.saveVariantFromReward.call(this, variant);
+      return ExperimentSummary.__super__.saveVariantFromReward.call(this, variant);
     };
 
-    Experiment.prototype.unstick = function() {
-      Myna.log("Myna.Experiment.unstick", this.id);
+    ExperimentSummary.prototype.unstick = function() {
+      this.log("unstick", this.id);
       this.clearLastView();
       this.clearLastReward();
       this.clearStickySuggestion();
       return this.clearStickyReward();
     };
 
-    Experiment.prototype.loadStickySuggestion = function() {
+    ExperimentSummary.prototype.loadStickySuggestion = function() {
       return this.loadVariant('stickySuggestion');
     };
 
-    Experiment.prototype.saveStickySuggestion = function(variant) {
+    ExperimentSummary.prototype.saveStickySuggestion = function(variant) {
       this.saveVariant('stickySuggestion', variant);
       return this.clearVariant('stickyReward');
     };
 
-    Experiment.prototype.clearStickySuggestion = function() {
+    ExperimentSummary.prototype.clearStickySuggestion = function() {
       this.clearVariant('stickySuggestion');
       return this.clearVariant('stickyReward');
     };
 
-    Experiment.prototype.loadStickyReward = function() {
+    ExperimentSummary.prototype.loadStickyReward = function() {
       return this.loadVariant('stickyReward');
     };
 
-    Experiment.prototype.saveStickyReward = function(variant) {
+    ExperimentSummary.prototype.saveStickyReward = function(variant) {
       return this.saveVariant('stickyReward', variant);
     };
 
-    Experiment.prototype.clearStickyReward = function() {
+    ExperimentSummary.prototype.clearStickyReward = function() {
       return this.clearVariant('stickyReward');
     };
 
-    return Experiment;
+    return ExperimentSummary;
 
-  })(Myna.BaseExperiment);
+  })(Myna.ExperimentBase);
 
 }).call(this);
 
@@ -10711,7 +10791,7 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
       this.recordView = __bind(this.recordView, this);
       this.listenTo = __bind(this.listenTo, this);
       Recorder.__super__.constructor.call(this, options);
-      Myna.log("Myna.Recorder.constructor", options);
+      this.log("constructor", options);
       this.apiKey = (_ref = options.apiKey) != null ? _ref : Myna.error("Myna.Recorder.constructor", "no apiKey in options", options);
       this.apiRoot = (_ref1 = options.apiRoot) != null ? _ref1 : "//api.mynaweb.com";
       this.storageKey = (_ref2 = options.storageKey) != null ? _ref2 : "myna";
@@ -10724,7 +10804,7 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
     Recorder.prototype.listenTo = function(expt) {
       var _this = this;
 
-      Myna.log("Myna.Recorder.listenTo", expt.id);
+      this.log("listenTo", expt.id);
       expt.on('recordView', function(variant, success, error) {
         return _this.recordView(expt, variant, success, error);
       });
@@ -10740,14 +10820,14 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
       if (error == null) {
         error = (function() {});
       }
-      Myna.log("Myna.Recorder.recordView", expt.id, variant.id);
+      this.log("recordView", expt.id, variant.id);
       this.queueEvent({
         typename: "view",
         experiment: expt.uuid,
         variant: variant.id,
         timestamp: Myna.dateToString(new Date())
       });
-      Myna.log("Myna.Recorder.recordReward", "aboutToSync", this.autoSync);
+      this.log("recordReward", "aboutToSync", this.autoSync);
       if (this.autoSync) {
         return this.sync(success, error);
       } else {
@@ -10762,7 +10842,7 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
       if (error == null) {
         error = (function() {});
       }
-      Myna.log("Myna.Recorder.recordReward", expt.id, variant.id, amount);
+      this.log("recordReward", expt.id, variant.id, amount);
       this.queueEvent({
         typename: "reward",
         experiment: expt.uuid,
@@ -10770,7 +10850,7 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
         amount: amount,
         timestamp: Myna.dateToString(new Date())
       });
-      Myna.log("Myna.Recorder.recordReward", "aboutToSync", this.autoSync);
+      this.log("recordReward", "aboutToSync", this.autoSync);
       if (this.autoSync) {
         return this.sync(success, error);
       } else {
@@ -10793,7 +10873,7 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
         error: error
       });
       if (this.semaphore > 0) {
-        return Myna.log("Myna.Recorder.sync", "queued");
+        return this.log("sync", "queued");
       } else {
         this.semaphore++;
         waiting = this.waiting;
@@ -10802,7 +10882,7 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
           var events;
 
           events = _this.clearQueuedEvents();
-          Myna.log("Myna.Recorder.sync.start", events, waiting.length);
+          _this.log("sync.start", events, waiting.length);
           if (_this.trigger('beforeSync', events) === false) {
             return _this.requeueEvents(events);
           } else {
@@ -10812,7 +10892,7 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
         syncAll = function(events, successEvents, errorEvents) {
           var head, tail;
 
-          Myna.log("Myna.Recorder.sync.syncAll", events, successEvents, errorEvents);
+          _this.log("sync.syncAll", events, successEvents, errorEvents);
           if (events.length === 0) {
             return finish(successEvents, errorEvents);
           } else {
@@ -10823,7 +10903,7 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
         syncOne = function(event, otherEvents, successEvents, errorEvents) {
           var params;
 
-          Myna.log("Myna.Recorder.sync.syncOne", event, otherEvents, successEvents, errorEvents);
+          _this.log("sync.syncOne", event, otherEvents, successEvents, errorEvents);
           params = Myna.deleteKeys(event, 'experiment');
           return Myna.jsonp.request({
             url: "" + _this.apiRoot + "/v2/experiment/" + event.experiment + "/record",
@@ -10842,7 +10922,7 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
         finish = function(successEvents, errorEvents) {
           var item, _i, _j, _len, _len1;
 
-          Myna.log("Myna.Recorder.sync.finish", successEvents, errorEvents);
+          _this.log("sync.finish", successEvents, errorEvents);
           if (errorEvents.length > 0) {
             _this.requeueEvents(errorEvents);
             for (_i = 0, _len = waiting.length; _i < _len; _i++) {
@@ -10869,12 +10949,12 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
       var ans, _ref;
 
       ans = (_ref = this.load().queuedEvents) != null ? _ref : [];
-      Myna.log("Myna.Recorder.queuedEvents", ans);
+      this.log("queuedEvents", ans);
       return ans;
     };
 
     Recorder.prototype.queueEvent = function(event) {
-      Myna.log("Myna.Recorder.queueEvent", event);
+      this.log("queueEvent", event);
       return this.loadAndSave(function(saved) {
         var _ref;
 
@@ -10884,7 +10964,7 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
     };
 
     Recorder.prototype.requeueEvents = function(events) {
-      Myna.log("Myna.Recorder.requeueEvents", events);
+      this.log("requeueEvents", events);
       return this.loadAndSave(function(saved) {
         var _ref;
 
@@ -10896,7 +10976,7 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
     Recorder.prototype.clearQueuedEvents = function() {
       var ans;
 
-      Myna.log("Myna.Recorder.clearQueuedEvents");
+      this.log("clearQueuedEvents");
       ans = [];
       this.loadAndSave(function(saved) {
         var _ref;
@@ -10929,9 +11009,13 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
 }).call(this);
 
 (function() {
-  var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+  var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
+    __hasProp = {}.hasOwnProperty,
+    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
-  Myna.Client = (function() {
+  Myna.Client = (function(_super) {
+    __extends(Client, _super);
+
     function Client(options) {
       var data, expt, _i, _len, _ref, _ref1;
 
@@ -10941,12 +11025,12 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
       this.reward = __bind(this.reward, this);
       this.view = __bind(this.view, this);
       this.suggest = __bind(this.suggest, this);
-      Myna.log("Myna.Client.constructor", options);
+      this.log("constructor", options);
       this.experiments = {};
       _ref1 = (_ref = options.experiments) != null ? _ref : [];
       for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
         data = _ref1[_i];
-        expt = data instanceof Myna.Experiment ? data : new Myna.Experiment(data);
+        expt = data instanceof Myna.ExperimentBase ? data : new Myna.ExperimentSummary(data);
         this.experiments[expt.id] = expt;
       }
     }
@@ -10986,7 +11070,7 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
 
     return Client;
 
-  })();
+  })(Myna.Logging);
 
 }).call(this);
 
@@ -11013,7 +11097,7 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
     Binder.prototype.listenTo = function(expt) {
       var _this = this;
 
-      Myna.log("Myna.Binder.listenTo", expt);
+      this.log("listenTo", expt);
       return expt.on('view', function(variant) {
         return _this.bind(expt, variant);
       });
@@ -11030,19 +11114,19 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
       var allElems, bindElems, cssClass, dataBind, dataGoal, dataPrefix, dataShow, goalElems, showElems, _ref, _ref1,
         _this = this;
 
-      Myna.log("Myna.Binder.bind", expt);
+      this.log("bind", expt);
       this.unbind();
       cssClass = (_ref = expt.settings.get("myna.html.cssClass")) != null ? _ref : "myna-" + expt.id;
       dataPrefix = (_ref1 = expt.settings.get("myna.html.dataPrefix")) != null ? _ref1 : null;
       dataShow = dataPrefix ? "" + this.dataPrefix + "-show" : "show";
       dataBind = dataPrefix ? "" + this.dataPrefix + "-bind" : "bind";
       dataGoal = dataPrefix ? "" + this.dataPrefix + "-goal" : "goal";
-      Myna.log("Myna.Binder.bind", "searchParams", cssClass, dataShow, dataBind, dataGoal);
+      this.log("bind", "searchParams", cssClass, dataShow, dataBind, dataGoal);
       allElems = cssClass ? Myna.$("." + cssClass) : null;
       showElems = cssClass ? allElems.filter("[data-" + dataShow + "]") : $("[data-" + dataShow + "]");
       bindElems = cssClass ? allElems.filter("[data-" + dataBind + "]") : $("[data-" + dataBind + "]");
       goalElems = cssClass ? allElems.filter("[data-" + dataGoal + "]") : $("[data-" + dataGoal + "]");
-      Myna.log("Myna.Binder.bind", "elements", allElems, showElems, bindElems, goalElems);
+      this.log("bind", "elements", allElems, showElems, bindElems, goalElems);
       showElems.each(function(index, elem) {
         return _this.bindShow(expt, variant, dataShow, elem);
       });
@@ -11057,12 +11141,12 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
     Binder.prototype.unbind = function() {
       var elem, event, handler, _i, _len, _ref, _ref1, _results;
 
-      Myna.log("Myna.Binder.unbind", this.boundHandlers);
+      this.log("unbind", this.boundHandlers);
       _ref = this.boundHandlers;
       _results = [];
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         _ref1 = _ref[_i], elem = _ref1[0], event = _ref1[1], handler = _ref1[2];
-        Myna.log("Myna.Binder.unbind", elem, event, handler);
+        this.log("unbind", elem, event, handler);
         _results.push(Myna.$(elem).off(event, handler));
       }
       return _results;
@@ -11071,7 +11155,7 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
     Binder.prototype.bindShow = function(expt, variant, dataAttr, elem) {
       var path, self;
 
-      Myna.log("Myna.Binder.bindShow", expt, dataAttr, elem);
+      this.log("bindShow", expt, dataAttr, elem);
       self = Myna.$(elem);
       path = self.data(dataAttr);
       if (variant.id === path || variant.settings.get(path)) {
@@ -11084,7 +11168,7 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
     Binder.prototype.bindBind = function(expt, variant, dataAttr, elem) {
       var lhs, rhs, self, _ref, _ref1, _ref2, _ref3, _ref4;
 
-      Myna.log("Myna.Binder.bindBind", expt, dataAttr, elem);
+      this.log("bindBind", expt, dataAttr, elem);
       self = Myna.$(elem);
       _ref = attrString.split("="), lhs = _ref[0], rhs = _ref[1];
       if (!(lhs && rhs)) {
@@ -11108,7 +11192,7 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
       var event, handler, self,
         _this = this;
 
-      Myna.log("Myna.Binder.bindGoal", expt, dataAttr, elem);
+      this.log("bindGoal", expt, dataAttr, elem);
       self = Myna.$(elem);
       event = self.data(dataAttr);
       if (!event) {
@@ -11122,7 +11206,7 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
         case "click":
           handler = this.createClickHandler(expt);
           this.boundHandlers.push([elem, "click", handler]);
-          Myna.log("Myna.Binder.bindGoal", "attach", elem, "click", handler, this.boundHandlers);
+          this.log("bindGoal", "attach", elem, "click", handler, this.boundHandlers);
           return self.on("click", handler);
       }
     };
@@ -11133,7 +11217,7 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
       if (innerHandler == null) {
         innerHandler = (function() {});
       }
-      Myna.log("Myna.Binder.createClickHandler", expt, innerHandler);
+      this.log("createClickHandler", expt, innerHandler);
       return handler = function() {
         var args, complete, elem, evt, rewarded, self;
 
@@ -11170,9 +11254,13 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
 }).call(this);
 
 (function() {
-  var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+  var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
+    __hasProp = {}.hasOwnProperty,
+    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
-  Myna.Toolbar = (function() {
+  Myna.Toolbar = (function(_super) {
+    __extends(Toolbar, _super);
+
     function Toolbar(options) {
       if (options == null) {
         options = {};
@@ -11183,7 +11271,7 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
       this.initStylesheet = __bind(this.initStylesheet, this);
       this.remove = __bind(this.remove, this);
       this.init = __bind(this.init, this);
-      Myna.log("Myna.Toolbar.constructor");
+      this.log("constructor");
     }
 
     Toolbar.active = function() {
@@ -11191,7 +11279,7 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
     };
 
     Toolbar.prototype.init = function() {
-      Myna.log("Myna.Toolbar.init");
+      this.log("init");
       this.initStylesheet();
       this.initInspector();
       this.initToolbar();
@@ -11205,7 +11293,7 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
     };
 
     Toolbar.prototype.initStylesheet = function() {
-      Myna.log("Myna.Toolbar.initStylesheet");
+      this.log("initStylesheet");
       if (!this.stylesheet) {
         this.stylesheet = Myna.$("<style id=\"myna-stylesheet\">\n  html {\n    margin-top: 40px;\n  }\n\n  /* Clearfix */\n\n  .myna-overlay-inner {\n    *zoom: 1;\n  }\n\n  .myna-overlay-inner:before,\n  .myna-overlay-inner:after {\n    display: table;\n    content: \"\";\n    line-height: 0;\n  }\n\n  .myna-overlay-inner:after {\n    clear: both;\n  }\n\n  /* Structure */\n\n  .myna-overlay-inner {\n    font-size: 16px;\n    line-height: 20px;\n  }\n\n  .myna-overlay-inner .pull-left {\n    float: left;\n  }\n\n  .myna-overlay-inner .pull-right {\n    float: right;\n  }\n\n  .myna-overlay-title {\n    padding: 5px 10px;\n    cursor: pointer;\n    font-weight: bold;\n    line-height: 150%;\n  }\n\n  .myna-overlay-field {\n    padding: 0 10px 5px;\n    white-space: nowrap;\n  }\n\n  .myna-overlay-inner label,\n  .myna-overlay-inner select,\n  .myna-overlay-inner button {\n    display: inline-block;\n    box-sizing: border-box;\n    height: 30px;\n    margin: 0 5px;\n    padding: 0 8px;\n    font-size: 16px;\n    line-height: 30px;\n    overflow: hidden;\n    text-overflow: ellipsis;\n    white-space: nowrap;\n    -webkit-border-radius: 5px;\n    -moz-border-radius: 5px;\n    border-radius: 5px;\n  }\n\n  .myna-overlay-inner label {\n    width: 160px;\n    padding: 0;\n  }\n\n  .myna-overlay-inner select {\n    width: 200px;\n  }\n\n  /* Toolbar specifics */\n\n  #myna-toolbar {\n    position: fixed;\n    top: 0;\n    left: 0;\n    width: 100%;\n  }\n\n  #myna-toolbar .myna-overlay-inner {\n    padding: 5px 10px;\n  }\n\n  /* Inspector specifics */\n\n  #myna-inspector {\n    position: fixed;\n    bottom: 20px;\n    right: 20px;\n    -webkit-border-radius: 10px;\n    -moz-border-radius: 10px;\n    border-radius: 10px;\n  }\n\n  #myna-inspector .myna-overlay-inner {\n    padding: 0 0 5px;\n  }\n\n  /* Highlight */\n\n  .myna-toolbar-highlight-hover,\n  .myna-toolbar-highlight-toggle {\n    outline: 5px solid #55f;\n  }\n\n  /* Themes */\n\n  .myna-overlay-outer {\n    -webkit-box-shadow: 0px 0px 10px rgba(50, 50, 50, 0.5);\n    -moz-box-shadow:    0px 0px 10px rgba(50, 50, 50, 0.5);\n    box-shadow:         0px 0px 10px rgba(50, 50, 50, 0.5);\n  }\n\n  .myna-overlay-outer {\n    background: #000;\n    background: rgba(0, 0, 0, 0.75);\n    color: #fff;\n  }\n\n  .myna-overlay-inner select,\n  .myna-overlay-inner button {\n    background: #333;\n    background: -moz-linear-gradient(top, #444 0%, #222 100%);\n    background: -webkit-linear-gradient(top, #444 0%, #222 100%);\n    background: -o-linear-gradient(top, #444 0%, #222 100%);\n    background: -ms-linear-gradient(top, #444 0%, #222 100%);\n    background: linear-gradient(to bottom, #444 0%, #222 100%);\n    border: 1px solid #555;\n    color: #fff;\n  }\n\n  .myna-overlay-inner select.active,\n  .myna-overlay-inner button.active,\n  .myna-overlay-inner select:active,\n  .myna-overlay-inner button:active {\n    background: -moz-linear-gradient(top, #222 0%, #444 100%);\n    background: -webkit-linear-gradient(top, #222 0%, #444 100%);\n    background: -o-linear-gradient(top, #222 0%, #444 100%);\n    background: -ms-linear-gradient(top, #222 0%, #444 100%);\n    background: linear-gradient(to bottom, #222 0%, #444 100%);\n  }\n\n  .myna-overlay-outer a {\n    color: #fff;\n    text-decoration: none;\n  }\n\n  .myna-overlay-outer.myna-overlay-light {\n    background: #fff;\n    background: rgba(255, 255, 255, 0.75);\n    color: #000;\n  }\n\n  .myna-overlay-outer.myna-overlay-light a {\n    color: #000;\n    text-decoration: none;\n  }\n</style>").appendTo("head");
       }
@@ -11215,7 +11303,7 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
       var brand, closeButton, inner, inspectorButton, left, right,
         _this = this;
 
-      Myna.log("Myna.Toolbar.initToolbar");
+      this.log("initToolbar");
       if (!this.Toolbar) {
         this.toolbar = $("<div id='myna-toolbar' class='myna-overlay-outer'>").appendTo("body");
         inner = $("<div class='myna-overlay-inner'>").appendTo(this.toolbar);
@@ -11243,7 +11331,7 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
       var inspectorSize, lastMousePos, mouseMove,
         _this = this;
 
-      Myna.log("Myna.Toolbar.initInspector");
+      this.log("initInspector");
       if (!this.inspector) {
         this.inspector = $("<div id='myna-inspector' class='myna-overlay-outer'>").appendTo("body");
         this.inspectorInner = $("<div class='myna-overlay-inner'>").appendTo(this.inspector);
@@ -11255,7 +11343,7 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
 
           evt.stopPropagation();
           evt.preventDefault();
-          Myna.log("Myna.Toolbar.initInspector.mouseMove", evt, lastMousePos);
+          _this.log("initInspector.mouseMove", evt, lastMousePos);
           currMousePos = {
             x: evt.clientX,
             y: evt.clientY
@@ -11274,7 +11362,7 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
         this.inspectorTitle.on('mousedown', function(evt) {
           evt.stopPropagation();
           evt.preventDefault();
-          Myna.log("Myna.Toolbar.initInspector.mouseDown", evt, lastMousePos);
+          _this.log("initInspector.mouseDown", evt, lastMousePos);
           lastMousePos = {
             x: evt.clientX,
             y: evt.clientY
@@ -11287,7 +11375,7 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
         this.inspectorTitle.on('mouseup', function(evt) {
           evt.stopPropagation();
           evt.preventDefault();
-          Myna.log("Myna.Toolbar.initInspector.mouseUp", evt, lastMousePos);
+          _this.log("initInspector.mouseUp", evt, lastMousePos);
           return $('html').off('mousemove', mouseMove);
         });
       }
@@ -11297,7 +11385,7 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
       var cssClass, label, rewardButton, showButton, suggestButton, unstickButton, variant, variantId, variantSelect, wrapper, _ref, _ref1,
         _this = this;
 
-      Myna.log("Myna.Toolbar.addExperiment", expt);
+      this.log("addExperiment", expt);
       wrapper = $("<div class='myna-overlay-field'>").appendTo(this.inspectorInner);
       label = $("<label>").text(expt.id).appendTo(wrapper);
       variantSelect = $("<select>").appendTo(wrapper);
@@ -11350,7 +11438,7 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
 
     return Toolbar;
 
-  }).call(this);
+  }).call(this, Myna.Logging);
 
 }).call(this);
 

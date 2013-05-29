@@ -1,13 +1,13 @@
-class Myna.Toolbar
+class Myna.Toolbar extends Myna.Logging
   constructor: (options = {}) ->
-    Myna.log("Myna.Toolbar.constructor")
+    @log("constructor")
 
   # Class method:
   @active: =>
     !!Myna.cache.load("myna-toolbar")
 
   init: =>
-    Myna.log("Myna.Toolbar.init")
+    @log("init")
     @initStylesheet()
     @initInspector()
     @initToolbar()
@@ -20,7 +20,7 @@ class Myna.Toolbar
     window.location.reload()
 
   initStylesheet: =>
-    Myna.log("Myna.Toolbar.initStylesheet")
+    @log("initStylesheet")
     unless @stylesheet
       @stylesheet = Myna.$(
         """
@@ -192,7 +192,7 @@ class Myna.Toolbar
     return
 
   initToolbar: =>
-    Myna.log("Myna.Toolbar.initToolbar")
+    @log("initToolbar")
     unless @Toolbar
       @toolbar        = $("<div id='myna-toolbar' class='myna-overlay-outer'>").appendTo("body")
       inner           = $("<div class='myna-overlay-inner'>").appendTo(@toolbar)
@@ -220,7 +220,7 @@ class Myna.Toolbar
       return
 
   initInspector: =>
-    Myna.log("Myna.Toolbar.initInspector")
+    @log("initInspector")
     unless @inspector
       @inspector = $("<div id='myna-inspector' class='myna-overlay-outer'>").appendTo("body")
       @inspectorInner = $("<div class='myna-overlay-inner'>").appendTo(@inspector)
@@ -233,7 +233,7 @@ class Myna.Toolbar
       mouseMove = (evt) =>
         evt.stopPropagation()
         evt.preventDefault()
-        Myna.log("Myna.Toolbar.initInspector.mouseMove", evt, lastMousePos)
+        @log("initInspector.mouseMove", evt, lastMousePos)
         currMousePos = { x: evt.clientX, y: evt.clientY }
         inspectorPos = @inspector.position()
         @inspector.css
@@ -248,7 +248,7 @@ class Myna.Toolbar
       @inspectorTitle.on 'mousedown', (evt) =>
         evt.stopPropagation()
         evt.preventDefault()
-        Myna.log("Myna.Toolbar.initInspector.mouseDown", evt, lastMousePos)
+        @log("initInspector.mouseDown", evt, lastMousePos)
         lastMousePos = { x: evt.clientX, y: evt.clientY }
         inspectorSize ?= @inspector.size()
         $('html').on('mousemove', mouseMove)
@@ -256,13 +256,13 @@ class Myna.Toolbar
       @inspectorTitle.on 'mouseup', (evt) =>
         evt.stopPropagation()
         evt.preventDefault()
-        Myna.log("Myna.Toolbar.initInspector.mouseUp", evt, lastMousePos)
+        @log("initInspector.mouseUp", evt, lastMousePos)
         $('html').off('mousemove', mouseMove)
 
     return
 
   addExperiment: (expt) =>
-    Myna.log("Myna.Toolbar.addExperiment", expt)
+    @log("addExperiment", expt)
     wrapper        = $("<div class='myna-overlay-field'>").appendTo(@inspectorInner)
     label          = $("<label>").text(expt.id).appendTo(wrapper)
     variantSelect  = $("<select>").appendTo(wrapper)

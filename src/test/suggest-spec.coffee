@@ -1,4 +1,4 @@
-expt = new Myna.Experiment
+expt = new Myna.ExperimentSummary
   uuid:     "45923780-80ed-47c6-aa46-15e2ae7a0e8c"
   id:       "id"
   settings: "myna.js.sticky": true
@@ -24,10 +24,10 @@ for sticky in [false, true]
       recorder.clearQueuedEvents()
       fn()
 
-  describe "Myna.Experiment.suggest (#{(if sticky then 'sticky' else 'non-sticky')})", ->
+  describe "Myna.ExperimentSummary.suggest (#{(if sticky then 'sticky' else 'non-sticky')})", ->
     it "should suggest something", initialized ->
       withSuggestion expt, (variant) ->
-        expect(variant).toBeInstanceOf(Myna.Variant)
+        expect(variant).toBeInstanceOf(Myna.VariantSummary)
 
     it "should save the last suggestion", initialized ->
       withSuggestion expt, (variant) ->

@@ -1,10 +1,10 @@
-class Myna.Client
+class Myna.Client extends Myna.Logging
   constructor: (options = {}) ->
-    Myna.log("Myna.Client.constructor", options)
+    @log("constructor", options)
 
     @experiments = {}
     for data in (options.experiments ? [])
-      expt = if data instanceof Myna.Experiment then data else new Myna.Experiment(data)
+      expt = if data instanceof Myna.ExperimentBase then data else new Myna.ExperimentSummary(data)
       @experiments[expt.id] = expt
 
   suggest: (exptId, success = (->), error = (->)) =>

@@ -1,4 +1,4 @@
-class Myna.Events
+class Myna.Events extends Myna.Logging
   constructor: () ->
     @eventHandlers = {}
 
@@ -6,7 +6,7 @@ class Myna.Events
   #
   # string any ... -> undefined
   trigger: (event, args...) =>
-    Myna.log("Myna.Events.trigger", event, args...)
+    @log("trigger", event, args...)
 
     cancel = false
     for handler in (@eventHandlers[event] ? [])
@@ -24,10 +24,10 @@ class Myna.Events
   #
   # string any ... (-> any) (-> any) -> undefined
   triggerAsync: (event, args..., success, error) =>
-    Myna.log("Myna.Events.triggerAsync", event, args...)
+    @log("triggerAsync", event, args...)
 
     triggerAll = (handlers) =>
-      Myna.log("Myna.Events.triggerAsync.triggerAll", handlers)
+      @log("triggerAsync.triggerAll", handlers)
       if handlers.length == 0
         success()
       else
@@ -38,7 +38,7 @@ class Myna.Events
 
   on: (event, handler) =>
     @eventHandlers[event] = (@eventHandlers[event] ? []).concat([ handler ])
-    Myna.log("Myna.Events.on", event, handler, @eventHandlers[event])
+    @log("on", event, handler, @eventHandlers[event])
 
   off: (event, handler = null) =>
     switch arguments.length
@@ -47,4 +47,4 @@ class Myna.Events
       else
         [ event, handler ] = arguments
         @eventHandlers[event] = for h in @eventHandlers[event] when h != handler then h
-    Myna.log("Myna.Events.off", event, handler, @eventHandlers[event])
+    @log("off", event, handler, @eventHandlers[event])

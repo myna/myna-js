@@ -1,19 +1,19 @@
-class Myna.BaseExperiment extends Myna.Events
+class Myna.ExperimentBase extends Myna.Events
   constructor: (options = {}) ->
     super(options)
-    Myna.log("Myna.BaseExperiment.constructor", options)
-    @uuid      = options.uuid ? Myna.error("Myna.BaseExperiment.constructor", @id, "no uuid in options", options)
-    @id        = options.id   ? Myna.error("Myna.BaseExperiment.constructor", @id, "no id in options", options)
-    @settings  = new Myna.Settings(options.settings ? {})
+    @log("constructor", options)
+    @id         = options.id   ? @error("constructor", @id, "no id in options", options)
+    @uuid       = options.uuid ? @error("constructor", @id, "no uuid in options", options)
+    @settings   = new Myna.Settings(options.settings ? {})
 
     @variants = {}
     for data in (options.variants ? [])
-      @variants[data.id] = new Myna.Variant(data)
+      @variants[data.id] = @createVariant(data)
 
   # (variant -> void) (any -> void) -> void
   suggest: (success = (->), error = (->)) =>
     variants = @loadVariantsForSuggest()
-    Myna.log("Myna.BaseExperiment.suggest", @id, variants.variant?.id, variants.viewed?.id)
+    @log("suggest", @id, variants.variant?.id, variants.viewed?.id)
     @viewVariant(Myna.extend({ success, error }, variants))
     return
 
@@ -23,13 +23,13 @@ class Myna.BaseExperiment extends Myna.Events
   # or(string, variant) -> { variant: variant, viewed: or(variant, undefined) } -> undefined
   view: (variantOrId, success = (->), error = (->)) =>
     variants = @loadVariantsForView(variantOrId)
-    Myna.log("Myna.BaseExperiment.view", @id, variants.variant?.id, variants.viewed?.id)
+    @log("view", @id, variants.variant?.id, variants.viewed?.id)
     @viewVariant(Myna.extend({ success, error }, variants))
     return
 
   # or(string, variant) -> { variant: variant, viewed: or(variant, undefined) } -> undefined
   loadVariantsForView: (variantOrId) =>
-    variant: if variantOrId instanceof Myna.Variant then variantOrId else @variants[variantOrId]
+    variant: if variantOrId instanceof Myna.VariantSummary then variantOrId else @variants[variantOrId]
     viewed:  null
 
   # object -> undefined
@@ -39,7 +39,7 @@ class Myna.BaseExperiment extends Myna.Events
     success   = options.success ? (->)
     error     = options.error   ? (->)
 
-    Myna.log("Myna.BaseExperiment.viewVariant", @id, variant?.id, viewed?.id)
+    @log("viewVariant", @id, variant?.id, viewed?.id)
 
     if viewed? # TODO: Do we need this conditional? Why not just save every time?
       # The comparison to false is important here as it distringuishes from undefined:
@@ -69,7 +69,7 @@ class Myna.BaseExperiment extends Myna.Events
   # 0-to-1 (variant boolean -> undefined) (any -> undefined) -> undefined
   reward: (amount = 1.0, success = (->), error = (->)) =>
     variants = @loadVariantsForReward()
-    Myna.log("Myna.BaseExperiment.reward", @id, variants.variant?.id, variants.rewarded?.id, amount)
+    @log("reward", @id, variants.variant?.id, variants.rewarded?.id, amount)
     @rewardVariant(Myna.extend({ amount, success, error }, variants))
     return
 
@@ -80,7 +80,7 @@ class Myna.BaseExperiment extends Myna.Events
 
   # object -> undefined
   rewardVariant: (options = {}) =>
-    Myna.log("Myna.BaseExperiment.rewardVariant", @id, options)
+    @log("rewardVariant", @id, options)
 
     variant   = options.variant
     rewarded  = options.rewarded
@@ -126,10 +126,14 @@ class Myna.BaseExperiment extends Myna.Events
     for id, variant of @variants
       total -= variant.weight
       if total <= random
-        Myna.log("Myna.BaseExperiment.randomVariant", @id, variant.id)
+        @log("randomVariant", @id, variant.id)
         return variant
-    Myna.log("Myna.BaseExperiment.randomVariant", @id, null)
+    @log("randomVariant", @id, null)
     return null
+
+  # object => or(Variant, VariantSummary)
+  createVariant: (data) =>
+    new Myna.VariantSummary(data)
 
   # => U(variant null)
   loadLastView: =>
@@ -158,12 +162,12 @@ class Myna.BaseExperiment extends Myna.Events
 
   loadVariant: (cacheKey) =>
     id = @load()?[cacheKey]
-    Myna.log("Myna.BaseExperiment.loadVariant", @id, cacheKey, id)
+    @log("loadVariant", @id, cacheKey, id)
     if id? then @variants[id] else null
 
   saveVariant: (cacheKey, variant) =>
     @loadAndSave (saved) =>
-      Myna.log("Myna.BaseExperiment.saveVariant", @id, cacheKey, variant, saved)
+      @log("saveVariant", @id, cacheKey, variant, saved)
       if variant?
         saved[cacheKey] = variant.id
       else

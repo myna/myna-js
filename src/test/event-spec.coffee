@@ -1,4 +1,4 @@
-expt = new Myna.Experiment
+expt = new Myna.ExperimentSummary
   uuid:     "45923780-80ed-47c6-aa46-15e2ae7a0e8c"
   id:       "id"
   settings: "myna.js.sticky": false
@@ -190,6 +190,6 @@ describe "beforeReward event", ->
       expect(findCall(calls, "view",            0)).toEqual([ "view",            variant, true ])
       expect(findCall(calls, "beforeSync",      0)).toEqual([ "beforeSync",      [[ 'view', variant.id, null ]] ])
       expect(findCall(calls, "beforeReward",    0)).toEqual([ "beforeReward",    variant, 0.8, true ])
-      expect(findCall(calls, "afterSync",       0)).toEqual([ "afterSync",       [], [[ 'view', variant.id, null ]] ])
+      expect(findCall(calls, "afterSync",       0)).toEqual([ "afterSync",       [[ 'view', variant.id, null ]], [] ])
 
       @removeAllSpies()

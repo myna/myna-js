@@ -1,4 +1,4 @@
-expt = new Myna.Experiment
+expt = new Myna.ExperimentSummary
   uuid:     "45923780-80ed-47c6-aa46-15e2ae7a0e8c"
   id:       "id"
   settings: "myna.js.sticky": true
@@ -25,7 +25,7 @@ for sticky in [false, true]
       fn()
       @removeAllSpies()
 
-  describe "Myna.Experiment.reward (#{(if sticky then 'sticky' else 'non-sticky')})", ->
+  describe "Myna.ExperimentSummary.reward (#{(if sticky then 'sticky' else 'non-sticky')})", ->
     it "should reward the last suggestion", initialized ->
       withSuggestion expt, (variant) ->
         withReward expt, 0.8, ->
@@ -62,7 +62,7 @@ for sticky in [false, true]
       finished = false
 
       withSuggestion expt, (variant) ->
-        expect(variant).toBeInstanceOf(Myna.Variant)
+        expect(variant).toBeInstanceOf(Myna.VariantSummary)
         withReward expt, 0.8, ->
           withReward expt, 0.6, ->
             expect(eventSummaries(recorder.queuedEvents())).toEqual [
@@ -78,7 +78,7 @@ for sticky in [false, true]
       finished = false
 
       withSuggestion expt, (v1) ->
-        expect(v1).toBeInstanceOf(Myna.Variant)
+        expect(v1).toBeInstanceOf(Myna.VariantSummary)
         withReward expt, 0.8, ->
           withSuggestion expt, (v2) ->
             withReward expt, 0.6, ->

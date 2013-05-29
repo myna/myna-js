@@ -1,4 +1,4 @@
-expt = new Myna.Experiment
+expt = new Myna.ExperimentSummary
   uuid:     "uuid"
   id:       "id"
   settings: "myna.js.sticky": true
@@ -8,7 +8,7 @@ expt = new Myna.Experiment
     { id: "c", settings: { buttons: "blue"  }, weight: 0.6 }
   ]
 
-describe "Myna.Experiment.constructor", ->
+describe "Myna.ExperimentSummary.constructor", ->
   it "should accept custom options", ->
     expect(expt.uuid).toEqual("uuid")
     expect(expt.id).toEqual("id")
@@ -23,34 +23,34 @@ describe "Myna.Experiment.constructor", ->
     expect(for key, value of expt.variants then value.weight).toEqual([ 0.2, 0.4, 0.6 ])
 
   it "should succeed if no settings or variants are provided", ->
-    actual = new Myna.Experiment(uuid: "uuid", id: "id")
+    actual = new Myna.ExperimentSummary(uuid: "uuid", id: "id")
     expect(actual.settings.data).toEqual({})
     expect(actual.variants).toEqual({})
 
   it "should fail if no uuid is provided", ->
-    expect(-> new Myna.Experiment(id: "id")).toThrow()
+    expect(-> new Myna.ExperimentSummary(id: "id")).toThrow()
 
   it "should fail if no id is provided", ->
-    expect(-> new Myna.Experiment(uuid: "uuid")).toThrow()
+    expect(-> new Myna.ExperimentSummary(uuid: "uuid")).toThrow()
 
-describe "Myna.Experiment.sticky", ->
+describe "Myna.ExperimentSummary.sticky", ->
   it "should be derived from the 'myna.js.sticky' setting", ->
-    expect(new Myna.Experiment(uuid: "uuid", id: "id", settings: "myna.js.sticky": true).sticky()).toEqual(true)
-    expect(new Myna.Experiment(uuid: "uuid", id: "id", settings: "myna.js.sticky": false).sticky()).toEqual(false)
+    expect(new Myna.ExperimentSummary(uuid: "uuid", id: "id", settings: "myna.js.sticky": true).sticky()).toEqual(true)
+    expect(new Myna.ExperimentSummary(uuid: "uuid", id: "id", settings: "myna.js.sticky": false).sticky()).toEqual(false)
 
   it "should default to true", ->
-    expect(new Myna.Experiment(uuid: "uuid", id: "id").sticky()).toEqual(true)
+    expect(new Myna.ExperimentSummary(uuid: "uuid", id: "id").sticky()).toEqual(true)
 
-describe "Myna.Experiment.totalWeight", ->
+describe "Myna.ExperimentSummary.totalWeight", ->
   it "should return the sum of the variants' weights, even if they don't total 1.0", ->
     expect(expt.totalWeight()).toBeCloseTo(1.2, 0.001)
 
-describe "Myna.Experiment.randomVariant", ->
+describe "Myna.ExperimentSummary.randomVariant", ->
   it "should return ... er ... random variants", ->
     ids = []
     for i in [1..100]
       actual = expt.randomVariant()
-      expect(actual).toBeInstanceOf(Myna.Variant)
+      expect(actual).toBeInstanceOf(Myna.VariantSummary)
       ids.push(actual.id)
     expect(ids).toContain("a")
     expect(ids).toContain("b")
@@ -74,7 +74,7 @@ for localStorageEnabled in [false, true] # end up resetting it to true
     (if Myna.cache.localStorageSupported then ' supported,' else ' unsupported,') +
     (if Myna.cache.localStorageEnabled then ' enabled' else ' disabled')
 
-  describe "Myna.Experiment.{load,save,clear}LastView (#{localStorageStatus})", ->
+  describe "Myna.ExperimentSummary.{load,save,clear}LastView (#{localStorageStatus})", ->
     it "should load nothing if nothing has been saved", ->
       expt.clearLastView()
       expect(expt.loadLastView()).toEqual(null)
@@ -87,11 +87,11 @@ for localStorageEnabled in [false, true] # end up resetting it to true
       expect(expt.loadLastView()).toBe(expt.variants.b)
 
     it "should not interfere with other experiments", ->
-      expt2 = new Myna.Experiment(uuid: "uuid2", id: "id2")
+      expt2 = new Myna.ExperimentSummary(uuid: "uuid2", id: "id2")
       expt.saveLastView(expt.variants.a)
       expect(expt2.loadLastView()).toEqual(null)
 
-  describe "Myna.Experiment.{load,save,clear}StickySuggestion (#{localStorageStatus})", ->
+  describe "Myna.ExperimentSummary.{load,save,clear}StickySuggestion (#{localStorageStatus})", ->
     it "should load nothing if nothing has been saved", ->
       expt.clearStickySuggestion()
       expect(expt.loadStickySuggestion()).toEqual(null)
@@ -104,7 +104,7 @@ for localStorageEnabled in [false, true] # end up resetting it to true
       expect(expt.loadStickySuggestion()).toBe(expt.variants.b)
 
     it "should not interfere with other experiments", ->
-      expt2 = new Myna.Experiment(uuid: "uuid2", id: "id2")
+      expt2 = new Myna.ExperimentSummary(uuid: "uuid2", id: "id2")
       expt.saveStickySuggestion(expt.variants.a)
       expect(expt2.loadStickySuggestion()).toEqual(null)
 
@@ -114,7 +114,7 @@ for localStorageEnabled in [false, true] # end up resetting it to true
       expect(expt.loadLastView()).toBe(expt.variants.a)
       expect(expt.loadStickySuggestion()).toBe(expt.variants.b)
 
-  describe "Myna.Experiment.{load,save,clear}StickyReward (#{localStorageStatus})", ->
+  describe "Myna.ExperimentSummary.{load,save,clear}StickyReward (#{localStorageStatus})", ->
     it "should load nothing if nothing has been saved", ->
       expt.clearStickyReward()
       expect(expt.loadStickyReward()).toEqual(null)
@@ -127,7 +127,7 @@ for localStorageEnabled in [false, true] # end up resetting it to true
       expect(expt.loadStickyReward()).toBe(expt.variants.b)
 
     it "should not interfere with other experiments", ->
-      expt2 = new Myna.Experiment(uuid: "uuid2", id: "id2")
+      expt2 = new Myna.ExperimentSummary(uuid: "uuid2", id: "id2")
       expt.saveStickyReward(expt.variants.a)
       expect(expt2.loadStickyReward()).toEqual(null)
 

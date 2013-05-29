@@ -12,7 +12,7 @@ for denyAccess in [ false, true ]
 
   accessStatus = if denyAccess then "deny access" else "allow access"
 
-  expt = new Myna.Experiment
+  expt = new Myna.ExperimentSummary
     uuid:     "45923780-80ed-47c6-aa46-15e2ae7a0e8c"
     id:       "id"
     settings: "myna.js.sticky": false
@@ -37,7 +37,7 @@ for denyAccess in [ false, true ]
       recorder.waiting = []
       fn()
 
-  describe "Myna.Experiment.record (#{accessStatus})", ->
+  describe "Myna.ExperimentSummary.record (#{accessStatus})", ->
     it "should record a single event", initialized ->
       variant  = null
       success  = false

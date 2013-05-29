@@ -1,4 +1,4 @@
-class Myna.Experiment extends Myna.BaseExperiment
+class Myna.ExperimentSummary extends Myna.ExperimentBase
 
   # -> boolean
   sticky: =>
@@ -32,7 +32,7 @@ class Myna.Experiment extends Myna.BaseExperiment
     super(variant)
 
   unstick: =>
-    Myna.log("Myna.Experiment.unstick", @id)
+    @log("unstick", @id)
     @clearLastView()
     @clearLastReward()
     @clearStickySuggestion()

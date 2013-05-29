@@ -25,13 +25,14 @@ module.exports = (grunt) ->
     [
       intro...
       'core.coffee'
+      'logging.coffee'
+      'events.coffee'
       'jsonp.coffee'
       'settings.coffee'
       'cache.coffee'
-      'variant.coffee'
-      'events.coffee'
-      'base-experiment.coffee'
-      'experiment.coffee'
+      'variant-summary.coffee'
+      'experiment-base.coffee'
+      'experiment-summary.coffee'
       'recorder.coffee'
       'client.coffee'
       outro...

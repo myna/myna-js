@@ -26,13 +26,13 @@ describe "Myna.initLocal", ->
 
     expect(client).toBeInstanceOf(Myna.Client)
 
-    expect(client.experiments.a).toBeInstanceOf(Myna.Experiment)
-    expect(client.experiments.b).toBeInstanceOf(Myna.Experiment)
+    expect(client.experiments.a).toBeInstanceOf(Myna.ExperimentSummary)
+    expect(client.experiments.b).toBeInstanceOf(Myna.ExperimentSummary)
 
-    expect(client.experiments.a.variants.variant1).toBeInstanceOf(Myna.Variant)
-    expect(client.experiments.a.variants.variant2).toBeInstanceOf(Myna.Variant)
-    expect(client.experiments.b.variants.foo).toBeInstanceOf(Myna.Variant)
-    expect(client.experiments.b.variants.bar).toBeInstanceOf(Myna.Variant)
+    expect(client.experiments.a.variants.variant1).toBeInstanceOf(Myna.VariantSummary)
+    expect(client.experiments.a.variants.variant2).toBeInstanceOf(Myna.VariantSummary)
+    expect(client.experiments.b.variants.foo).toBeInstanceOf(Myna.VariantSummary)
+    expect(client.experiments.b.variants.bar).toBeInstanceOf(Myna.VariantSummary)
 
 describe "Myna.initApi", ->
   it "should create a client", ->
@@ -52,7 +52,7 @@ describe "Myna.initApi", ->
       for id, expt of client.experiments
         Myna.log(" - ", id, expt)
 
-      expect(client.experiments.test).toBeInstanceOf(Myna.Experiment)
+      expect(client.experiments.test).toBeInstanceOf(Myna.ExperimentSummary)
 
-      expect(client.experiments.test.variants.variant1).toBeInstanceOf(Myna.Variant)
-      expect(client.experiments.test.variants.variant2).toBeInstanceOf(Myna.Variant)
+      expect(client.experiments.test.variants.variant1).toBeInstanceOf(Myna.VariantSummary)
+      expect(client.experiments.test.variants.variant2).toBeInstanceOf(Myna.VariantSummary)
