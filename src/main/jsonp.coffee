@@ -4,6 +4,24 @@ Myna.jsonp =
   callbacks: {}
   counter: 0
 
+  # string string -> HTMLElement
+  #
+  # This private method is factored out of Myna.jsonp.request
+  # so we can hook into it in unit tests. See jsonp-spec.coffee
+  createScriptElem: (url, callbackName) ->
+    scriptElem = document.createElement("script")
+    scriptElem.setAttribute("type","text/javascript")
+    scriptElem.setAttribute("async", "true")
+    scriptElem.setAttribute("src", url)
+    scriptElem.setAttribute("class", "myna-jsonp")
+    scriptElem.setAttribute("data-callback", callbackName)
+
+    # onreadystatechange is for IE, onload/onerror for everyone else
+    scriptElem.onload = scriptElem.onreadystatechange = ->
+      Myna.jsonp.remove(callbackName, scriptElem)
+
+    scriptElem
+
   # (
   #   success : (any ... -> undefined)
   #   error   : (json    -> undefined)
@@ -32,15 +50,7 @@ Myna.jsonp =
 
     # Prepare script element:
 
-    scriptElem = document.createElement("script")
-    scriptElem.setAttribute("type","text/javascript")
-    scriptElem.setAttribute("async", "true")
-    scriptElem.setAttribute("src", url)
-    scriptElem.setAttribute("class", "myna-jsonp")
-    scriptElem.setAttribute("data-callback", callbackName)
-    # onreadystatechange is for IE, onload/onerror for everyone else
-    scriptElem.onload = scriptElem.onreadystatechange = ->
-      Myna.jsonp.remove(callbackName, scriptElem)
+    scriptElem = Myna.jsonp.createScriptElem(url, callbackName)
 
     # Register timeout function
 

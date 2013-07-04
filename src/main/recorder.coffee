@@ -1,13 +1,14 @@
 class Myna.Recorder extends Myna.Events
-  constructor: (options = {}) ->
-    super(options)
+  constructor: (client) ->
+    Myna.log("Myna.Recorder.constructor", client)
 
-    Myna.log("Myna.Recorder.constructor", options)
-    @apiKey     = options.apiKey     ? Myna.error("Myna.Recorder.constructor", "no apiKey in options", options)
-    @apiRoot    = options.apiRoot    ? "//api.mynaweb.com"
-    @storageKey = options.storageKey ? "myna"
-    @timeout    = options.timeout    ? 1000 # ms
-    @autoSync   = options.autoSync   ? true
+    @client     = client
+    @apiKey     = client.apiKey     ? Myna.error("Myna.Recorder.constructor", "no apiKey in options", options)
+    @apiRoot    = client.apiRoot    ? "//api.mynaweb.com"
+
+    @storageKey = client.settings.get("myna.web.storageKey", "myna")
+    @timeout    = client.settings.get("myna.web.timeout", 1000)
+    @autoSync   = client.settings.get("myna.web.autoSync", true)
 
     # The number of record requests currently in progress. Should be 0 or 1.
     # The value is used to prevent multiple record requests being submitted concurrently.
@@ -18,6 +19,11 @@ class Myna.Recorder extends Myna.Events
     # These callbacks are cached until the current record request is over,
     # at which point the record method retriggers itself.
     @waiting = []
+
+  # Start listening for results
+  init: =>
+    for id, expt of client.experiments
+      @listenTo(expt)
 
   listenTo: (expt) =>
     Myna.log("Myna.Recorder.listenTo", expt.id)

@@ -1,31 +1,29 @@
 (function() {
-  var _ref, _ref1,
+  var _ref,
     __slice = [].slice;
 
-  if ((_ref = window.Myna) == null) {
+  if (window.Myna == null) {
     window.Myna = {};
   }
 
   Myna.debug = true;
 
   Myna.log = function() {
-    var args, _ref1;
-
+    var args, _ref;
     args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
     if (Myna.debug) {
-      if ((_ref1 = window.console) != null) {
-        _ref1.log(args);
+      if ((_ref = window.console) != null) {
+        _ref.log(args);
       }
     }
   };
 
   Myna.error = function() {
-    var args, _ref1;
-
+    var args, _ref;
     args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
     if (Myna.debug) {
-      if ((_ref1 = window.console) != null) {
-        _ref1.error(args);
+      if ((_ref = window.console) != null) {
+        _ref.error(args);
       }
     }
     throw args;
@@ -33,7 +31,6 @@
 
   Myna.extend = function() {
     var des, key, sources, src, value, _i, _len;
-
     des = arguments[0], sources = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
     for (_i = 0, _len = sources.length; _i < _len; _i++) {
       src = sources[_i];
@@ -47,7 +44,6 @@
 
   Myna.deleteKeys = function() {
     var ans, key, keys, obj, _i, _len;
-
     obj = arguments[0], keys = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
     ans = Myna.extend({}, obj);
     for (_i = 0, _len = keys.length; _i < _len; _i++) {
@@ -59,13 +55,11 @@
 
   Myna.dateToString = function(date) {
     var day, hour, milli, minute, month, pad, second, year;
-
     if (Date.prototype.toISOString) {
       return date.toISOString();
     } else {
       pad = function(num, len) {
         var str;
-
         str = "" + num;
         while (str.length < len) {
           str = '0' + str;
@@ -87,7 +81,7 @@
     return msg;
   };
 
-  Myna.$ = (_ref1 = window.jQuery) != null ? _ref1 : null;
+  Myna.$ = (_ref = window.jQuery) != null ? _ref : null;
 
 }).call(this);
 
@@ -95,9 +89,21 @@
   Myna.jsonp = {
     callbacks: {},
     counter: 0,
+    createScriptElem: function(url, callbackName) {
+      var scriptElem;
+      scriptElem = document.createElement("script");
+      scriptElem.setAttribute("type", "text/javascript");
+      scriptElem.setAttribute("async", "true");
+      scriptElem.setAttribute("src", url);
+      scriptElem.setAttribute("class", "myna-jsonp");
+      scriptElem.setAttribute("data-callback", callbackName);
+      scriptElem.onload = scriptElem.onreadystatechange = function() {
+        return Myna.jsonp.remove(callbackName, scriptElem);
+      };
+      return scriptElem;
+    },
     request: function(options) {
       var callbackName, error, key, onComplete, onTimeout, params, returned, scriptElem, success, timeout, timer, url, urlRoot, value, _ref, _ref1, _ref2, _ref3, _ref4;
-
       if (options == null) {
         options = {};
       }
@@ -115,15 +121,7 @@
       }
       url += "callback=Myna.jsonp.callbacks." + callbackName;
       Myna.log("Myna.jsonp.request", url, success, error, timeout);
-      scriptElem = document.createElement("script");
-      scriptElem.setAttribute("type", "text/javascript");
-      scriptElem.setAttribute("async", "true");
-      scriptElem.setAttribute("src", url);
-      scriptElem.setAttribute("class", "myna-jsonp");
-      scriptElem.setAttribute("data-callback", callbackName);
-      scriptElem.onload = scriptElem.onreadystatechange = function() {
-        return Myna.jsonp.remove(callbackName, scriptElem);
-      };
+      scriptElem = Myna.jsonp.createScriptElem(url, callbackName);
       onTimeout = function() {
         if (returned) {
           return Myna.log("Myna.jsonp.request.onTimeout", callbackName, timeout, "already returned");
@@ -169,7 +167,6 @@
     },
     remove: function(callbackName, scriptElem) {
       var readyState;
-
       if (callbackName == null) {
         callbackName = null;
       }
@@ -218,7 +215,8 @@
     function Root(next) {
       this.set = __bind(this.set, this);
       this.get = __bind(this.get, this);
-      this.path = __bind(this.path, this);      Root.__super__.constructor.call(this, next);
+      this.path = __bind(this.path, this);
+      Root.__super__.constructor.call(this, next);
     }
 
     Root.prototype.path = function() {
@@ -243,7 +241,8 @@
     function Field(next, name) {
       this.set = __bind(this.set, this);
       this.get = __bind(this.get, this);
-      this.path = __bind(this.path, this);      Field.__super__.constructor.call(this, next);
+      this.path = __bind(this.path, this);
+      Field.__super__.constructor.call(this, next);
       this.name = name;
     }
 
@@ -257,7 +256,6 @@
 
     Field.prototype.set = function(data, value) {
       var ans, k, v;
-
       ans = {};
       for (k in data) {
         v = data[k];
@@ -311,7 +309,6 @@
 
     Settings.prototype.get = function(path, orElse) {
       var ans, _ref;
-
       if (orElse == null) {
         orElse = null;
       }
@@ -322,7 +319,6 @@
 
     Settings.prototype.set = function() {
       var key, value, _ref;
-
       switch (arguments.length) {
         case 0:
           Myna.error("Myna.Settings.set", "not enough arguments", arguments);
@@ -346,7 +342,6 @@
 
     Settings.prototype.parse = function(path) {
       var memo, name, _i, _ref;
-
       memo = nil;
       _ref = path.split(".");
       for (_i = _ref.length - 1; _i >= 0; _i += -1) {
@@ -367,10 +362,10 @@
 }).call(this);
 
 (function() {
-  var decodeCookieValue, encodeCookieValue, exn, readCookie, readLocalStorage, removeCookie, removeLocalStorage, writeCookie, writeLocalStorage, _ref,
+  var decodeCookieValue, encodeCookieValue, exn, readCookie, readLocalStorage, removeCookie, removeLocalStorage, writeCookie, writeLocalStorage,
     _this = this;
 
-  if ((_ref = Myna.cache) == null) {
+  if (Myna.cache == null) {
     Myna.cache = {};
   }
 
@@ -389,7 +384,6 @@
 
   readLocalStorage = function(key) {
     var str;
-
     str = window.localStorage.getItem("myna-" + key);
     if (str != null) {
       try {
@@ -430,7 +424,6 @@
 
   writeCookie = function(name, obj, days) {
     var date, expires, path, value;
-
     if (days == null) {
       days = 365;
     }
@@ -442,17 +435,14 @@
 
   readCookie = function(name) {
     var cookie, cookieValue, cookies, isNameEQCookie, nameEQ, str, _i, _len;
-
     nameEQ = "myna-" + name + "=";
     isNameEQCookie = function(cookie) {
       var i;
-
       i = cookie.indexOf(nameEQ);
       return i >= 0 && cookie.substring(0, i).match('^\\s*$');
     };
     cookieValue = function(cookie) {
       var i;
-
       i = cookie.indexOf(nameEQ);
       return cookie.substring(i + nameEQ.length, cookie.length);
     };
@@ -502,7 +492,6 @@
   Myna.Variant = (function() {
     function Variant(options) {
       var _ref, _ref1, _ref2;
-
       if (options == null) {
         options = {};
       }
@@ -526,12 +515,12 @@
       this.off = __bind(this.off, this);
       this.on = __bind(this.on, this);
       this.triggerAsync = __bind(this.triggerAsync, this);
-      this.trigger = __bind(this.trigger, this);      this.eventHandlers = {};
+      this.trigger = __bind(this.trigger, this);
+      this.eventHandlers = {};
     }
 
     Events.prototype.trigger = function() {
       var args, cancel, event, handler, _i, _len, _ref, _ref1;
-
       event = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
       Myna.log.apply(Myna, ["Myna.Events.trigger", event].concat(__slice.call(args)));
       cancel = false;
@@ -550,12 +539,10 @@
     Events.prototype.triggerAsync = function() {
       var args, error, event, success, triggerAll, _i, _ref,
         _this = this;
-
       event = arguments[0], args = 4 <= arguments.length ? __slice.call(arguments, 1, _i = arguments.length - 2) : (_i = 1, []), success = arguments[_i++], error = arguments[_i++];
       Myna.log.apply(Myna, ["Myna.Events.triggerAsync", event].concat(__slice.call(args)));
       triggerAll = function(handlers) {
         var head, rest;
-
         Myna.log("Myna.Events.triggerAsync.triggerAll", handlers);
         if (handlers.length === 0) {
           return success();
@@ -571,14 +558,12 @@
 
     Events.prototype.on = function(event, handler) {
       var _ref;
-
       this.eventHandlers[event] = ((_ref = this.eventHandlers[event]) != null ? _ref : []).concat([handler]);
       return Myna.log("Myna.Events.on", event, handler, this.eventHandlers[event]);
     };
 
     Events.prototype.off = function(event, handler) {
       var h;
-
       if (handler == null) {
         handler = null;
       }
@@ -593,7 +578,6 @@
           event = arguments[0], handler = arguments[1];
           this.eventHandlers[event] = (function() {
             var _i, _len, _ref, _results;
-
             _ref = this.eventHandlers[event];
             _results = [];
             for (_i = 0, _len = _ref.length; _i < _len; _i++) {
@@ -625,7 +609,6 @@
 
     function BaseExperiment(options) {
       var data, _i, _len, _ref, _ref1, _ref2, _ref3, _ref4;
-
       if (options == null) {
         options = {};
       }
@@ -668,7 +651,6 @@
 
     BaseExperiment.prototype.suggest = function(success, error) {
       var variants, _ref, _ref1;
-
       if (success == null) {
         success = (function() {});
       }
@@ -692,7 +674,6 @@
 
     BaseExperiment.prototype.view = function(variantOrId, success, error) {
       var variants, _ref, _ref1;
-
       if (success == null) {
         success = (function() {});
       }
@@ -716,7 +697,6 @@
 
     BaseExperiment.prototype.viewVariant = function(options) {
       var error, success, variant, viewed, _ref, _ref1;
-
       variant = options.variant;
       viewed = options.viewed;
       success = (_ref = options.success) != null ? _ref : (function() {});
@@ -746,7 +726,6 @@
 
     BaseExperiment.prototype.reward = function(amount, success, error) {
       var variants, _ref, _ref1;
-
       if (amount == null) {
         amount = 1.0;
       }
@@ -775,7 +754,6 @@
     BaseExperiment.prototype.rewardVariant = function(options) {
       var amount, error, rewarded, success, variant, _ref, _ref1, _ref2,
         _this = this;
-
       if (options == null) {
         options = {};
       }
@@ -798,7 +776,6 @@
             return _this.trigger('reward', variant, amount, true);
           }, function() {
             var args;
-
             args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
             return error.call.apply(error, [_this].concat(__slice.call(args)));
           });
@@ -815,7 +792,6 @@
 
     BaseExperiment.prototype.totalWeight = function() {
       var ans, id, variant, _ref;
-
       ans = 0.0;
       _ref = this.variants;
       for (id in _ref) {
@@ -827,7 +803,6 @@
 
     BaseExperiment.prototype.randomVariant = function() {
       var id, random, total, variant, _ref;
-
       total = this.totalWeight();
       random = Math.random() * total;
       _ref = this.variants;
@@ -870,7 +845,6 @@
 
     BaseExperiment.prototype.loadVariant = function(cacheKey) {
       var id, _ref;
-
       id = (_ref = this.load()) != null ? _ref[cacheKey] : void 0;
       Myna.log("Myna.BaseExperiment.loadVariant", this.id, cacheKey, id);
       if (id != null) {
@@ -882,7 +856,6 @@
 
     BaseExperiment.prototype.saveVariant = function(cacheKey, variant) {
       var _this = this;
-
       return this.loadAndSave(function(saved) {
         Myna.log("Myna.BaseExperiment.saveVariant", _this.id, cacheKey, variant, saved);
         if (variant != null) {
@@ -900,7 +873,6 @@
 
     BaseExperiment.prototype.loadAndSave = function(func) {
       var _ref;
-
       return this.save(func((_ref = this.load()) != null ? _ref : {}));
     };
 
@@ -940,7 +912,8 @@
       this.saveVariantFromView = __bind(this.saveVariantFromView, this);
       this.loadVariantsForView = __bind(this.loadVariantsForView, this);
       this.loadVariantsForSuggest = __bind(this.loadVariantsForSuggest, this);
-      this.sticky = __bind(this.sticky, this);      _ref = Experiment.__super__.constructor.apply(this, arguments);
+      this.sticky = __bind(this.sticky, this);
+      _ref = Experiment.__super__.constructor.apply(this, arguments);
       return _ref;
     }
 
@@ -950,7 +923,6 @@
 
     Experiment.prototype.loadVariantsForSuggest = function() {
       var sticky;
-
       if (this.sticky()) {
         sticky = this.loadStickySuggestion();
         return {
@@ -1042,7 +1014,6 @@
 
     function Recorder(options) {
       var _ref, _ref1, _ref2, _ref3, _ref4;
-
       if (options == null) {
         options = {};
       }
@@ -1070,7 +1041,6 @@
 
     Recorder.prototype.listenTo = function(expt) {
       var _this = this;
-
       Myna.log("Myna.Recorder.listenTo", expt.id);
       expt.on('recordView', function(variant, success, error) {
         return _this.recordView(expt, variant, success, error);
@@ -1128,7 +1098,6 @@
     Recorder.prototype.sync = function(success, error) {
       var finish, start, syncAll, syncOne, waiting,
         _this = this;
-
       if (success == null) {
         success = (function() {});
       }
@@ -1147,7 +1116,6 @@
         this.waiting = [];
         start = function() {
           var events;
-
           events = _this.clearQueuedEvents();
           Myna.log("Myna.Recorder.sync.start", events, waiting.length);
           if (_this.trigger('beforeSync', events) === false) {
@@ -1158,7 +1126,6 @@
         };
         syncAll = function(events, successEvents, errorEvents) {
           var head, tail;
-
           Myna.log("Myna.Recorder.sync.syncAll", events, successEvents, errorEvents);
           if (events.length === 0) {
             return finish(successEvents, errorEvents);
@@ -1169,7 +1136,6 @@
         };
         syncOne = function(event, otherEvents, successEvents, errorEvents) {
           var params;
-
           Myna.log("Myna.Recorder.sync.syncOne", event, otherEvents, successEvents, errorEvents);
           params = Myna.deleteKeys(event, 'experiment');
           return Myna.jsonp.request({
@@ -1188,7 +1154,6 @@
         };
         finish = function(successEvents, errorEvents) {
           var item, _i, _j, _len, _len1;
-
           Myna.log("Myna.Recorder.sync.finish", successEvents, errorEvents);
           if (errorEvents.length > 0) {
             _this.requeueEvents(errorEvents);
@@ -1214,7 +1179,6 @@
 
     Recorder.prototype.queuedEvents = function() {
       var ans, _ref;
-
       ans = (_ref = this.load().queuedEvents) != null ? _ref : [];
       Myna.log("Myna.Recorder.queuedEvents", ans);
       return ans;
@@ -1224,7 +1188,6 @@
       Myna.log("Myna.Recorder.queueEvent", event);
       return this.loadAndSave(function(saved) {
         var _ref;
-
         saved.queuedEvents = ((_ref = saved.queuedEvents) != null ? _ref : []).concat([event]);
         return saved;
       });
@@ -1234,7 +1197,6 @@
       Myna.log("Myna.Recorder.requeueEvents", events);
       return this.loadAndSave(function(saved) {
         var _ref;
-
         saved.queuedEvents = events.concat((_ref = saved.queuedEvents) != null ? _ref : []);
         return saved;
       });
@@ -1242,12 +1204,10 @@
 
     Recorder.prototype.clearQueuedEvents = function() {
       var ans;
-
       Myna.log("Myna.Recorder.clearQueuedEvents");
       ans = [];
       this.loadAndSave(function(saved) {
         var _ref;
-
         ans = (_ref = saved.queuedEvents) != null ? _ref : [];
         delete saved.queuedEvents;
         return saved;
@@ -1257,7 +1217,6 @@
 
     Recorder.prototype.loadAndSave = function(func) {
       var _ref;
-
       return this.save(func((_ref = this.load()) != null ? _ref : {}));
     };
 
@@ -1281,7 +1240,6 @@
   Myna.Client = (function() {
     function Client(options) {
       var data, expt, _i, _len, _ref, _ref1;
-
       if (options == null) {
         options = {};
       }
@@ -1338,11 +1296,10 @@
 }).call(this);
 
 (function() {
-  Myna.initLocal = function(options) {
+  Myna.init = function(options) {
     var apiKey, apiRoot, debug, experiments, expt, id, _ref, _ref1, _ref2, _ref3, _ref4;
-
-    Myna.log("Myna.initLocal", options);
-    apiKey = (_ref = options.apiKey) != null ? _ref : Myna.error("Myna.initLocal", "no apiKey in options", options);
+    Myna.log("Myna.init", options);
+    apiKey = (_ref = options.apiKey) != null ? _ref : Myna.error("Myna.init", "no apiKey in options", options);
     apiRoot = (_ref1 = options.apiRoot) != null ? _ref1 : "//api.mynaweb.com";
     debug = (_ref2 = options.debug) != null ? _ref2 : window.location.hash === "#debug";
     experiments = (_ref3 = options.experiments) != null ? _ref3 : [];
@@ -1359,17 +1316,16 @@
       _ref4 = Myna.client.experiments;
       for (id in _ref4) {
         expt = _ref4[id];
-        Myna.client.records.listenTo(expt);
+        Myna.client.recorder.listenTo(expt);
       }
     }
     return Myna.client;
   };
 
-  Myna.initApi = function(options) {
+  Myna.initRemote = function(options) {
     var apiKey, apiRoot, error, success, _ref, _ref1, _ref2, _ref3;
-
     Myna.log("Myna.initRemote", options);
-    apiKey = (_ref = options.apiKey) != null ? _ref : Myna.error("Myna.Client.initApi", "no apiKey in options", options);
+    apiKey = (_ref = options.apiKey) != null ? _ref : Myna.error("Myna.Client.initRemote", "no apiKey in options", options);
     apiRoot = (_ref1 = options.apiRoot) != null ? _ref1 : "//api.mynaweb.com";
     success = (_ref2 = options.success) != null ? _ref2 : (function() {});
     error = (_ref3 = options.error) != null ? _ref3 : (function() {});
@@ -1380,7 +1336,7 @@
       },
       success: function(json) {
         Myna.log("Myna.initRemote", "response", json);
-        return success(Myna.initLocal({
+        return success(Myna.init({
           apiKey: apiKey,
           apiRoot: apiRoot,
           experiments: json.results

@@ -1,45 +1,40 @@
-Myna.initLocal = (options) ->
-  Myna.log("Myna.initLocal", options)
+# deploymentJson -> void
+Myna.init = (options) ->
+  Myna.log("Myna.init", options)
 
-  apiKey      = options.apiKey      ? Myna.error("Myna.initLocal", "no apiKey in options", options)
-  apiRoot     = options.apiRoot     ? "//api.mynaweb.com"
-  debug       = options.debug       ? window.location.hash == "#debug" || Myna.Toolbar.active()
-  experiments = options.experiments ? []
+  apiKey      = options.apiKey  ? Myna.error("Myna.init", "no apiKey in options", options)
+  apiRoot     = options.apiRoot ? "//api.mynaweb.com"
+  experiments = for expt in (options.experiments ? [])
+                  new Myna.Experiment(expt)
 
   Myna.client = new Myna.Client({ apiKey, apiRoot, experiments })
-  Myna.client.binder = new Myna.Binder(options)
 
-  if debug
-    Myna.client.toolbar = new Myna.Toolbar(Myna.client)
+  Myna.binder = new Myna.Binder(Myna.client)
+
+  if Myna.Toolbar.active()
+    Myna.toolbar = new Myna.Toolbar(Myna.client, Myna.binder)
+    Myna.$ ->
+      Myna.toolbar.init()
+      Myna.binder.init()
   else
-    Myna.client.recorder = new Myna.Recorder(options)
-    for id, expt of Myna.client.experiments
-      Myna.client.recorder.listenTo(expt)
-
-  Myna.$ ->
-    if debug
-      Myna.client.toolbar.init()
-    for id, expt of Myna.client.experiments
-      if Myna.client.binder.detect(expt)
-        Myna.client.binder.listenTo(expt)
-        if debug
-          Myna.client.toolbar.addExperiment(expt)
-        expt.suggest()
+    Myna.recorder = new Myna.Recorder(Myna.client)
+    Myna.recorder.init()
+    Myna.$ ->
+      Myna.binder.init()
 
   Myna.client
 
-Myna.initApi = (options) ->
+# { url: string, success: deploymentJson -> void, error: ??? -> void } -> void
+Myna.initRemote = (options) ->
   Myna.log("Myna.initRemote", options)
 
-  apiKey  = options.apiKey  ? Myna.error("Myna.Client.initApi", "no apiKey in options", options)
-  apiRoot = options.apiRoot ? "//api.mynaweb.com"
-  success = options.success ? (->)
-  error   = options.error   ? (->)
+  url      = options.url     ? Myna.error("Myna.Client.initRemote", "no url specified in options", options)
+  success  = options.success ? (->)
+  error    = options.error   ? (->)
 
   Myna.jsonp.request
-    url:     "#{apiRoot}/v2/experiment"
-    params:  apikey: apiKey
+    url:     url
     success: (json) ->
       Myna.log("Myna.initRemote", "response", json)
-      success(Myna.initLocal({ apiKey, apiRoot, experiments: json.results }))
+      success(Myna.init(json))
     error:   error

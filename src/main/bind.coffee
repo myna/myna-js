@@ -1,6 +1,17 @@
 class Myna.Binder
-  constructor: (options = {}) ->
+  constructor: (client) ->
+    Myna.log("Myna.Binder.constructor", client)
+
+    @client = client
+
     @boundHandlers = []
+
+  # Detect experiments and
+  init: =>
+    for id, expt of @client.experiments
+      if @detect(expt)
+        @listenTo(expt)
+        expt.suggest()
 
   listenTo: (expt) =>
     Myna.log("Myna.Binder.listenTo", expt)

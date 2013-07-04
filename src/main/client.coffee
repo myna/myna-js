@@ -2,9 +2,13 @@ class Myna.Client
   constructor: (options = {}) ->
     Myna.log("Myna.Client.constructor", options)
 
+    @uuid        = options.uuid       ? null
+    @apiKey      = options.apiKey     ? Myna.error("Myna.Deployment.constructor", "no apiKey in options", options)
+    @apiRoot     = options.apiRoot    ? "//api.mynaweb.com"
+    @settings    = new Myna.Settings(options.settings ? {})
+
     @experiments = {}
-    for data in (options.experiments ? [])
-      expt = if data instanceof Myna.Experiment then data else new Myna.Experiment(data)
+    for expt in (options.experiments ? [])
       @experiments[expt.id] = expt
 
   suggest: (exptId, success = (->), error = (->)) =>

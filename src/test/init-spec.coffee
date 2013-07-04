@@ -1,6 +1,6 @@
-describe "Myna.initLocal", ->
+describe "Myna.init", ->
   it "should create a client", ->
-    client = Myna.initLocal
+    client = Myna.init
       apiKey:   "092c90f6-a8f2-11e2-a2b9-7c6d628b25f7"
       apiRoot:  testApiRoot
       experiments: [
@@ -34,12 +34,12 @@ describe "Myna.initLocal", ->
     expect(client.experiments.b.variants.foo).toBeInstanceOf(Myna.Variant)
     expect(client.experiments.b.variants.bar).toBeInstanceOf(Myna.Variant)
 
-describe "Myna.initApi", ->
+describe "Myna.initRemote", ->
   it "should create a client", ->
     client = null
 
     runs ->
-      Myna.initApi
+      Myna.initRemote
         apiKey:  "092c90f6-a8f2-11e2-a2b9-7c6d628b25f7"
         apiRoot: testApiRoot
         success: (c) -> client = c

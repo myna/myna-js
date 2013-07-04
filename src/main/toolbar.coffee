@@ -1,10 +1,13 @@
 class Myna.Toolbar
-  constructor: (options = {}) ->
+  constructor: (client, binder = null) ->
     Myna.log("Myna.Toolbar.constructor")
 
-  # Class method:
+    @client = client
+    @binder = binder
+
+  # Should we initialize a toolbar?
   @active: =>
-    !!Myna.cache.load("myna-toolbar")
+    window.location.hash == "#debug" || !!Myna.cache.load("myna-toolbar")
 
   init: =>
     Myna.log("Myna.Toolbar.init")
@@ -12,6 +15,11 @@ class Myna.Toolbar
     @initInspector()
     @initToolbar()
     Myna.cache.save("myna-toolbar", true)
+
+    for id, expt of @client.experiments
+      if @binder == null || @binder.detect(expt)
+        @addExperiment(expt)
+
     return
 
   remove: =>

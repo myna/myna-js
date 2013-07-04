@@ -9597,33 +9597,31 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
 })( window );
 
 (function() {
-  var _ref, _ref1,
+  var _ref,
     __slice = [].slice;
 
-  if ((_ref = window.Myna) == null) {
+  if (window.Myna == null) {
     window.Myna = {};
   }
 
   Myna.debug = true;
 
   Myna.log = function() {
-    var args, _ref1;
-
+    var args, _ref;
     args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
     if (Myna.debug) {
-      if ((_ref1 = window.console) != null) {
-        _ref1.log(args);
+      if ((_ref = window.console) != null) {
+        _ref.log(args);
       }
     }
   };
 
   Myna.error = function() {
-    var args, _ref1;
-
+    var args, _ref;
     args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
     if (Myna.debug) {
-      if ((_ref1 = window.console) != null) {
-        _ref1.error(args);
+      if ((_ref = window.console) != null) {
+        _ref.error(args);
       }
     }
     throw args;
@@ -9631,7 +9629,6 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
 
   Myna.extend = function() {
     var des, key, sources, src, value, _i, _len;
-
     des = arguments[0], sources = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
     for (_i = 0, _len = sources.length; _i < _len; _i++) {
       src = sources[_i];
@@ -9645,7 +9642,6 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
 
   Myna.deleteKeys = function() {
     var ans, key, keys, obj, _i, _len;
-
     obj = arguments[0], keys = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
     ans = Myna.extend({}, obj);
     for (_i = 0, _len = keys.length; _i < _len; _i++) {
@@ -9657,13 +9653,11 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
 
   Myna.dateToString = function(date) {
     var day, hour, milli, minute, month, pad, second, year;
-
     if (Date.prototype.toISOString) {
       return date.toISOString();
     } else {
       pad = function(num, len) {
         var str;
-
         str = "" + num;
         while (str.length < len) {
           str = '0' + str;
@@ -9685,7 +9679,7 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
     return msg;
   };
 
-  Myna.$ = (_ref1 = window.jQuery) != null ? _ref1 : null;
+  Myna.$ = (_ref = window.jQuery) != null ? _ref : null;
 
 }).call(this);
 
@@ -9693,9 +9687,21 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
   Myna.jsonp = {
     callbacks: {},
     counter: 0,
+    createScriptElem: function(url, callbackName) {
+      var scriptElem;
+      scriptElem = document.createElement("script");
+      scriptElem.setAttribute("type", "text/javascript");
+      scriptElem.setAttribute("async", "true");
+      scriptElem.setAttribute("src", url);
+      scriptElem.setAttribute("class", "myna-jsonp");
+      scriptElem.setAttribute("data-callback", callbackName);
+      scriptElem.onload = scriptElem.onreadystatechange = function() {
+        return Myna.jsonp.remove(callbackName, scriptElem);
+      };
+      return scriptElem;
+    },
     request: function(options) {
       var callbackName, error, key, onComplete, onTimeout, params, returned, scriptElem, success, timeout, timer, url, urlRoot, value, _ref, _ref1, _ref2, _ref3, _ref4;
-
       if (options == null) {
         options = {};
       }
@@ -9713,15 +9719,7 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
       }
       url += "callback=Myna.jsonp.callbacks." + callbackName;
       Myna.log("Myna.jsonp.request", url, success, error, timeout);
-      scriptElem = document.createElement("script");
-      scriptElem.setAttribute("type", "text/javascript");
-      scriptElem.setAttribute("async", "true");
-      scriptElem.setAttribute("src", url);
-      scriptElem.setAttribute("class", "myna-jsonp");
-      scriptElem.setAttribute("data-callback", callbackName);
-      scriptElem.onload = scriptElem.onreadystatechange = function() {
-        return Myna.jsonp.remove(callbackName, scriptElem);
-      };
+      scriptElem = Myna.jsonp.createScriptElem(url, callbackName);
       onTimeout = function() {
         if (returned) {
           return Myna.log("Myna.jsonp.request.onTimeout", callbackName, timeout, "already returned");
@@ -9767,7 +9765,6 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
     },
     remove: function(callbackName, scriptElem) {
       var readyState;
-
       if (callbackName == null) {
         callbackName = null;
       }
@@ -9816,7 +9813,8 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
     function Root(next) {
       this.set = __bind(this.set, this);
       this.get = __bind(this.get, this);
-      this.path = __bind(this.path, this);      Root.__super__.constructor.call(this, next);
+      this.path = __bind(this.path, this);
+      Root.__super__.constructor.call(this, next);
     }
 
     Root.prototype.path = function() {
@@ -9841,7 +9839,8 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
     function Field(next, name) {
       this.set = __bind(this.set, this);
       this.get = __bind(this.get, this);
-      this.path = __bind(this.path, this);      Field.__super__.constructor.call(this, next);
+      this.path = __bind(this.path, this);
+      Field.__super__.constructor.call(this, next);
       this.name = name;
     }
 
@@ -9855,7 +9854,6 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
 
     Field.prototype.set = function(data, value) {
       var ans, k, v;
-
       ans = {};
       for (k in data) {
         v = data[k];
@@ -9909,7 +9907,6 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
 
     Settings.prototype.get = function(path, orElse) {
       var ans, _ref;
-
       if (orElse == null) {
         orElse = null;
       }
@@ -9920,7 +9917,6 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
 
     Settings.prototype.set = function() {
       var key, value, _ref;
-
       switch (arguments.length) {
         case 0:
           Myna.error("Myna.Settings.set", "not enough arguments", arguments);
@@ -9944,7 +9940,6 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
 
     Settings.prototype.parse = function(path) {
       var memo, name, _i, _ref;
-
       memo = nil;
       _ref = path.split(".");
       for (_i = _ref.length - 1; _i >= 0; _i += -1) {
@@ -9965,10 +9960,10 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
 }).call(this);
 
 (function() {
-  var decodeCookieValue, encodeCookieValue, exn, readCookie, readLocalStorage, removeCookie, removeLocalStorage, writeCookie, writeLocalStorage, _ref,
+  var decodeCookieValue, encodeCookieValue, exn, readCookie, readLocalStorage, removeCookie, removeLocalStorage, writeCookie, writeLocalStorage,
     _this = this;
 
-  if ((_ref = Myna.cache) == null) {
+  if (Myna.cache == null) {
     Myna.cache = {};
   }
 
@@ -9987,7 +9982,6 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
 
   readLocalStorage = function(key) {
     var str;
-
     str = window.localStorage.getItem("myna-" + key);
     if (str != null) {
       try {
@@ -10028,7 +10022,6 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
 
   writeCookie = function(name, obj, days) {
     var date, expires, path, value;
-
     if (days == null) {
       days = 365;
     }
@@ -10040,17 +10033,14 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
 
   readCookie = function(name) {
     var cookie, cookieValue, cookies, isNameEQCookie, nameEQ, str, _i, _len;
-
     nameEQ = "myna-" + name + "=";
     isNameEQCookie = function(cookie) {
       var i;
-
       i = cookie.indexOf(nameEQ);
       return i >= 0 && cookie.substring(0, i).match('^\\s*$');
     };
     cookieValue = function(cookie) {
       var i;
-
       i = cookie.indexOf(nameEQ);
       return cookie.substring(i + nameEQ.length, cookie.length);
     };
@@ -10100,7 +10090,6 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
   Myna.Variant = (function() {
     function Variant(options) {
       var _ref, _ref1, _ref2;
-
       if (options == null) {
         options = {};
       }
@@ -10124,12 +10113,12 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
       this.off = __bind(this.off, this);
       this.on = __bind(this.on, this);
       this.triggerAsync = __bind(this.triggerAsync, this);
-      this.trigger = __bind(this.trigger, this);      this.eventHandlers = {};
+      this.trigger = __bind(this.trigger, this);
+      this.eventHandlers = {};
     }
 
     Events.prototype.trigger = function() {
       var args, cancel, event, handler, _i, _len, _ref, _ref1;
-
       event = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
       Myna.log.apply(Myna, ["Myna.Events.trigger", event].concat(__slice.call(args)));
       cancel = false;
@@ -10148,12 +10137,10 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
     Events.prototype.triggerAsync = function() {
       var args, error, event, success, triggerAll, _i, _ref,
         _this = this;
-
       event = arguments[0], args = 4 <= arguments.length ? __slice.call(arguments, 1, _i = arguments.length - 2) : (_i = 1, []), success = arguments[_i++], error = arguments[_i++];
       Myna.log.apply(Myna, ["Myna.Events.triggerAsync", event].concat(__slice.call(args)));
       triggerAll = function(handlers) {
         var head, rest;
-
         Myna.log("Myna.Events.triggerAsync.triggerAll", handlers);
         if (handlers.length === 0) {
           return success();
@@ -10169,14 +10156,12 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
 
     Events.prototype.on = function(event, handler) {
       var _ref;
-
       this.eventHandlers[event] = ((_ref = this.eventHandlers[event]) != null ? _ref : []).concat([handler]);
       return Myna.log("Myna.Events.on", event, handler, this.eventHandlers[event]);
     };
 
     Events.prototype.off = function(event, handler) {
       var h;
-
       if (handler == null) {
         handler = null;
       }
@@ -10191,7 +10176,6 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
           event = arguments[0], handler = arguments[1];
           this.eventHandlers[event] = (function() {
             var _i, _len, _ref, _results;
-
             _ref = this.eventHandlers[event];
             _results = [];
             for (_i = 0, _len = _ref.length; _i < _len; _i++) {
@@ -10223,7 +10207,6 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
 
     function BaseExperiment(options) {
       var data, _i, _len, _ref, _ref1, _ref2, _ref3, _ref4;
-
       if (options == null) {
         options = {};
       }
@@ -10266,7 +10249,6 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
 
     BaseExperiment.prototype.suggest = function(success, error) {
       var variants, _ref, _ref1;
-
       if (success == null) {
         success = (function() {});
       }
@@ -10290,7 +10272,6 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
 
     BaseExperiment.prototype.view = function(variantOrId, success, error) {
       var variants, _ref, _ref1;
-
       if (success == null) {
         success = (function() {});
       }
@@ -10314,7 +10295,6 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
 
     BaseExperiment.prototype.viewVariant = function(options) {
       var error, success, variant, viewed, _ref, _ref1;
-
       variant = options.variant;
       viewed = options.viewed;
       success = (_ref = options.success) != null ? _ref : (function() {});
@@ -10344,7 +10324,6 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
 
     BaseExperiment.prototype.reward = function(amount, success, error) {
       var variants, _ref, _ref1;
-
       if (amount == null) {
         amount = 1.0;
       }
@@ -10373,7 +10352,6 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
     BaseExperiment.prototype.rewardVariant = function(options) {
       var amount, error, rewarded, success, variant, _ref, _ref1, _ref2,
         _this = this;
-
       if (options == null) {
         options = {};
       }
@@ -10396,7 +10374,6 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
             return _this.trigger('reward', variant, amount, true);
           }, function() {
             var args;
-
             args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
             return error.call.apply(error, [_this].concat(__slice.call(args)));
           });
@@ -10413,7 +10390,6 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
 
     BaseExperiment.prototype.totalWeight = function() {
       var ans, id, variant, _ref;
-
       ans = 0.0;
       _ref = this.variants;
       for (id in _ref) {
@@ -10425,7 +10401,6 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
 
     BaseExperiment.prototype.randomVariant = function() {
       var id, random, total, variant, _ref;
-
       total = this.totalWeight();
       random = Math.random() * total;
       _ref = this.variants;
@@ -10468,7 +10443,6 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
 
     BaseExperiment.prototype.loadVariant = function(cacheKey) {
       var id, _ref;
-
       id = (_ref = this.load()) != null ? _ref[cacheKey] : void 0;
       Myna.log("Myna.BaseExperiment.loadVariant", this.id, cacheKey, id);
       if (id != null) {
@@ -10480,7 +10454,6 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
 
     BaseExperiment.prototype.saveVariant = function(cacheKey, variant) {
       var _this = this;
-
       return this.loadAndSave(function(saved) {
         Myna.log("Myna.BaseExperiment.saveVariant", _this.id, cacheKey, variant, saved);
         if (variant != null) {
@@ -10498,7 +10471,6 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
 
     BaseExperiment.prototype.loadAndSave = function(func) {
       var _ref;
-
       return this.save(func((_ref = this.load()) != null ? _ref : {}));
     };
 
@@ -10538,7 +10510,8 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
       this.saveVariantFromView = __bind(this.saveVariantFromView, this);
       this.loadVariantsForView = __bind(this.loadVariantsForView, this);
       this.loadVariantsForSuggest = __bind(this.loadVariantsForSuggest, this);
-      this.sticky = __bind(this.sticky, this);      _ref = Experiment.__super__.constructor.apply(this, arguments);
+      this.sticky = __bind(this.sticky, this);
+      _ref = Experiment.__super__.constructor.apply(this, arguments);
       return _ref;
     }
 
@@ -10548,7 +10521,6 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
 
     Experiment.prototype.loadVariantsForSuggest = function() {
       var sticky;
-
       if (this.sticky()) {
         sticky = this.loadStickySuggestion();
         return {
@@ -10640,7 +10612,6 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
 
     function Recorder(options) {
       var _ref, _ref1, _ref2, _ref3, _ref4;
-
       if (options == null) {
         options = {};
       }
@@ -10668,7 +10639,6 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
 
     Recorder.prototype.listenTo = function(expt) {
       var _this = this;
-
       Myna.log("Myna.Recorder.listenTo", expt.id);
       expt.on('recordView', function(variant, success, error) {
         return _this.recordView(expt, variant, success, error);
@@ -10726,7 +10696,6 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
     Recorder.prototype.sync = function(success, error) {
       var finish, start, syncAll, syncOne, waiting,
         _this = this;
-
       if (success == null) {
         success = (function() {});
       }
@@ -10745,7 +10714,6 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
         this.waiting = [];
         start = function() {
           var events;
-
           events = _this.clearQueuedEvents();
           Myna.log("Myna.Recorder.sync.start", events, waiting.length);
           if (_this.trigger('beforeSync', events) === false) {
@@ -10756,7 +10724,6 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
         };
         syncAll = function(events, successEvents, errorEvents) {
           var head, tail;
-
           Myna.log("Myna.Recorder.sync.syncAll", events, successEvents, errorEvents);
           if (events.length === 0) {
             return finish(successEvents, errorEvents);
@@ -10767,7 +10734,6 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
         };
         syncOne = function(event, otherEvents, successEvents, errorEvents) {
           var params;
-
           Myna.log("Myna.Recorder.sync.syncOne", event, otherEvents, successEvents, errorEvents);
           params = Myna.deleteKeys(event, 'experiment');
           return Myna.jsonp.request({
@@ -10786,7 +10752,6 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
         };
         finish = function(successEvents, errorEvents) {
           var item, _i, _j, _len, _len1;
-
           Myna.log("Myna.Recorder.sync.finish", successEvents, errorEvents);
           if (errorEvents.length > 0) {
             _this.requeueEvents(errorEvents);
@@ -10812,7 +10777,6 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
 
     Recorder.prototype.queuedEvents = function() {
       var ans, _ref;
-
       ans = (_ref = this.load().queuedEvents) != null ? _ref : [];
       Myna.log("Myna.Recorder.queuedEvents", ans);
       return ans;
@@ -10822,7 +10786,6 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
       Myna.log("Myna.Recorder.queueEvent", event);
       return this.loadAndSave(function(saved) {
         var _ref;
-
         saved.queuedEvents = ((_ref = saved.queuedEvents) != null ? _ref : []).concat([event]);
         return saved;
       });
@@ -10832,7 +10795,6 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
       Myna.log("Myna.Recorder.requeueEvents", events);
       return this.loadAndSave(function(saved) {
         var _ref;
-
         saved.queuedEvents = events.concat((_ref = saved.queuedEvents) != null ? _ref : []);
         return saved;
       });
@@ -10840,12 +10802,10 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
 
     Recorder.prototype.clearQueuedEvents = function() {
       var ans;
-
       Myna.log("Myna.Recorder.clearQueuedEvents");
       ans = [];
       this.loadAndSave(function(saved) {
         var _ref;
-
         ans = (_ref = saved.queuedEvents) != null ? _ref : [];
         delete saved.queuedEvents;
         return saved;
@@ -10855,7 +10815,6 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
 
     Recorder.prototype.loadAndSave = function(func) {
       var _ref;
-
       return this.save(func((_ref = this.load()) != null ? _ref : {}));
     };
 
@@ -10879,7 +10838,6 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
   Myna.Client = (function() {
     function Client(options) {
       var data, expt, _i, _len, _ref, _ref1;
-
       if (options == null) {
         options = {};
       }
@@ -10957,7 +10915,6 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
 
     Binder.prototype.listenTo = function(expt) {
       var _this = this;
-
       Myna.log("Myna.Binder.listenTo", expt);
       return expt.on('view', function(variant) {
         return _this.bind(expt, variant);
@@ -10966,7 +10923,6 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
 
     Binder.prototype.detect = function(expt) {
       var cssClass, _ref;
-
       cssClass = (_ref = expt.settings.get("myna.html.cssClass")) != null ? _ref : "myna-" + expt.id;
       return $("." + cssClass).length > 0;
     };
@@ -10974,7 +10930,6 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
     Binder.prototype.bind = function(expt, variant) {
       var allElems, bindElems, cssClass, dataBind, dataGoal, dataPrefix, dataShow, goalElems, showElems, _ref, _ref1,
         _this = this;
-
       Myna.log("Myna.Binder.bind", expt);
       this.unbind();
       cssClass = (_ref = expt.settings.get("myna.html.cssClass")) != null ? _ref : "myna-" + expt.id;
@@ -11001,7 +10956,6 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
 
     Binder.prototype.unbind = function() {
       var elem, event, handler, _i, _len, _ref, _ref1, _results;
-
       Myna.log("Myna.Binder.unbind", this.boundHandlers);
       _ref = this.boundHandlers;
       _results = [];
@@ -11015,7 +10969,6 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
 
     Binder.prototype.bindShow = function(expt, variant, dataAttr, elem) {
       var path, self;
-
       Myna.log("Myna.Binder.bindShow", expt, dataAttr, elem);
       self = Myna.$(elem);
       path = self.data(dataAttr);
@@ -11028,7 +10981,6 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
 
     Binder.prototype.bindBind = function(expt, variant, dataAttr, elem) {
       var lhs, rhs, self, _ref, _ref1, _ref2, _ref3, _ref4;
-
       Myna.log("Myna.Binder.bindBind", expt, dataAttr, elem);
       self = Myna.$(elem);
       _ref = attrString.split("="), lhs = _ref[0], rhs = _ref[1];
@@ -11052,7 +11004,6 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
     Binder.prototype.bindGoal = function(expt, variant, dataAttr, elem) {
       var event, handler, self,
         _this = this;
-
       Myna.log("Myna.Binder.bindGoal", expt, dataAttr, elem);
       self = Myna.$(elem);
       event = self.data(dataAttr);
@@ -11074,14 +11025,12 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
 
     Binder.prototype.createClickHandler = function(expt, innerHandler) {
       var handler;
-
       if (innerHandler == null) {
         innerHandler = (function() {});
       }
       Myna.log("Myna.Binder.createClickHandler", expt, innerHandler);
       return handler = function() {
         var args, complete, elem, evt, rewarded, self;
-
         evt = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
         myna.log.apply(myna, ["Myna.Binder.clickHandler", evt].concat(__slice.call(args)));
         elem = this;
@@ -11159,7 +11108,6 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
     Toolbar.prototype.initToolbar = function() {
       var brand, closeButton, inner, inspectorButton, left, right,
         _this = this;
-
       Myna.log("Myna.Toolbar.initToolbar");
       if (!this.Toolbar) {
         this.toolbar = $("<div id='myna-toolbar' class='myna-overlay-outer'>").appendTo("body");
@@ -11187,7 +11135,6 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
     Toolbar.prototype.initInspector = function() {
       var inspectorSize, lastMousePos, mouseMove,
         _this = this;
-
       Myna.log("Myna.Toolbar.initInspector");
       if (!this.inspector) {
         this.inspector = $("<div id='myna-inspector' class='myna-overlay-outer'>").appendTo("body");
@@ -11197,7 +11144,6 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
         inspectorSize = null;
         mouseMove = function(evt) {
           var currMousePos, inspectorPos;
-
           evt.stopPropagation();
           evt.preventDefault();
           Myna.log("Myna.Toolbar.initInspector.mouseMove", evt, lastMousePos);
@@ -11241,7 +11187,6 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
     Toolbar.prototype.addExperiment = function(expt) {
       var cssClass, label, rewardButton, showButton, suggestButton, unstickButton, variant, variantId, variantSelect, wrapper, _ref, _ref1,
         _this = this;
-
       Myna.log("Myna.Toolbar.addExperiment", expt);
       wrapper = $("<div class='myna-overlay-field'>").appendTo(this.inspectorInner);
       label = $("<label>").text(expt.id).appendTo(wrapper);
@@ -11263,7 +11208,6 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
       cssClass = (_ref1 = expt.settings.get("myna.html.cssClass")) != null ? _ref1 : "myna-" + expt.id;
       showButton.on('click', function(evt) {
         var self;
-
         self = $(this);
         if (self.is(".active")) {
           self.removeClass("active");
@@ -11300,11 +11244,10 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
 }).call(this);
 
 (function() {
-  Myna.initLocal = function(options) {
+  Myna.init = function(options) {
     var apiKey, apiRoot, debug, experiments, expt, id, _ref, _ref1, _ref2, _ref3, _ref4;
-
-    Myna.log("Myna.initLocal", options);
-    apiKey = (_ref = options.apiKey) != null ? _ref : Myna.error("Myna.initLocal", "no apiKey in options", options);
+    Myna.log("Myna.init", options);
+    apiKey = (_ref = options.apiKey) != null ? _ref : Myna.error("Myna.init", "no apiKey in options", options);
     apiRoot = (_ref1 = options.apiRoot) != null ? _ref1 : "//api.mynaweb.com";
     debug = ((_ref2 = options.debug) != null ? _ref2 : window.location.hash === "#debug") || Myna.Toolbar.active();
     experiments = (_ref3 = options.experiments) != null ? _ref3 : [];
@@ -11326,7 +11269,6 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
     }
     Myna.$(function() {
       var _ref5, _results;
-
       if (debug) {
         Myna.client.toolbar.init();
       }
@@ -11349,26 +11291,17 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
     return Myna.client;
   };
 
-  Myna.initApi = function(options) {
-    var apiKey, apiRoot, error, success, _ref, _ref1, _ref2, _ref3;
-
+  Myna.initRemote = function(options) {
+    var error, success, url, _ref, _ref1, _ref2;
     Myna.log("Myna.initRemote", options);
-    apiKey = (_ref = options.apiKey) != null ? _ref : Myna.error("Myna.Client.initApi", "no apiKey in options", options);
-    apiRoot = (_ref1 = options.apiRoot) != null ? _ref1 : "//api.mynaweb.com";
-    success = (_ref2 = options.success) != null ? _ref2 : (function() {});
-    error = (_ref3 = options.error) != null ? _ref3 : (function() {});
+    url = (_ref = options.url) != null ? _ref : Myna.error("Myna.Client.initRemote", "no url specified in options", options);
+    success = (_ref1 = options.success) != null ? _ref1 : (function() {});
+    error = (_ref2 = options.error) != null ? _ref2 : (function() {});
     return Myna.jsonp.request({
-      url: "" + apiRoot + "/v2/experiment",
-      params: {
-        apikey: apiKey
-      },
+      url: url,
       success: function(json) {
         Myna.log("Myna.initRemote", "response", json);
-        return success(Myna.initLocal({
-          apiKey: apiKey,
-          apiRoot: apiRoot,
-          experiments: json.results
-        }));
+        return success(Myna.init(json));
       },
       error: error
     });

@@ -27,6 +27,14 @@ describe "Myna.jsonp.request", ->
     data  = null
     error = null
 
+    # Replace createScriptElem with a method that creates an invalid script tag:
+    spyOn(Myna.jsonp, "createScriptElem").andCallFake (url, callbackName) ->
+      scriptElem = document.createElement("script")
+      scriptElem.setAttribute("type","text/javascript")
+      scriptElem.setAttribute("class", "myna-jsonp")
+      scriptElem.setAttribute("data-callback", callbackName)
+      scriptElem
+
     runs ->
       Myna.jsonp.request
         url:     "#{testApiRoot}/v1/version"
@@ -37,6 +45,8 @@ describe "Myna.jsonp.request", ->
     waitsFor -> data || error
 
     runs ->
+      @removeAllSpies()
+
       expect(data).toEqual(null)
 
       expect(typeof error).toEqual("object")
