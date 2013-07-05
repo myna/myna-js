@@ -70,9 +70,9 @@ module.exports = (grunt) ->
     "js-init-spec.coffee"
   ]
 
-  mynaHtmlMainSources = mainSources [ "jquery-1.9.1.js" ], [
+  mynaHtmlMainSources = mainSources [ ], [
     "bind.coffee"
-    "toolbar.coffee"
+    "inspector.coffee"
     "html-init.coffee"
   ]
 
@@ -171,8 +171,8 @@ module.exports = (grunt) ->
     "concat:mynaJsLatest"
     # "jshint:mynaJsMain"
     # "jshint:mynaJsTest"
-    "connect"
-    "jasmine:mynaJs"
+    # "connect"
+    # "jasmine:mynaJs"
     "uglify:mynaJsDist"
     "uglify:mynaJsLatest"
   ]
@@ -185,7 +185,7 @@ module.exports = (grunt) ->
     # "jshint:mynaHtmlMain"
     # "jshint:mynaHtmlTest"
     # "connect"
-    "jasmine:mynaHtml"
+    # "jasmine:mynaHtml"
     "uglify:mynaHtmlDist"
     "uglify:mynaHtmlLatest"
   ]
