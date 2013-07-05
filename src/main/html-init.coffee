@@ -11,10 +11,10 @@ Myna.init = (options) ->
 
   Myna.binder = new Myna.Binder(Myna.client)
 
-  if Myna.Toolbar.active()
-    Myna.toolbar = new Myna.Toolbar(Myna.client, Myna.binder)
+  if Myna.Inspector.active()
+    Myna.inspector = new Myna.Inspector(Myna.client, Myna.binder)
     Myna.$ ->
-      Myna.toolbar.init()
+      Myna.inspector.init()
       Myna.binder.init()
   else
     Myna.recorder = new Myna.Recorder(Myna.client)

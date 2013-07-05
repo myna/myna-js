@@ -9,10 +9,10 @@ Myna.init = (options) ->
 
   Myna.client = new Myna.Client({ apiKey, apiRoot, experiments })
 
-  if Myna.Toolbar.active()
-    Myna.toolbar = new Myna.Toolbar(Myna.client)
+  if Myna.Inspector.active()
+    Myna.inspector = new Myna.Inspector(Myna.client)
     Myna.$ ->
-      Myna.toolbar.init()
+      Myna.inspector.init()
   else
     Myna.recorder = new Myna.Recorder(Myna.client)
     Myna.recorder.init()

@@ -1,20 +1,20 @@
-class Myna.Toolbar
+class Myna.Inspector
   constructor: (client, binder = null) ->
-    Myna.log("Myna.Toolbar.constructor")
+    Myna.log("Myna.Inspector.constructor")
 
     @client = client
     @binder = binder
 
-  # Should we initialize a toolbar?
+  # Should we initialize a inspector?
   @active: =>
-    window.location.hash == "#debug" || !!Myna.cache.load("myna-toolbar")
+    window.location.hash == "#debug" || !!Myna.cache.load("myna-inspector")
 
   init: =>
-    Myna.log("Myna.Toolbar.init")
+    Myna.log("Myna.Inspector.init")
     @initStylesheet()
     @initInspector()
-    @initToolbar()
-    Myna.cache.save("myna-toolbar", true)
+    @initInspector()
+    Myna.cache.save("myna-inspector", true)
 
     for id, expt of @client.experiments
       if @binder == null || @binder.detect(expt)
@@ -24,11 +24,11 @@ class Myna.Toolbar
 
   remove: =>
     window.location.hash = ""
-    Myna.cache.remove("myna-toolbar")
+    Myna.cache.remove("myna-inspector")
     window.location.reload()
 
   initStylesheet: =>
-    Myna.log("Myna.Toolbar.initStylesheet")
+    Myna.log("Myna.Inspector.initStylesheet")
     unless @stylesheet
       @stylesheet = Myna.$(
         """
@@ -108,16 +108,16 @@ class Myna.Toolbar
             width: 200px;
           }
 
-          /* Toolbar specifics */
+          /* Inspector specifics */
 
-          #myna-toolbar {
+          #myna-inspector {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
           }
 
-          #myna-toolbar .myna-overlay-inner {
+          #myna-inspector .myna-overlay-inner {
             padding: 5px 10px;
           }
 
@@ -138,8 +138,8 @@ class Myna.Toolbar
 
           /* Highlight */
 
-          .myna-toolbar-highlight-hover,
-          .myna-toolbar-highlight-toggle {
+          .myna-inspector-highlight-hover,
+          .myna-inspector-highlight-toggle {
             outline: 5px solid #55f;
           }
 
@@ -199,11 +199,11 @@ class Myna.Toolbar
         """).appendTo("head")
     return
 
-  initToolbar: =>
-    Myna.log("Myna.Toolbar.initToolbar")
-    unless @Toolbar
-      @toolbar        = $("<div id='myna-toolbar' class='myna-overlay-outer'>").appendTo("body")
-      inner           = $("<div class='myna-overlay-inner'>").appendTo(@toolbar)
+  initInspector: =>
+    Myna.log("Myna.Inspector.initInspector")
+    unless @Inspector
+      @inspector        = $("<div id='myna-inspector' class='myna-overlay-outer'>").appendTo("body")
+      inner           = $("<div class='myna-overlay-inner'>").appendTo(@inspector)
 
       left            = $("<div class='pull-left'>").appendTo(inner)
       brand           = $("<label><a href='http://mynaweb.com'>Myna</a></label>").appendTo(left)
@@ -228,7 +228,7 @@ class Myna.Toolbar
       return
 
   initInspector: =>
-    Myna.log("Myna.Toolbar.initInspector")
+    Myna.log("Myna.Inspector.initInspector")
     unless @inspector
       @inspector = $("<div id='myna-inspector' class='myna-overlay-outer'>").appendTo("body")
       @inspectorInner = $("<div class='myna-overlay-inner'>").appendTo(@inspector)
@@ -241,7 +241,7 @@ class Myna.Toolbar
       mouseMove = (evt) =>
         evt.stopPropagation()
         evt.preventDefault()
-        Myna.log("Myna.Toolbar.initInspector.mouseMove", evt, lastMousePos)
+        Myna.log("Myna.Inspector.initInspector.mouseMove", evt, lastMousePos)
         currMousePos = { x: evt.clientX, y: evt.clientY }
         inspectorPos = @inspector.position()
         @inspector.css
@@ -256,7 +256,7 @@ class Myna.Toolbar
       @inspectorTitle.on 'mousedown', (evt) =>
         evt.stopPropagation()
         evt.preventDefault()
-        Myna.log("Myna.Toolbar.initInspector.mouseDown", evt, lastMousePos)
+        Myna.log("Myna.Inspector.initInspector.mouseDown", evt, lastMousePos)
         lastMousePos = { x: evt.clientX, y: evt.clientY }
         inspectorSize ?= @inspector.size()
         $('html').on('mousemove', mouseMove)
@@ -264,13 +264,13 @@ class Myna.Toolbar
       @inspectorTitle.on 'mouseup', (evt) =>
         evt.stopPropagation()
         evt.preventDefault()
-        Myna.log("Myna.Toolbar.initInspector.mouseUp", evt, lastMousePos)
+        Myna.log("Myna.Inspector.initInspector.mouseUp", evt, lastMousePos)
         $('html').off('mousemove', mouseMove)
 
     return
 
   addExperiment: (expt) =>
-    Myna.log("Myna.Toolbar.addExperiment", expt)
+    Myna.log("Myna.Inspector.addExperiment", expt)
     wrapper        = $("<div class='myna-overlay-field'>").appendTo(@inspectorInner)
     label          = $("<label>").text(expt.id).appendTo(wrapper)
     variantSelect  = $("<select>").appendTo(wrapper)
@@ -294,14 +294,14 @@ class Myna.Toolbar
       self = $(this)
       if self.is(".active")
         self.removeClass("active")
-        $(".#{cssClass}").removeClass("myna-toolbar-highlight-toggle")
+        $(".#{cssClass}").removeClass("myna-inspector-highlight-toggle")
       else
-        $(".#{cssClass}").addClass("myna-toolbar-highlight-toggle")
+        $(".#{cssClass}").addClass("myna-inspector-highlight-toggle")
         self.addClass("active")
 
     wrapper.hover(
-      => $(".#{cssClass}").addClass("myna-toolbar-highlight-hover")
-      => $(".#{cssClass}").removeClass("myna-toolbar-highlight-hover")
+      => $(".#{cssClass}").addClass("myna-inspector-highlight-hover")
+      => $(".#{cssClass}").removeClass("myna-inspector-highlight-hover")
     )
 
     suggestButton.on "click", (evt) ->

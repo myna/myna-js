@@ -1012,11 +1012,7 @@
   Myna.Recorder = (function(_super) {
     __extends(Recorder, _super);
 
-    function Recorder(options) {
-      var _ref, _ref1, _ref2, _ref3, _ref4;
-      if (options == null) {
-        options = {};
-      }
+    function Recorder(client) {
       this.save = __bind(this.save, this);
       this.load = __bind(this.load, this);
       this.loadAndSave = __bind(this.loadAndSave, this);
@@ -1028,16 +1024,29 @@
       this.recordReward = __bind(this.recordReward, this);
       this.recordView = __bind(this.recordView, this);
       this.listenTo = __bind(this.listenTo, this);
-      Recorder.__super__.constructor.call(this, options);
-      Myna.log("Myna.Recorder.constructor", options);
-      this.apiKey = (_ref = options.apiKey) != null ? _ref : Myna.error("Myna.Recorder.constructor", "no apiKey in options", options);
-      this.apiRoot = (_ref1 = options.apiRoot) != null ? _ref1 : "//api.mynaweb.com";
-      this.storageKey = (_ref2 = options.storageKey) != null ? _ref2 : "myna";
-      this.timeout = (_ref3 = options.timeout) != null ? _ref3 : 1000;
-      this.autoSync = (_ref4 = options.autoSync) != null ? _ref4 : true;
+      this.init = __bind(this.init, this);
+      var _ref, _ref1;
+      Myna.log("Myna.Recorder.constructor", client);
+      this.client = client;
+      this.apiKey = (_ref = client.apiKey) != null ? _ref : Myna.error("Myna.Recorder.constructor", "no apiKey in options", options);
+      this.apiRoot = (_ref1 = client.apiRoot) != null ? _ref1 : "//api.mynaweb.com";
+      this.storageKey = client.settings.get("myna.web.storageKey", "myna");
+      this.timeout = client.settings.get("myna.web.timeout", 1000);
+      this.autoSync = client.settings.get("myna.web.autoSync", true);
       this.semaphore = 0;
       this.waiting = [];
     }
+
+    Recorder.prototype.init = function() {
+      var expt, id, _ref, _results;
+      _ref = client.experiments;
+      _results = [];
+      for (id in _ref) {
+        expt = _ref[id];
+        _results.push(this.listenTo(expt));
+      }
+      return _results;
+    };
 
     Recorder.prototype.listenTo = function(expt) {
       var _this = this;
@@ -1239,7 +1248,7 @@
 
   Myna.Client = (function() {
     function Client(options) {
-      var data, expt, _i, _len, _ref, _ref1;
+      var expt, _i, _len, _ref, _ref1, _ref2, _ref3, _ref4, _ref5;
       if (options == null) {
         options = {};
       }
@@ -1247,11 +1256,14 @@
       this.view = __bind(this.view, this);
       this.suggest = __bind(this.suggest, this);
       Myna.log("Myna.Client.constructor", options);
+      this.uuid = (_ref = options.uuid) != null ? _ref : null;
+      this.apiKey = (_ref1 = options.apiKey) != null ? _ref1 : Myna.error("Myna.Deployment.constructor", "no apiKey in options", options);
+      this.apiRoot = (_ref2 = options.apiRoot) != null ? _ref2 : "//api.mynaweb.com";
+      this.settings = new Myna.Settings((_ref3 = options.settings) != null ? _ref3 : {});
       this.experiments = {};
-      _ref1 = (_ref = options.experiments) != null ? _ref : [];
-      for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-        data = _ref1[_i];
-        expt = data instanceof Myna.Experiment ? data : new Myna.Experiment(data);
+      _ref5 = (_ref4 = options.experiments) != null ? _ref4 : [];
+      for (_i = 0, _len = _ref5.length; _i < _len; _i++) {
+        expt = _ref5[_i];
         this.experiments[expt.id] = expt;
       }
     }
@@ -1297,50 +1309,48 @@
 
 (function() {
   Myna.init = function(options) {
-    var apiKey, apiRoot, debug, experiments, expt, id, _ref, _ref1, _ref2, _ref3, _ref4;
+    var apiKey, apiRoot, experiments, expt, _ref, _ref1;
     Myna.log("Myna.init", options);
     apiKey = (_ref = options.apiKey) != null ? _ref : Myna.error("Myna.init", "no apiKey in options", options);
     apiRoot = (_ref1 = options.apiRoot) != null ? _ref1 : "//api.mynaweb.com";
-    debug = (_ref2 = options.debug) != null ? _ref2 : window.location.hash === "#debug";
-    experiments = (_ref3 = options.experiments) != null ? _ref3 : [];
+    experiments = (function() {
+      var _i, _len, _ref2, _ref3, _results;
+      _ref3 = (_ref2 = options.experiments) != null ? _ref2 : [];
+      _results = [];
+      for (_i = 0, _len = _ref3.length; _i < _len; _i++) {
+        expt = _ref3[_i];
+        _results.push(new Myna.Experiment(expt));
+      }
+      return _results;
+    })();
     Myna.client = new Myna.Client({
       apiKey: apiKey,
       apiRoot: apiRoot,
       experiments: experiments
     });
-    if (debug) {
-      Myna.client.toolbar = new Myna.Toolbar(Myna.client);
-      Myna.$(Myna.client.toolbar.init);
+    if (Myna.Inspector.active()) {
+      Myna.inspector = new Myna.Inspector(Myna.client);
+      Myna.$(function() {
+        return Myna.inspector.init();
+      });
     } else {
-      Myna.client.recorder = new Myna.Recorder(options);
-      _ref4 = Myna.client.experiments;
-      for (id in _ref4) {
-        expt = _ref4[id];
-        Myna.client.recorder.listenTo(expt);
-      }
+      Myna.recorder = new Myna.Recorder(Myna.client);
+      Myna.recorder.init();
     }
     return Myna.client;
   };
 
   Myna.initRemote = function(options) {
-    var apiKey, apiRoot, error, success, _ref, _ref1, _ref2, _ref3;
+    var error, success, url, _ref, _ref1, _ref2;
     Myna.log("Myna.initRemote", options);
-    apiKey = (_ref = options.apiKey) != null ? _ref : Myna.error("Myna.Client.initRemote", "no apiKey in options", options);
-    apiRoot = (_ref1 = options.apiRoot) != null ? _ref1 : "//api.mynaweb.com";
-    success = (_ref2 = options.success) != null ? _ref2 : (function() {});
-    error = (_ref3 = options.error) != null ? _ref3 : (function() {});
+    url = (_ref = options.url) != null ? _ref : Myna.error("Myna.Client.initRemote", "no url specified in options", options);
+    success = (_ref1 = options.success) != null ? _ref1 : (function() {});
+    error = (_ref2 = options.error) != null ? _ref2 : (function() {});
     return Myna.jsonp.request({
-      url: "" + apiRoot + "/v2/experiment",
-      params: {
-        apikey: apiKey
-      },
+      url: url,
       success: function(json) {
         Myna.log("Myna.initRemote", "response", json);
-        return success(Myna.init({
-          apiKey: apiKey,
-          apiRoot: apiRoot,
-          experiments: json.results
-        }));
+        return success(Myna.init(json));
       },
       error: error
     });
