@@ -22,7 +22,7 @@ class Myna.Recorder extends Myna.Events
 
   # Start listening for results
   init: =>
-    for id, expt of client.experiments
+    for id, expt of @client.experiments
       @listenTo(expt)
 
   listenTo: (expt) =>

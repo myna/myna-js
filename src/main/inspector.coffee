@@ -13,8 +13,8 @@ class Myna.Inspector
     Myna.log("Myna.Inspector.init")
     @initStylesheet()
     @initInspector()
-    @initInspector()
-    Myna.cache.save("myna-inspector", true)
+    @initNavbar()
+    Myna.cache.save("myna-inspector", { visible: true})
 
     for id, expt of @client.experiments
       if @binder == null || @binder.detect(expt)
@@ -108,16 +108,16 @@ class Myna.Inspector
             width: 200px;
           }
 
-          /* Inspector specifics */
+          /* Navbar specifics */
 
-          #myna-inspector {
+          #myna-navbar {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
           }
 
-          #myna-inspector .myna-overlay-inner {
+          #myna-navbar .myna-overlay-inner {
             padding: 5px 10px;
           }
 
@@ -199,20 +199,20 @@ class Myna.Inspector
         """).appendTo("head")
     return
 
-  initInspector: =>
-    Myna.log("Myna.Inspector.initInspector")
+  initNavbar: =>
+    Myna.log("Myna.Inspector.initNavbar")
     unless @Inspector
-      @inspector        = $("<div id='myna-inspector' class='myna-overlay-outer'>").appendTo("body")
-      inner           = $("<div class='myna-overlay-inner'>").appendTo(@inspector)
+      @navbar       = Myna.$("<div id='myna-navbar' class='myna-overlay-outer'>").appendTo("body")
+      inner           = Myna.$("<div class='myna-overlay-inner'>").appendTo(@navbar)
 
-      left            = $("<div class='pull-left'>").appendTo(inner)
-      brand           = $("<label><a href='http://mynaweb.com'>Myna</a></label>").appendTo(left)
+      left            = Myna.$("<div class='pull-left'>").appendTo(inner)
+      brand           = Myna.$("<label><a href='http://mynaweb.com'>Myna</a></label>").appendTo(left)
 
-      right           = $("<div class='pull-right'>").appendTo(inner)
-      inspectorButton = $("<button class='inspector'>").
+      right           = Myna.$("<div class='pull-right'>").appendTo(inner)
+      inspectorButton = Myna.$("<button class='inspector'>").
                           text(if @inspector.is(":visible") then 'Hide inspector' else 'Show inspector').
                           appendTo(right)
-      closeButton     = $("<button class='close'>Close</button>").appendTo(right)
+      closeButton     = Myna.$("<button class='close'>Close</button>").appendTo(right)
 
       inspectorButton.on 'click', =>
         if @inspector.is(":visible")
@@ -230,9 +230,9 @@ class Myna.Inspector
   initInspector: =>
     Myna.log("Myna.Inspector.initInspector")
     unless @inspector
-      @inspector = $("<div id='myna-inspector' class='myna-overlay-outer'>").appendTo("body")
-      @inspectorInner = $("<div class='myna-overlay-inner'>").appendTo(@inspector)
-      @inspectorTitle = $("<div class='myna-overlay-title'>Experiments</div>").appendTo(@inspectorInner)
+      @inspector      = Myna.$("<div id='myna-inspector' class='myna-overlay-outer'>").appendTo("body")
+      @inspectorInner = Myna.$("<div class='myna-overlay-inner'>").appendTo(@inspector)
+      @inspectorTitle = Myna.$("<div class='myna-overlay-title'>Experiments</div>").appendTo(@inspectorInner)
 
       # Make the inspector draggable:
       lastMousePos = null
@@ -259,29 +259,29 @@ class Myna.Inspector
         Myna.log("Myna.Inspector.initInspector.mouseDown", evt, lastMousePos)
         lastMousePos = { x: evt.clientX, y: evt.clientY }
         inspectorSize ?= @inspector.size()
-        $('html').on('mousemove', mouseMove)
+        Myna.$('html').on('mousemove', mouseMove)
 
       @inspectorTitle.on 'mouseup', (evt) =>
         evt.stopPropagation()
         evt.preventDefault()
         Myna.log("Myna.Inspector.initInspector.mouseUp", evt, lastMousePos)
-        $('html').off('mousemove', mouseMove)
+        Myna.$('html').off('mousemove', mouseMove)
 
     return
 
   addExperiment: (expt) =>
     Myna.log("Myna.Inspector.addExperiment", expt)
-    wrapper        = $("<div class='myna-overlay-field'>").appendTo(@inspectorInner)
-    label          = $("<label>").text(expt.id).appendTo(wrapper)
-    variantSelect  = $("<select>").appendTo(wrapper)
+    wrapper        = Myna.$("<div class='myna-overlay-field'>").appendTo(@inspectorInner)
+    label          = Myna.$("<label>").text(expt.id).appendTo(wrapper)
+    variantSelect  = Myna.$("<select>").appendTo(wrapper)
 
-    showButton     = $("<button>").text("Show").appendTo(wrapper)
-    suggestButton  = $("<button>").text("Suggest").appendTo(wrapper)
-    rewardButton   = $("<button>").text("Reward").attr("disabled", !expt.sticky?()?).appendTo(wrapper)
-    unstickButton  = $("<button>").text("Unstick").attr("disabled", !expt.sticky?()?).appendTo(wrapper)
+    showButton     = Myna.$("<button>").text("Show").appendTo(wrapper)
+    suggestButton  = Myna.$("<button>").text("Suggest").appendTo(wrapper)
+    rewardButton   = Myna.$("<button>").text("Reward").attr("disabled", !expt.sticky?()?).appendTo(wrapper)
+    unstickButton  = Myna.$("<button>").text("Unstick").attr("disabled", !expt.sticky?()?).appendTo(wrapper)
 
     for variantId, variant of expt.variants
-      $("<option>").attr("value", variantId).text("View #{variantId}").appendTo(variantSelect)
+      Myna.$("<option>").attr("value", variantId).text("View #{variantId}").appendTo(variantSelect)
 
     variantSelect.on "change", (evt) ->
       evt.stopPropagation()
@@ -291,17 +291,17 @@ class Myna.Inspector
 
     cssClass = expt.settings.get("myna.html.cssClass") ? "myna-#{expt.id}"
     showButton.on 'click', (evt) ->
-      self = $(this)
+      self = Myna.$(this)
       if self.is(".active")
         self.removeClass("active")
-        $(".#{cssClass}").removeClass("myna-inspector-highlight-toggle")
+        Myna.$(".#{cssClass}").removeClass("myna-inspector-highlight-toggle")
       else
-        $(".#{cssClass}").addClass("myna-inspector-highlight-toggle")
+        Myna.$(".#{cssClass}").addClass("myna-inspector-highlight-toggle")
         self.addClass("active")
 
     wrapper.hover(
-      => $(".#{cssClass}").addClass("myna-inspector-highlight-hover")
-      => $(".#{cssClass}").removeClass("myna-inspector-highlight-hover")
+      => Myna.$(".#{cssClass}").addClass("myna-inspector-highlight-hover")
+      => Myna.$(".#{cssClass}").removeClass("myna-inspector-highlight-hover")
     )
 
     suggestButton.on "click", (evt) ->

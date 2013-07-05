@@ -1039,7 +1039,7 @@
 
     Recorder.prototype.init = function() {
       var expt, id, _ref, _results;
-      _ref = client.experiments;
+      _ref = this.client.experiments;
       _results = [];
       for (id in _ref) {
         expt = _ref[id];
@@ -1354,7 +1354,7 @@
     Binder.prototype.detect = function(expt) {
       var cssClass, _ref;
       cssClass = (_ref = expt.settings.get("myna.html.cssClass")) != null ? _ref : "myna-" + expt.id;
-      return $("." + cssClass).length > 0;
+      return Myna.$("." + cssClass).length > 0;
     };
 
     Binder.prototype.bind = function(expt, variant) {
@@ -1369,9 +1369,9 @@
       dataGoal = dataPrefix ? "" + this.dataPrefix + "-goal" : "goal";
       Myna.log("Myna.Binder.bind", "searchParams", cssClass, dataShow, dataBind, dataGoal);
       allElems = cssClass ? Myna.$("." + cssClass) : null;
-      showElems = cssClass ? allElems.filter("[data-" + dataShow + "]") : $("[data-" + dataShow + "]");
-      bindElems = cssClass ? allElems.filter("[data-" + dataBind + "]") : $("[data-" + dataBind + "]");
-      goalElems = cssClass ? allElems.filter("[data-" + dataGoal + "]") : $("[data-" + dataGoal + "]");
+      showElems = cssClass ? allElems.filter("[data-" + dataShow + "]") : Myna.$("[data-" + dataShow + "]");
+      bindElems = cssClass ? allElems.filter("[data-" + dataBind + "]") : Myna.$("[data-" + dataBind + "]");
+      goalElems = cssClass ? allElems.filter("[data-" + dataGoal + "]") : Myna.$("[data-" + dataGoal + "]");
       Myna.log("Myna.Binder.bind", "elements", allElems, showElems, bindElems, goalElems);
       showElems.each(function(index, elem) {
         return _this.bindShow(expt, variant, dataShow, elem);
@@ -1442,7 +1442,7 @@
       }
       switch (event) {
         case "load":
-          return $(function() {
+          return Myna.$(function() {
             return expt.reward();
           });
         case "click":
@@ -1462,15 +1462,15 @@
       return handler = function() {
         var args, complete, elem, evt, rewarded, self;
         evt = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
-        myna.log.apply(myna, ["Myna.Binder.clickHandler", evt].concat(__slice.call(args)));
+        Myna.log.apply(Myna, ["Myna.Binder.clickHandler", evt].concat(__slice.call(args)));
         elem = this;
-        self = $(elem);
+        self = Myna.$(elem);
         rewarded = expt.loadStickyReward() || expt.loadLastReward();
         if (rewarded != null) {
-          myna.log("Myna.Binder.clickHandler", "pass-through");
+          Myna.log("Myna.Binder.clickHandler", "pass-through");
           innerHandler.call.apply(innerHandler, [this, evt].concat(__slice.call(args)));
         } else {
-          myna.log("Myna.Binder.clickHandler", "pass-through");
+          Myna.log("Myna.Binder.clickHandler", "pass-through");
           evt.stopPropagation();
           evt.preventDefault();
           complete = function() {
@@ -1503,7 +1503,7 @@
       }
       this.addExperiment = __bind(this.addExperiment, this);
       this.initInspector = __bind(this.initInspector, this);
-      this.initInspector = __bind(this.initInspector, this);
+      this.initNavbar = __bind(this.initNavbar, this);
       this.initStylesheet = __bind(this.initStylesheet, this);
       this.remove = __bind(this.remove, this);
       this.init = __bind(this.init, this);
@@ -1521,8 +1521,10 @@
       Myna.log("Myna.Inspector.init");
       this.initStylesheet();
       this.initInspector();
-      this.initInspector();
-      Myna.cache.save("myna-inspector", true);
+      this.initNavbar();
+      Myna.cache.save("myna-inspector", {
+        visible: true
+      });
       _ref = this.client.experiments;
       for (id in _ref) {
         expt = _ref[id];
@@ -1541,22 +1543,22 @@
     Inspector.prototype.initStylesheet = function() {
       Myna.log("Myna.Inspector.initStylesheet");
       if (!this.stylesheet) {
-        this.stylesheet = Myna.$("<style id=\"myna-stylesheet\">\n  html {\n    margin-top: 40px;\n  }\n\n  /* Clearfix */\n\n  .myna-overlay-inner {\n    *zoom: 1;\n  }\n\n  .myna-overlay-inner:before,\n  .myna-overlay-inner:after {\n    display: table;\n    content: \"\";\n    line-height: 0;\n  }\n\n  .myna-overlay-inner:after {\n    clear: both;\n  }\n\n  /* Structure */\n\n  .myna-overlay-inner {\n    font-size: 16px;\n    line-height: 20px;\n  }\n\n  .myna-overlay-inner .pull-left {\n    float: left;\n  }\n\n  .myna-overlay-inner .pull-right {\n    float: right;\n  }\n\n  .myna-overlay-title {\n    padding: 5px 10px;\n    cursor: pointer;\n    font-weight: bold;\n    line-height: 150%;\n  }\n\n  .myna-overlay-field {\n    padding: 0 10px 5px;\n    white-space: nowrap;\n  }\n\n  .myna-overlay-inner label,\n  .myna-overlay-inner select,\n  .myna-overlay-inner button {\n    display: inline-block;\n    box-sizing: border-box;\n    height: 30px;\n    margin: 0 5px;\n    padding: 0 8px;\n    font-size: 16px;\n    line-height: 30px;\n    overflow: hidden;\n    text-overflow: ellipsis;\n    white-space: nowrap;\n    -webkit-border-radius: 5px;\n    -moz-border-radius: 5px;\n    border-radius: 5px;\n  }\n\n  .myna-overlay-inner label {\n    width: 160px;\n    padding: 0;\n  }\n\n  .myna-overlay-inner select {\n    width: 200px;\n  }\n\n  /* Inspector specifics */\n\n  #myna-inspector {\n    position: fixed;\n    top: 0;\n    left: 0;\n    width: 100%;\n  }\n\n  #myna-inspector .myna-overlay-inner {\n    padding: 5px 10px;\n  }\n\n  /* Inspector specifics */\n\n  #myna-inspector {\n    position: fixed;\n    bottom: 20px;\n    right: 20px;\n    -webkit-border-radius: 10px;\n    -moz-border-radius: 10px;\n    border-radius: 10px;\n  }\n\n  #myna-inspector .myna-overlay-inner {\n    padding: 0 0 5px;\n  }\n\n  /* Highlight */\n\n  .myna-inspector-highlight-hover,\n  .myna-inspector-highlight-toggle {\n    outline: 5px solid #55f;\n  }\n\n  /* Themes */\n\n  .myna-overlay-outer {\n    -webkit-box-shadow: 0px 0px 10px rgba(50, 50, 50, 0.5);\n    -moz-box-shadow:    0px 0px 10px rgba(50, 50, 50, 0.5);\n    box-shadow:         0px 0px 10px rgba(50, 50, 50, 0.5);\n  }\n\n  .myna-overlay-outer {\n    background: #000;\n    background: rgba(0, 0, 0, 0.75);\n    color: #fff;\n  }\n\n  .myna-overlay-inner select,\n  .myna-overlay-inner button {\n    background: #333;\n    background: -moz-linear-gradient(top, #444 0%, #222 100%);\n    background: -webkit-linear-gradient(top, #444 0%, #222 100%);\n    background: -o-linear-gradient(top, #444 0%, #222 100%);\n    background: -ms-linear-gradient(top, #444 0%, #222 100%);\n    background: linear-gradient(to bottom, #444 0%, #222 100%);\n    border: 1px solid #555;\n    color: #fff;\n  }\n\n  .myna-overlay-inner select.active,\n  .myna-overlay-inner button.active,\n  .myna-overlay-inner select:active,\n  .myna-overlay-inner button:active {\n    background: -moz-linear-gradient(top, #222 0%, #444 100%);\n    background: -webkit-linear-gradient(top, #222 0%, #444 100%);\n    background: -o-linear-gradient(top, #222 0%, #444 100%);\n    background: -ms-linear-gradient(top, #222 0%, #444 100%);\n    background: linear-gradient(to bottom, #222 0%, #444 100%);\n  }\n\n  .myna-overlay-outer a {\n    color: #fff;\n    text-decoration: none;\n  }\n\n  .myna-overlay-outer.myna-overlay-light {\n    background: #fff;\n    background: rgba(255, 255, 255, 0.75);\n    color: #000;\n  }\n\n  .myna-overlay-outer.myna-overlay-light a {\n    color: #000;\n    text-decoration: none;\n  }\n</style>").appendTo("head");
+        this.stylesheet = Myna.$("<style id=\"myna-stylesheet\">\n  html {\n    margin-top: 40px;\n  }\n\n  /* Clearfix */\n\n  .myna-overlay-inner {\n    *zoom: 1;\n  }\n\n  .myna-overlay-inner:before,\n  .myna-overlay-inner:after {\n    display: table;\n    content: \"\";\n    line-height: 0;\n  }\n\n  .myna-overlay-inner:after {\n    clear: both;\n  }\n\n  /* Structure */\n\n  .myna-overlay-inner {\n    font-size: 16px;\n    line-height: 20px;\n  }\n\n  .myna-overlay-inner .pull-left {\n    float: left;\n  }\n\n  .myna-overlay-inner .pull-right {\n    float: right;\n  }\n\n  .myna-overlay-title {\n    padding: 5px 10px;\n    cursor: pointer;\n    font-weight: bold;\n    line-height: 150%;\n  }\n\n  .myna-overlay-field {\n    padding: 0 10px 5px;\n    white-space: nowrap;\n  }\n\n  .myna-overlay-inner label,\n  .myna-overlay-inner select,\n  .myna-overlay-inner button {\n    display: inline-block;\n    box-sizing: border-box;\n    height: 30px;\n    margin: 0 5px;\n    padding: 0 8px;\n    font-size: 16px;\n    line-height: 30px;\n    overflow: hidden;\n    text-overflow: ellipsis;\n    white-space: nowrap;\n    -webkit-border-radius: 5px;\n    -moz-border-radius: 5px;\n    border-radius: 5px;\n  }\n\n  .myna-overlay-inner label {\n    width: 160px;\n    padding: 0;\n  }\n\n  .myna-overlay-inner select {\n    width: 200px;\n  }\n\n  /* Navbar specifics */\n\n  #myna-navbar {\n    position: fixed;\n    top: 0;\n    left: 0;\n    width: 100%;\n  }\n\n  #myna-navbar .myna-overlay-inner {\n    padding: 5px 10px;\n  }\n\n  /* Inspector specifics */\n\n  #myna-inspector {\n    position: fixed;\n    bottom: 20px;\n    right: 20px;\n    -webkit-border-radius: 10px;\n    -moz-border-radius: 10px;\n    border-radius: 10px;\n  }\n\n  #myna-inspector .myna-overlay-inner {\n    padding: 0 0 5px;\n  }\n\n  /* Highlight */\n\n  .myna-inspector-highlight-hover,\n  .myna-inspector-highlight-toggle {\n    outline: 5px solid #55f;\n  }\n\n  /* Themes */\n\n  .myna-overlay-outer {\n    -webkit-box-shadow: 0px 0px 10px rgba(50, 50, 50, 0.5);\n    -moz-box-shadow:    0px 0px 10px rgba(50, 50, 50, 0.5);\n    box-shadow:         0px 0px 10px rgba(50, 50, 50, 0.5);\n  }\n\n  .myna-overlay-outer {\n    background: #000;\n    background: rgba(0, 0, 0, 0.75);\n    color: #fff;\n  }\n\n  .myna-overlay-inner select,\n  .myna-overlay-inner button {\n    background: #333;\n    background: -moz-linear-gradient(top, #444 0%, #222 100%);\n    background: -webkit-linear-gradient(top, #444 0%, #222 100%);\n    background: -o-linear-gradient(top, #444 0%, #222 100%);\n    background: -ms-linear-gradient(top, #444 0%, #222 100%);\n    background: linear-gradient(to bottom, #444 0%, #222 100%);\n    border: 1px solid #555;\n    color: #fff;\n  }\n\n  .myna-overlay-inner select.active,\n  .myna-overlay-inner button.active,\n  .myna-overlay-inner select:active,\n  .myna-overlay-inner button:active {\n    background: -moz-linear-gradient(top, #222 0%, #444 100%);\n    background: -webkit-linear-gradient(top, #222 0%, #444 100%);\n    background: -o-linear-gradient(top, #222 0%, #444 100%);\n    background: -ms-linear-gradient(top, #222 0%, #444 100%);\n    background: linear-gradient(to bottom, #222 0%, #444 100%);\n  }\n\n  .myna-overlay-outer a {\n    color: #fff;\n    text-decoration: none;\n  }\n\n  .myna-overlay-outer.myna-overlay-light {\n    background: #fff;\n    background: rgba(255, 255, 255, 0.75);\n    color: #000;\n  }\n\n  .myna-overlay-outer.myna-overlay-light a {\n    color: #000;\n    text-decoration: none;\n  }\n</style>").appendTo("head");
       }
     };
 
-    Inspector.prototype.initInspector = function() {
+    Inspector.prototype.initNavbar = function() {
       var brand, closeButton, inner, inspectorButton, left, right,
         _this = this;
-      Myna.log("Myna.Inspector.initInspector");
+      Myna.log("Myna.Inspector.initNavbar");
       if (!this.Inspector) {
-        this.inspector = $("<div id='myna-inspector' class='myna-overlay-outer'>").appendTo("body");
-        inner = $("<div class='myna-overlay-inner'>").appendTo(this.inspector);
-        left = $("<div class='pull-left'>").appendTo(inner);
-        brand = $("<label><a href='http://mynaweb.com'>Myna</a></label>").appendTo(left);
-        right = $("<div class='pull-right'>").appendTo(inner);
-        inspectorButton = $("<button class='inspector'>").text(this.inspector.is(":visible") ? 'Hide inspector' : 'Show inspector').appendTo(right);
-        closeButton = $("<button class='close'>Close</button>").appendTo(right);
+        this.navbar = Myna.$("<div id='myna-navbar' class='myna-overlay-outer'>").appendTo("body");
+        inner = Myna.$("<div class='myna-overlay-inner'>").appendTo(this.navbar);
+        left = Myna.$("<div class='pull-left'>").appendTo(inner);
+        brand = Myna.$("<label><a href='http://mynaweb.com'>Myna</a></label>").appendTo(left);
+        right = Myna.$("<div class='pull-right'>").appendTo(inner);
+        inspectorButton = Myna.$("<button class='inspector'>").text(this.inspector.is(":visible") ? 'Hide inspector' : 'Show inspector').appendTo(right);
+        closeButton = Myna.$("<button class='close'>Close</button>").appendTo(right);
         inspectorButton.on('click', function() {
           if (_this.inspector.is(":visible")) {
             _this.inspector.hide();
@@ -1577,9 +1579,9 @@
         _this = this;
       Myna.log("Myna.Inspector.initInspector");
       if (!this.inspector) {
-        this.inspector = $("<div id='myna-inspector' class='myna-overlay-outer'>").appendTo("body");
-        this.inspectorInner = $("<div class='myna-overlay-inner'>").appendTo(this.inspector);
-        this.inspectorTitle = $("<div class='myna-overlay-title'>Experiments</div>").appendTo(this.inspectorInner);
+        this.inspector = Myna.$("<div id='myna-inspector' class='myna-overlay-outer'>").appendTo("body");
+        this.inspectorInner = Myna.$("<div class='myna-overlay-inner'>").appendTo(this.inspector);
+        this.inspectorTitle = Myna.$("<div class='myna-overlay-title'>Experiments</div>").appendTo(this.inspectorInner);
         lastMousePos = null;
         inspectorSize = null;
         mouseMove = function(evt) {
@@ -1613,13 +1615,13 @@
           if (inspectorSize == null) {
             inspectorSize = _this.inspector.size();
           }
-          return $('html').on('mousemove', mouseMove);
+          return Myna.$('html').on('mousemove', mouseMove);
         });
         this.inspectorTitle.on('mouseup', function(evt) {
           evt.stopPropagation();
           evt.preventDefault();
           Myna.log("Myna.Inspector.initInspector.mouseUp", evt, lastMousePos);
-          return $('html').off('mousemove', mouseMove);
+          return Myna.$('html').off('mousemove', mouseMove);
         });
       }
     };
@@ -1628,17 +1630,17 @@
       var cssClass, label, rewardButton, showButton, suggestButton, unstickButton, variant, variantId, variantSelect, wrapper, _ref, _ref1,
         _this = this;
       Myna.log("Myna.Inspector.addExperiment", expt);
-      wrapper = $("<div class='myna-overlay-field'>").appendTo(this.inspectorInner);
-      label = $("<label>").text(expt.id).appendTo(wrapper);
-      variantSelect = $("<select>").appendTo(wrapper);
-      showButton = $("<button>").text("Show").appendTo(wrapper);
-      suggestButton = $("<button>").text("Suggest").appendTo(wrapper);
-      rewardButton = $("<button>").text("Reward").attr("disabled", (typeof expt.sticky === "function" ? expt.sticky() : void 0) == null).appendTo(wrapper);
-      unstickButton = $("<button>").text("Unstick").attr("disabled", (typeof expt.sticky === "function" ? expt.sticky() : void 0) == null).appendTo(wrapper);
+      wrapper = Myna.$("<div class='myna-overlay-field'>").appendTo(this.inspectorInner);
+      label = Myna.$("<label>").text(expt.id).appendTo(wrapper);
+      variantSelect = Myna.$("<select>").appendTo(wrapper);
+      showButton = Myna.$("<button>").text("Show").appendTo(wrapper);
+      suggestButton = Myna.$("<button>").text("Suggest").appendTo(wrapper);
+      rewardButton = Myna.$("<button>").text("Reward").attr("disabled", (typeof expt.sticky === "function" ? expt.sticky() : void 0) == null).appendTo(wrapper);
+      unstickButton = Myna.$("<button>").text("Unstick").attr("disabled", (typeof expt.sticky === "function" ? expt.sticky() : void 0) == null).appendTo(wrapper);
       _ref = expt.variants;
       for (variantId in _ref) {
         variant = _ref[variantId];
-        $("<option>").attr("value", variantId).text("View " + variantId).appendTo(variantSelect);
+        Myna.$("<option>").attr("value", variantId).text("View " + variantId).appendTo(variantSelect);
       }
       variantSelect.on("change", function(evt) {
         evt.stopPropagation();
@@ -1648,19 +1650,19 @@
       cssClass = (_ref1 = expt.settings.get("myna.html.cssClass")) != null ? _ref1 : "myna-" + expt.id;
       showButton.on('click', function(evt) {
         var self;
-        self = $(this);
+        self = Myna.$(this);
         if (self.is(".active")) {
           self.removeClass("active");
-          return $("." + cssClass).removeClass("myna-inspector-highlight-toggle");
+          return Myna.$("." + cssClass).removeClass("myna-inspector-highlight-toggle");
         } else {
-          $("." + cssClass).addClass("myna-inspector-highlight-toggle");
+          Myna.$("." + cssClass).addClass("myna-inspector-highlight-toggle");
           return self.addClass("active");
         }
       });
       wrapper.hover(function() {
-        return $("." + cssClass).addClass("myna-inspector-highlight-hover");
+        return Myna.$("." + cssClass).addClass("myna-inspector-highlight-hover");
       }, function() {
-        return $("." + cssClass).removeClass("myna-inspector-highlight-hover");
+        return Myna.$("." + cssClass).removeClass("myna-inspector-highlight-hover");
       });
       suggestButton.on("click", function(evt) {
         expt.suggest();

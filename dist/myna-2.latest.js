@@ -1039,7 +1039,7 @@
 
     Recorder.prototype.init = function() {
       var expt, id, _ref, _results;
-      _ref = client.experiments;
+      _ref = this.client.experiments;
       _results = [];
       for (id in _ref) {
         expt = _ref[id];

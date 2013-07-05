@@ -20,7 +20,7 @@ class Myna.Binder
   # experiment -> boolean
   detect: (expt) =>
     cssClass = expt.settings.get("myna.html.cssClass") ? "myna-#{expt.id}"
-    $(".#{cssClass}").length > 0
+    Myna.$(".#{cssClass}").length > 0
 
   bind: (expt, variant) =>
     Myna.log("Myna.Binder.bind", expt)
@@ -37,9 +37,9 @@ class Myna.Binder
     Myna.log("Myna.Binder.bind", "searchParams", cssClass, dataShow, dataBind, dataGoal)
 
     allElems  = if cssClass then Myna.$(".#{cssClass}") else null
-    showElems = if cssClass then allElems.filter("[data-#{dataShow}]") else $("[data-#{dataShow}]")
-    bindElems = if cssClass then allElems.filter("[data-#{dataBind}]") else $("[data-#{dataBind}]")
-    goalElems = if cssClass then allElems.filter("[data-#{dataGoal}]") else $("[data-#{dataGoal}]")
+    showElems = if cssClass then allElems.filter("[data-#{dataShow}]") else Myna.$("[data-#{dataShow}]")
+    bindElems = if cssClass then allElems.filter("[data-#{dataBind}]") else Myna.$("[data-#{dataBind}]")
+    goalElems = if cssClass then allElems.filter("[data-#{dataGoal}]") else Myna.$("[data-#{dataGoal}]")
 
     Myna.log("Myna.Binder.bind", "elements", allElems, showElems, bindElems, goalElems)
 
@@ -90,7 +90,7 @@ class Myna.Binder
 
     switch event
       when "load"
-        $(=> expt.reward())
+        Myna.$(=> expt.reward())
       when "click"
         handler = @createClickHandler(expt)
         @boundHandlers.push([elem, "click", handler])
@@ -102,19 +102,19 @@ class Myna.Binder
     Myna.log("Myna.Binder.createClickHandler", expt, innerHandler)
 
     handler = (evt, args...) ->
-      myna.log("Myna.Binder.clickHandler", evt, args...)
+      Myna.log("Myna.Binder.clickHandler", evt, args...)
 
       elem = this
-      self = $(elem)
+      self = Myna.$(elem)
 
       rewarded = expt.loadStickyReward() || expt.loadLastReward()
 
       if rewarded?
-        myna.log("Myna.Binder.clickHandler", "pass-through")
+        Myna.log("Myna.Binder.clickHandler", "pass-through")
 
         innerHandler.call(this, evt, args...)
       else
-        myna.log("Myna.Binder.clickHandler", "pass-through")
+        Myna.log("Myna.Binder.clickHandler", "pass-through")
 
         evt.stopPropagation()
         evt.preventDefault()
