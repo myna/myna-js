@@ -8,10 +8,13 @@ expt = new Myna.Experiment
     { id: "c", settings: { buttons: "blue"  }, weight: 0.6 }
   ]
 
-recorder = new Myna.Recorder
+client = new Myna.Client
   apiKey:   "092c90f6-a8f2-11e2-a2b9-7c6d628b25f7"
   apiRoot:  testApiRoot
-  autoSync: false
+  settings: "myna.web.autoSync":  false
+  experiments: [ expt ]
+
+recorder = new Myna.Recorder client
 
 recorder.listenTo(expt)
 

@@ -36,13 +36,14 @@ module.exports = (grunt) ->
       intro...
       "core.coffee"
       "jsonp.coffee"
+      "events.coffee"
       "settings.coffee"
       "cache.coffee"
       "variant.coffee"
-      "events.coffee"
       "base-experiment.coffee"
       "experiment.coffee"
       "recorder.coffee"
+      "google-analytics.coffee"
       "client.coffee"
       outro...
     ]
@@ -58,6 +59,7 @@ module.exports = (grunt) ->
       "suggest-spec.coffee"
       "reward-spec.coffee"
       "recorder-spec.coffee"
+      "google-analytics-spec.coffee"
       "event-spec.coffee"
       outro...
     ]

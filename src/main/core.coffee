@@ -12,6 +12,18 @@ Myna.error = (args...) ->
     window.console?.error(args)
   throw args
 
+# Adapted from jQuery:
+Myna.trim = (str) ->
+  if str == null then "" else str.replace /^\s+|\s+$/g, ''
+
+# From underscore.js:
+Myna.isArray = Array.isArray || (obj) ->
+  Object.prototype.toString.call(obj) == '[object Array]'
+
+# From underscore.js:
+Myna.isObject = (obj) ->
+  obj == Object(obj)
+
 Myna.extend = (des, sources...) ->
   for src in sources
     for key, value of src

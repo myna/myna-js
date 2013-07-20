@@ -29,6 +29,22 @@
     throw args;
   };
 
+  Myna.trim = function(str) {
+    if (str === null) {
+      return "";
+    } else {
+      return str.replace(/^\s+|\s+$/g, '');
+    }
+  };
+
+  Myna.isArray = Array.isArray || function(obj) {
+    return Object.prototype.toString.call(obj) === '[object Array]';
+  };
+
+  Myna.isObject = function(obj) {
+    return obj === Object(obj);
+  };
+
   Myna.extend = function() {
     var des, key, sources, src, value, _i, _len;
     des = arguments[0], sources = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
@@ -192,10 +208,104 @@
 }).call(this);
 
 (function() {
+  var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
+    __slice = [].slice;
+
+  Myna.Events = (function() {
+    function Events() {
+      this.off = __bind(this.off, this);
+      this.on = __bind(this.on, this);
+      this.triggerAsync = __bind(this.triggerAsync, this);
+      this.trigger = __bind(this.trigger, this);
+      this.eventHandlers = {};
+    }
+
+    Events.prototype.trigger = function() {
+      var args, cancel, event, handler, _i, _len, _ref, _ref1;
+      event = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
+      Myna.log.apply(Myna, ["Myna.Events.trigger", event].concat(__slice.call(args)));
+      cancel = false;
+      _ref1 = (_ref = this.eventHandlers[event]) != null ? _ref : [];
+      for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+        handler = _ref1[_i];
+        cancel = cancel || (handler.apply(this, args) === false);
+      }
+      if (cancel) {
+        return false;
+      } else {
+        return void 0;
+      }
+    };
+
+    Events.prototype.triggerAsync = function() {
+      var args, error, event, success, triggerAll, _i, _ref,
+        _this = this;
+      event = arguments[0], args = 4 <= arguments.length ? __slice.call(arguments, 1, _i = arguments.length - 2) : (_i = 1, []), success = arguments[_i++], error = arguments[_i++];
+      Myna.log.apply(Myna, ["Myna.Events.triggerAsync", event].concat(__slice.call(args)));
+      triggerAll = function(handlers) {
+        var head, rest;
+        Myna.log("Myna.Events.triggerAsync.triggerAll", handlers);
+        if (handlers.length === 0) {
+          return success();
+        } else {
+          head = handlers[0], rest = 2 <= handlers.length ? __slice.call(handlers, 1) : [];
+          return head.call.apply(head, [_this].concat(__slice.call(args), [(function() {
+            return triggerAll(rest);
+          })], [error]));
+        }
+      };
+      return triggerAll((_ref = this.eventHandlers[event]) != null ? _ref : []);
+    };
+
+    Events.prototype.on = function(event, handler) {
+      var _ref;
+      this.eventHandlers[event] = ((_ref = this.eventHandlers[event]) != null ? _ref : []).concat([handler]);
+      return Myna.log("Myna.Events.on", event, handler, this.eventHandlers[event]);
+    };
+
+    Events.prototype.off = function(event, handler) {
+      var h;
+      if (handler == null) {
+        handler = null;
+      }
+      switch (arguments.length) {
+        case 0:
+          this.eventHandlers = {};
+          break;
+        case 1:
+          delete this.eventHandlers[arguments[0]];
+          break;
+        default:
+          event = arguments[0], handler = arguments[1];
+          this.eventHandlers[event] = (function() {
+            var _i, _len, _ref, _results;
+            _ref = this.eventHandlers[event];
+            _results = [];
+            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+              h = _ref[_i];
+              if (h !== handler) {
+                _results.push(h);
+              }
+            }
+            return _results;
+          }).call(this);
+      }
+      return Myna.log("Myna.Events.off", event, handler, this.eventHandlers[event]);
+    };
+
+    return Events;
+
+  })();
+
+}).call(this);
+
+(function() {
+  'use strict';
   var Field, Nil, Path, Root, nil,
     __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
     __hasProp = {}.hasOwnProperty,
-    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
+    __slice = [].slice;
 
   Path = (function() {
     function Path(next) {
@@ -213,6 +323,8 @@
     __extends(Root, _super);
 
     function Root(next) {
+      this.prefixes = __bind(this.prefixes, this);
+      this.unset = __bind(this.unset, this);
       this.set = __bind(this.set, this);
       this.get = __bind(this.get, this);
       this.path = __bind(this.path, this);
@@ -228,7 +340,19 @@
     };
 
     Root.prototype.set = function(data, value) {
-      return this.next.set(data, value);
+      if (value != null) {
+        return this.next.set(data, value);
+      } else {
+        return this.next.unset(data);
+      }
+    };
+
+    Root.prototype.unset = function(data) {
+      return this.next.unset(data);
+    };
+
+    Root.prototype.prefixes = function() {
+      return this.next.prefixes();
     };
 
     return Root;
@@ -239,6 +363,8 @@
     __extends(Field, _super);
 
     function Field(next, name) {
+      this.prefixes = __bind(this.prefixes, this);
+      this.unset = __bind(this.unset, this);
       this.set = __bind(this.set, this);
       this.get = __bind(this.get, this);
       this.path = __bind(this.path, this);
@@ -265,6 +391,36 @@
       return ans;
     };
 
+    Field.prototype.unset = function(data) {
+      var ans, k, modified, v;
+      ans = {};
+      for (k in data) {
+        v = data[k];
+        ans[k] = v;
+      }
+      modified = this.next.unset(ans[this.name]);
+      if (this.next.unset(ans[this.name]) != null) {
+        ans[this.name] = modified;
+      } else {
+        delete ans[this.name];
+      }
+      return ans;
+    };
+
+    Field.prototype.prefixes = function() {
+      var prefix;
+      return [this.name].concat(__slice.call((function() {
+          var _i, _len, _ref, _results;
+          _ref = this.next.prefixes();
+          _results = [];
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            prefix = _ref[_i];
+            _results.push("" + this.name + "." + prefix);
+          }
+          return _results;
+        }).call(this)));
+    };
+
     return Field;
 
   })(Path);
@@ -288,76 +444,180 @@
       return value;
     };
 
+    Nil.prototype.unset = function(data) {
+      return void 0;
+    };
+
+    Nil.prototype.prefixes = function() {
+      return [];
+    };
+
     return Nil;
 
   })(Path);
 
   nil = new Nil();
 
-  Myna.Settings = (function() {
+  Myna.Settings = (function(_super) {
+    __extends(Settings, _super);
+
     function Settings(data) {
       if (data == null) {
         data = {};
       }
-      this.toJson = __bind(this.toJson, this);
-      this.parse = __bind(this.parse, this);
+      this.toJSON = __bind(this.toJSON, this);
+      this.triggerChange = __bind(this.triggerChange, this);
+      this.paths = __bind(this.paths, this);
+      this.pathValuePairs = __bind(this.pathValuePairs, this);
+      this.unset = __bind(this.unset, this);
       this.set = __bind(this.set, this);
       this.get = __bind(this.get, this);
+      Settings.__super__.constructor.call(this);
       this.data = {};
       this.set(data);
     }
 
-    Settings.prototype.get = function(path, orElse) {
-      var ans, _ref;
-      if (orElse == null) {
-        orElse = null;
-      }
-      ans = (_ref = this.parse(path).get(this.data)) != null ? _ref : orElse;
-      Myna.log("Myna.Settings.get", path, ans);
-      return ans;
+    Settings.ast = {
+      Root: Root,
+      Field: Field,
+      Nil: Nil,
+      nil: nil
     };
 
-    Settings.prototype.set = function() {
-      var key, value, _ref;
-      switch (arguments.length) {
-        case 0:
-          Myna.error("Myna.Settings.set", "not enough arguments", arguments);
-          break;
-        case 1:
-          _ref = arguments[0];
-          for (key in _ref) {
-            value = _ref[key];
-            Myna.log("Myna.Settings.set", key, value);
-            this.data = this.parse(key).set(this.data, value);
-          }
-          break;
-        default:
-          key = arguments[0];
-          value = arguments[1];
-          Myna.log("Myna.Settings.set", key, value);
-          this.data = this.parse(key).set(this.data, value);
-      }
-      return this;
-    };
-
-    Settings.prototype.parse = function(path) {
+    Settings.parse = function(path) {
       var memo, name, _i, _ref;
+      path = Myna.trim(path);
       memo = nil;
-      _ref = path.split(".");
-      for (_i = _ref.length - 1; _i >= 0; _i += -1) {
-        name = _ref[_i];
-        memo = new Field(memo, name);
+      if (path !== "") {
+        _ref = path.split(".");
+        for (_i = _ref.length - 1; _i >= 0; _i += -1) {
+          name = _ref[_i];
+          memo = new Field(memo, name);
+        }
       }
       return new Root(memo);
     };
 
-    Settings.prototype.toJson = function() {
+    Settings.prototype.get = function(path, orElse) {
+      var ans, _ref;
+      if (orElse == null) {
+        orElse = void 0;
+      }
+      ans = (_ref = Settings.parse(path).get(this.data)) != null ? _ref : orElse;
+      Myna.log("Myna.Settings.get", path, orElse, ans);
+      return ans;
+    };
+
+    Settings.defaultSetOptions = {
+      silent: false
+    };
+
+    Settings.prototype.set = function() {
+      var options, path, pathStr, paths, updates, value, _ref;
+      if (arguments.length === 0) {
+        throw ["Settings.set", "not enough arguments", arguments];
+      }
+      if (typeof arguments[0] === "object") {
+        updates = arguments[0];
+        options = Myna.extend({}, Settings.defaultSetOptions, (_ref = arguments[1]) != null ? _ref : {});
+        Myna.log("Myna.Settings.set", updates, options);
+        paths = [];
+        for (pathStr in updates) {
+          value = updates[pathStr];
+          path = Settings.parse(pathStr);
+          this.data = path.set(this.data, value);
+          paths.push(path);
+        }
+        if (!options.silent) {
+          this.triggerChange(paths);
+        }
+      } else {
+        updates = {};
+        updates[arguments[0]] = arguments[1];
+        options = arguments[2];
+        this.set(updates, options);
+      }
+      return this;
+    };
+
+    Settings.prototype.unset = function(path, options) {
+      var updates;
+      updates = {};
+      updates[path] = void 0;
+      return this.set(updates, options);
+    };
+
+    Settings.prototype.pathValuePairs = function() {
+      var ans, normalize, visit;
+      ans = [];
+      normalize = function(path) {
+        if (path[0] === ".") {
+          return path.substring(1);
+        } else {
+          return path;
+        }
+      };
+      visit = function(value, path) {
+        var i, k, v, _i, _len, _results, _results1;
+        if (path == null) {
+          path = "";
+        }
+        if (Myna.isArray(value)) {
+          _results = [];
+          for (v = _i = 0, _len = value.length; _i < _len; v = ++_i) {
+            i = value[v];
+            _results.push(visit(v, path + "[" + i + "]"));
+          }
+          return _results;
+        } else if (Myna.isObject(value)) {
+          _results1 = [];
+          for (k in value) {
+            v = value[k];
+            _results1.push(visit(v, path + "." + k));
+          }
+          return _results1;
+        } else {
+          return ans.push({
+            path: normalize(path),
+            value: value
+          });
+        }
+      };
+      visit(this.data);
+      Myna.log("Myna.Settings.pathValuePairs", ans);
+      return ans;
+    };
+
+    Settings.prototype.paths = function() {
+      return _.map(this.pathValuePairs(), function(pvp) {
+        return pvp.path;
+      });
+    };
+
+    Settings.prototype.triggerChange = function(paths) {
+      var path, prefix, _i, _j, _len, _len1, _ref;
+      Myna.log("Myna.Settings.triggerChange", paths, this.data, this._events);
+      for (_i = 0, _len = paths.length; _i < _len; _i++) {
+        path = paths[_i];
+        _ref = path.prefixes();
+        for (_j = 0, _len1 = _ref.length; _j < _len1; _j++) {
+          prefix = _ref[_j];
+          this.trigger("change:" + prefix, this.get(prefix));
+        }
+      }
+      return this.trigger("change");
+    };
+
+    Settings.prototype.toJSON = function(options) {
+      if (options == null) {
+        options = {};
+      }
       return this.data;
     };
 
     return Settings;
 
-  })();
+  }).call(this, Myna.Events);
 
 }).call(this);
 
@@ -501,98 +761,6 @@
     }
 
     return Variant;
-
-  })();
-
-}).call(this);
-
-(function() {
-  var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
-    __slice = [].slice;
-
-  Myna.Events = (function() {
-    function Events() {
-      this.off = __bind(this.off, this);
-      this.on = __bind(this.on, this);
-      this.triggerAsync = __bind(this.triggerAsync, this);
-      this.trigger = __bind(this.trigger, this);
-      this.eventHandlers = {};
-    }
-
-    Events.prototype.trigger = function() {
-      var args, cancel, event, handler, _i, _len, _ref, _ref1;
-      event = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
-      Myna.log.apply(Myna, ["Myna.Events.trigger", event].concat(__slice.call(args)));
-      cancel = false;
-      _ref1 = (_ref = this.eventHandlers[event]) != null ? _ref : [];
-      for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-        handler = _ref1[_i];
-        cancel = cancel || (handler.apply(this, args) === false);
-      }
-      if (cancel) {
-        return false;
-      } else {
-        return void 0;
-      }
-    };
-
-    Events.prototype.triggerAsync = function() {
-      var args, error, event, success, triggerAll, _i, _ref,
-        _this = this;
-      event = arguments[0], args = 4 <= arguments.length ? __slice.call(arguments, 1, _i = arguments.length - 2) : (_i = 1, []), success = arguments[_i++], error = arguments[_i++];
-      Myna.log.apply(Myna, ["Myna.Events.triggerAsync", event].concat(__slice.call(args)));
-      triggerAll = function(handlers) {
-        var head, rest;
-        Myna.log("Myna.Events.triggerAsync.triggerAll", handlers);
-        if (handlers.length === 0) {
-          return success();
-        } else {
-          head = handlers[0], rest = 2 <= handlers.length ? __slice.call(handlers, 1) : [];
-          return head.call.apply(head, [_this].concat(__slice.call(args), [(function() {
-            return triggerAll(rest);
-          })], [error]));
-        }
-      };
-      return triggerAll((_ref = this.eventHandlers[event]) != null ? _ref : []);
-    };
-
-    Events.prototype.on = function(event, handler) {
-      var _ref;
-      this.eventHandlers[event] = ((_ref = this.eventHandlers[event]) != null ? _ref : []).concat([handler]);
-      return Myna.log("Myna.Events.on", event, handler, this.eventHandlers[event]);
-    };
-
-    Events.prototype.off = function(event, handler) {
-      var h;
-      if (handler == null) {
-        handler = null;
-      }
-      switch (arguments.length) {
-        case 0:
-          this.eventHandlers = {};
-          break;
-        case 1:
-          delete this.eventHandlers[arguments[0]];
-          break;
-        default:
-          event = arguments[0], handler = arguments[1];
-          this.eventHandlers[event] = (function() {
-            var _i, _len, _ref, _results;
-            _ref = this.eventHandlers[event];
-            _results = [];
-            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-              h = _ref[_i];
-              if (h !== handler) {
-                _results.push(h);
-              }
-            }
-            return _results;
-          }).call(this);
-      }
-      return Myna.log("Myna.Events.off", event, handler, this.eventHandlers[event]);
-    };
-
-    return Events;
 
   })();
 
@@ -1244,6 +1412,111 @@
 }).call(this);
 
 (function() {
+  var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
+    __hasProp = {}.hasOwnProperty,
+    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+  Myna.GoogleAnalytics = (function(_super) {
+    __extends(GoogleAnalytics, _super);
+
+    function GoogleAnalytics(client) {
+      this.rewardMultiplier = __bind(this.rewardMultiplier, this);
+      this.eventName = __bind(this.eventName, this);
+      this.enabled = __bind(this.enabled, this);
+      this.rewardEvent = __bind(this.rewardEvent, this);
+      this.viewEvent = __bind(this.viewEvent, this);
+      this.recordReward = __bind(this.recordReward, this);
+      this.recordView = __bind(this.recordView, this);
+      this.listenTo = __bind(this.listenTo, this);
+      this.init = __bind(this.init, this);
+      Myna.log("Myna.GoogleAnalytics.constructor", client);
+      this.client = client;
+    }
+
+    GoogleAnalytics.prototype.init = function() {
+      var expt, id, _ref, _results;
+      _ref = this.client.experiments;
+      _results = [];
+      for (id in _ref) {
+        expt = _ref[id];
+        _results.push(this.listenTo(expt));
+      }
+      return _results;
+    };
+
+    GoogleAnalytics.prototype.listenTo = function(expt) {
+      var _this = this;
+      Myna.log("Myna.GoogleAnalytics.listenTo", expt.id);
+      expt.on('recordView', function(variant, success, error) {
+        return _this.recordView(expt, variant, success, error);
+      });
+      return expt.on('recordReward', function(variant, amount, success, error) {
+        return _this.recordReward(expt, variant, amount, success, error);
+      });
+    };
+
+    GoogleAnalytics.prototype.recordView = function(expt, variant, success, error) {
+      if (success == null) {
+        success = (function() {});
+      }
+      if (error == null) {
+        error = (function() {});
+      }
+      Myna.log("Myna.GoogleAnalytics.recordView", expt, variant, success, error);
+      if (this.enabled(expt)) {
+        if (typeof _gaq !== "undefined" && _gaq !== null) {
+          _gaq.push(this.viewEvent(expt, variant));
+        }
+      }
+      return success();
+    };
+
+    GoogleAnalytics.prototype.recordReward = function(expt, variant, amount, success, error) {
+      if (success == null) {
+        success = (function() {});
+      }
+      if (error == null) {
+        error = (function() {});
+      }
+      Myna.log("Myna.GoogleAnalytics.recordReward", expt, variant, success, error);
+      if (this.enabled(expt)) {
+        if (typeof _gaq !== "undefined" && _gaq !== null) {
+          _gaq.push(this.rewardEvent(expt, variant, amount));
+        }
+      }
+      return success();
+    };
+
+    GoogleAnalytics.prototype.viewEvent = function(expt, variant) {
+      return ["_trackEvent", "myna", this.eventName(expt, "view"), variant.id];
+    };
+
+    GoogleAnalytics.prototype.rewardEvent = function(expt, variant, amount) {
+      var m;
+      m = this.rewardMultiplier(expt);
+      return ["_trackEvent", "myna", this.eventName(expt, "reward"), variant.id, Math.round(m * amount)];
+    };
+
+    GoogleAnalytics.prototype.enabled = function(expt) {
+      return expt.settings.get("myna.web.googleAnalytics.enabled", true);
+    };
+
+    GoogleAnalytics.prototype.eventName = function(expt, event) {
+      var _ref;
+      return (_ref = expt.settings.get("myna.web.googleAnalytics." + event + "Event")) != null ? _ref : "" + expt.id + "-" + event;
+    };
+
+    GoogleAnalytics.prototype.rewardMultiplier = function(expt) {
+      return expt.settings.get("myna.web.googleAnalytics.rewardMultiplier", 100);
+    };
+
+    return GoogleAnalytics;
+
+  })(Myna.Events);
+
+}).call(this);
+
+(function() {
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
 
   Myna.Client = (function() {
@@ -1336,6 +1609,8 @@
     } else {
       Myna.recorder = new Myna.Recorder(Myna.client);
       Myna.recorder.init();
+      Myna.googleAnalytics = new Myna.GoogleAnalytics(Myna.client);
+      Myna.googleAnalytics.init();
     }
     return Myna.client;
   };

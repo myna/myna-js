@@ -21,10 +21,13 @@ for denyAccess in [ false, true ]
       { id: "variant2", weight: 0.5 }
     ]
 
-  recorder = new Myna.Recorder
+  client = new Myna.Client
     apiKey:   apiKey
     apiRoot:  testApiRoot
-    autoSync: false
+    settings: "myna.web.autoSync":  false
+    experiments: [ expt ]
+
+  recorder = new Myna.Recorder client
 
   initialized = (fn) ->
     return ->

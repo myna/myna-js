@@ -16,6 +16,8 @@ Myna.init = (options) ->
   else
     Myna.recorder = new Myna.Recorder(Myna.client)
     Myna.recorder.init()
+    Myna.googleAnalytics = new Myna.GoogleAnalytics(Myna.client)
+    Myna.googleAnalytics.init()
 
   Myna.client
 
