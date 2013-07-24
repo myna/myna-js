@@ -301,165 +301,241 @@
 
 (function() {
   'use strict';
-  var Field, Nil, Path, Root, nil,
+  var Path,
     __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
+    __slice = [].slice,
     __hasProp = {}.hasOwnProperty,
-    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
-    __slice = [].slice;
+    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
   Path = (function() {
-    function Path(next) {
-      if (next == null) {
-        next = null;
+    Path.identifierRegex = /^[a-z_$][a-z0-9_$]*/i;
+
+    Path.integerRegex = /^[0-9]+/;
+
+    Path.completeIdentifierRegex = /^[a-z_$][a-z0-9_$]*$/i;
+
+    function Path(input) {
+      this.toString = __bind(this.toString, this);
+      this.prefixes = __bind(this.prefixes, this);
+      this.unset = __bind(this.unset, this);
+      this.set = __bind(this.set, this);
+      this.get = __bind(this.get, this);
+      this.path = __bind(this.path, this);
+      this.quote = __bind(this.quote, this);
+      this.parse = __bind(this.parse, this);
+      if (typeof input === "string") {
+        this.nodes = this.parse(input);
+      } else {
+        this.nodes = input;
       }
-      this.next = next;
     }
+
+    Path.prototype.parse = function(originalPath) {
+      var identifier, indexField, number, path, skip, string, take, takeString, topLevel;
+      path = originalPath;
+      skip = function(num) {
+        if (path.length < num) {
+          throw "bad settings path: " + originalPath;
+        } else {
+          path = path.substring(num);
+        }
+      };
+      take = function(num) {
+        var ans;
+        if (path.length < num) {
+          throw "bad settings path: " + originalPath;
+        } else {
+          ans = path.substring(0, num);
+          path = path.substring(num);
+          return ans;
+        }
+      };
+      takeString = function(str) {
+        path = path.substring(str.length);
+        return str;
+      };
+      identifier = function() {
+        var match;
+        match = path.match(Path.identifierRegex);
+        if (match) {
+          return takeString(match[0]);
+        } else {
+          throw "bad settings path: " + originalPath;
+        }
+      };
+      number = function() {
+        var match;
+        match = path.match(Path.integerRegex);
+        if (match) {
+          return parseInt(takeString(match[0]));
+        } else {
+          throw "bad settings path: " + originalPath;
+        }
+      };
+      string = function(quote) {
+        var ans, terminated;
+        skip(1);
+        ans = "";
+        terminated = false;
+        while (!terminated) {
+          if (path[0] === quote) {
+            terminated = true;
+          } else if (path[0] === "\\") {
+            skip(1);
+            ans += take(1);
+          } else {
+            ans += take(1);
+          }
+        }
+        skip(1);
+        return ans;
+      };
+      indexField = function() {
+        var ans;
+        skip(1);
+        if (path[0] === "'") {
+          ans = string("'");
+        } else if (path[0] === '"') {
+          ans = string('"');
+        } else {
+          ans = number();
+        }
+        skip(1);
+        return ans;
+      };
+      topLevel = function() {
+        var ans;
+        ans = [];
+        while (path.length > 0) {
+          if (path[0] === ".") {
+            skip(1);
+            ans.push(identifier());
+          } else if (path[0] === "[") {
+            ans.push(indexField());
+          } else {
+            ans.push(identifier());
+          }
+        }
+        return ans;
+      };
+      path = Myna.trim(path);
+      if (path === "") {
+        return [];
+      } else if (path[0] === "." || path[0] === "[") {
+        return topLevel();
+      } else {
+        path = "." + path;
+        return topLevel();
+      }
+    };
+
+    Path.prototype.quote = function(str) {
+      return str.replace(/['\"\\]/g, function(quote) {
+        return "\\" + quote;
+      });
+    };
+
+    Path.prototype.path = function(nodes) {
+      var ans, node, _i, _len;
+      if (nodes == null) {
+        nodes = this.nodes;
+      }
+      ans = "";
+      for (_i = 0, _len = nodes.length; _i < _len; _i++) {
+        node = nodes[_i];
+        if (typeof node === "number") {
+          ans += "[" + node + "]";
+        } else if (Path.completeIdentifierRegex.test(node)) {
+          ans += "." + node;
+        } else {
+          ans += "[\"" + (this.quote(node)) + "\"]";
+        }
+      }
+      if (ans[0] === ".") {
+        return ans.substring(1);
+      } else {
+        return ans;
+      }
+    };
+
+    Path.prototype.get = function(data) {
+      var node, _i, _len, _ref;
+      _ref = this.nodes;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        node = _ref[_i];
+        data = data != null ? data[node] : void 0;
+      }
+      return data;
+    };
+
+    Path.prototype.set = function(data, value) {
+      var first, last, node, obj, _i, _j, _len, _ref;
+      if (value != null) {
+        if (this.nodes.length === 0) {
+          return value;
+        } else {
+          obj = data;
+          _ref = this.nodes, first = 2 <= _ref.length ? __slice.call(_ref, 0, _i = _ref.length - 1) : (_i = 0, []), last = _ref[_i++];
+          for (_j = 0, _len = first.length; _j < _len; _j++) {
+            node = first[_j];
+            if (typeof obj[node] !== "object") {
+              obj[node] = {};
+            }
+            obj = obj[node];
+          }
+          obj[last] = value;
+          return data;
+        }
+      } else {
+        return this.unset(data);
+      }
+    };
+
+    Path.prototype.unset = function(data) {
+      var first, last, node, obj, _i, _j, _len, _ref;
+      if (this.nodes.length === 0) {
+        return void 0;
+      } else {
+        obj = data;
+        _ref = this.nodes, first = 2 <= _ref.length ? __slice.call(_ref, 0, _i = _ref.length - 1) : (_i = 0, []), last = _ref[_i++];
+        for (_j = 0, _len = first.length; _j < _len; _j++) {
+          node = first[_j];
+          if (obj[node] == null) {
+            return data;
+          }
+          obj = obj[node];
+        }
+        delete obj[last];
+        return data;
+      }
+    };
+
+    Path.prototype.prefixes = function() {
+      var ans, n, nodes, _i, _ref;
+      nodes = this.nodes;
+      ans = [];
+      for (n = _i = 1, _ref = nodes.length; 1 <= _ref ? _i <= _ref : _i >= _ref; n = 1 <= _ref ? ++_i : --_i) {
+        ans.push(this.path(nodes.slice(0, n)));
+      }
+      return ans;
+    };
+
+    Path.prototype.toString = function() {
+      return this.path();
+    };
 
     return Path;
 
   })();
 
-  Root = (function(_super) {
-    __extends(Root, _super);
-
-    function Root(next) {
-      this.prefixes = __bind(this.prefixes, this);
-      this.unset = __bind(this.unset, this);
-      this.set = __bind(this.set, this);
-      this.get = __bind(this.get, this);
-      this.path = __bind(this.path, this);
-      Root.__super__.constructor.call(this, next);
-    }
-
-    Root.prototype.path = function() {
-      return this.next.path().substring(1);
-    };
-
-    Root.prototype.get = function(data) {
-      return this.next.get(data);
-    };
-
-    Root.prototype.set = function(data, value) {
-      if (value != null) {
-        return this.next.set(data, value);
-      } else {
-        return this.next.unset(data);
-      }
-    };
-
-    Root.prototype.unset = function(data) {
-      return this.next.unset(data);
-    };
-
-    Root.prototype.prefixes = function() {
-      return this.next.prefixes();
-    };
-
-    return Root;
-
-  })(Path);
-
-  Field = (function(_super) {
-    __extends(Field, _super);
-
-    function Field(next, name) {
-      this.prefixes = __bind(this.prefixes, this);
-      this.unset = __bind(this.unset, this);
-      this.set = __bind(this.set, this);
-      this.get = __bind(this.get, this);
-      this.path = __bind(this.path, this);
-      Field.__super__.constructor.call(this, next);
-      this.name = name;
-    }
-
-    Field.prototype.path = function() {
-      return "." + this.name + (this.next.path());
-    };
-
-    Field.prototype.get = function(data) {
-      return this.next.get(data != null ? data[this.name] : void 0);
-    };
-
-    Field.prototype.set = function(data, value) {
-      var ans, k, v;
-      ans = {};
-      for (k in data) {
-        v = data[k];
-        ans[k] = v;
-      }
-      ans[this.name] = this.next.set(ans[this.name], value);
-      return ans;
-    };
-
-    Field.prototype.unset = function(data) {
-      var ans, k, modified, v;
-      ans = {};
-      for (k in data) {
-        v = data[k];
-        ans[k] = v;
-      }
-      modified = this.next.unset(ans[this.name]);
-      if (this.next.unset(ans[this.name]) != null) {
-        ans[this.name] = modified;
-      } else {
-        delete ans[this.name];
-      }
-      return ans;
-    };
-
-    Field.prototype.prefixes = function() {
-      var prefix;
-      return [this.name].concat(__slice.call((function() {
-          var _i, _len, _ref, _results;
-          _ref = this.next.prefixes();
-          _results = [];
-          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            prefix = _ref[_i];
-            _results.push("" + this.name + "." + prefix);
-          }
-          return _results;
-        }).call(this)));
-    };
-
-    return Field;
-
-  })(Path);
-
-  Nil = (function(_super) {
-    __extends(Nil, _super);
-
-    function Nil() {
-      Nil.__super__.constructor.call(this, null);
-    }
-
-    Nil.prototype.path = function() {
-      return "";
-    };
-
-    Nil.prototype.get = function(data) {
-      return data;
-    };
-
-    Nil.prototype.set = function(data, value) {
-      return value;
-    };
-
-    Nil.prototype.unset = function(data) {
-      return void 0;
-    };
-
-    Nil.prototype.prefixes = function() {
-      return [];
-    };
-
-    return Nil;
-
-  })(Path);
-
-  nil = new Nil();
-
   Myna.Settings = (function(_super) {
     __extends(Settings, _super);
+
+    Settings.Path = Path;
+
+    Settings.defaultSetOptions = {
+      silent: false
+    };
 
     function Settings(data) {
       if (data == null) {
@@ -477,54 +553,29 @@
       this.set(data);
     }
 
-    Settings.ast = {
-      Root: Root,
-      Field: Field,
-      Nil: Nil,
-      nil: nil
-    };
-
-    Settings.parse = function(path) {
-      var memo, name, _i, _ref;
-      path = Myna.trim(path);
-      memo = nil;
-      if (path !== "") {
-        _ref = path.split(".");
-        for (_i = _ref.length - 1; _i >= 0; _i += -1) {
-          name = _ref[_i];
-          memo = new Field(memo, name);
-        }
-      }
-      return new Root(memo);
-    };
-
     Settings.prototype.get = function(path, orElse) {
       var ans, _ref;
       if (orElse == null) {
         orElse = void 0;
       }
-      ans = (_ref = Settings.parse(path).get(this.data)) != null ? _ref : orElse;
+      ans = (_ref = new Myna.Settings.Path(path).get(this.data)) != null ? _ref : orElse;
       Myna.log("Myna.Settings.get", path, orElse, ans);
       return ans;
-    };
-
-    Settings.defaultSetOptions = {
-      silent: false
     };
 
     Settings.prototype.set = function() {
       var options, path, pathStr, paths, updates, value, _ref;
       if (arguments.length === 0) {
-        throw ["Settings.set", "not enough arguments", arguments];
+        throw ["Myna.Settings.set", "not enough arguments", arguments];
       }
       if (typeof arguments[0] === "object") {
         updates = arguments[0];
-        options = Myna.extend({}, Settings.defaultSetOptions, (_ref = arguments[1]) != null ? _ref : {});
+        options = Myna.extend({}, Myna.Settings.defaultSetOptions, (_ref = arguments[1]) != null ? _ref : {});
         Myna.log("Myna.Settings.set", updates, options);
         paths = [];
         for (pathStr in updates) {
           value = updates[pathStr];
-          path = Settings.parse(pathStr);
+          path = new Myna.Settings.Path(pathStr);
           this.data = path.set(this.data, value);
           paths.push(path);
         }
@@ -617,7 +668,7 @@
 
     return Settings;
 
-  }).call(this, Myna.Events);
+  })(Myna.Events);
 
 }).call(this);
 
