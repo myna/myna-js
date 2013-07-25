@@ -4,15 +4,31 @@ class Path
   @identifierRegex: /^[a-z_$][a-z0-9_$]*/i
   @integerRegex: /^[0-9]+/
   @completeIdentifierRegex: /^[a-z_$][a-z0-9_$]*$/i
+  @permissiveIdentifierRegex: /^[^[.]+/
 
   constructor: (input) ->
     if typeof input == "string"
-      @nodes = @parse(input)
+      @nodes = Path.parse(input)
     else
       @nodes = input
 
+  # string -> boolean
+  @isValid: (path) =>
+    try
+      Path.parse(path)
+      true
+    catch exn
+      false
+
+  # string -> string
+  @normalize: (path) =>
+    try
+      new Path(path).toString()
+    catch exn
+      path
+
   # string -> arrayOf(or(string, integer))
-  parse: (originalPath) =>
+  @parse: (originalPath) =>
     path = originalPath
 
     skip = (num) ->
@@ -35,7 +51,7 @@ class Path
       str
 
     identifier = ->
-      match = path.match(Path.identifierRegex)
+      match = path.match(Path.permissiveIdentifierRegex)
       if match then takeString(match[0]) else throw "bad settings path: #{originalPath}"
 
     number = ->
@@ -147,6 +163,25 @@ class Path
       ans.push @path(nodes.slice(0, n))
     ans
 
+  isPrefixOf: (path) =>
+    a = this.nodes
+    b = path.nodes
+
+    if a.length > b.length
+      return false
+
+    for num in [0...a.length]
+      unless a[num] == b[num]
+        return false
+
+    true
+
+  take: (num) =>
+    new Path _.take @nodes, num
+
+  drop: (num) =>
+    new Path _.drop @nodes, num
+
   toString: =>
     @path()
 
@@ -162,9 +197,7 @@ class Myna.Settings extends Myna.Events
     @set(data)
 
   get: (path, orElse = undefined) =>
-    ans = new Myna.Settings.Path(path).get(@data) ? orElse
-    Myna.log("Myna.Settings.get", path, orElse, ans)
-    ans
+    new Myna.Settings.Path(path).get(@data) ? orElse
 
   # Two possible method signatures:
   # updatesObject optionsObject -> Settings
@@ -176,7 +209,6 @@ class Myna.Settings extends Myna.Events
     if typeof arguments[0] == "object"
       updates = arguments[0]
       options = Myna.extend({}, Myna.Settings.defaultSetOptions, arguments[1] ? {})
-      Myna.log("Myna.Settings.set", updates, options)
 
       paths = []
       for pathStr, value of updates
@@ -217,15 +249,12 @@ class Myna.Settings extends Myna.Events
 
     visit(@data)
 
-    Myna.log("Myna.Settings.pathValuePairs", ans)
-
     ans
 
   paths: =>
     _.map(@pathValuePairs(), (pvp) -> pvp.path)
 
   triggerChange: (paths) =>
-    Myna.log("Myna.Settings.triggerChange", paths, @data, @_events)
     for path in paths
       for prefix in path.prefixes()
         @trigger("change:#{prefix}", @get(prefix))

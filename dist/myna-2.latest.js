@@ -314,23 +314,48 @@
 
     Path.completeIdentifierRegex = /^[a-z_$][a-z0-9_$]*$/i;
 
+    Path.permissiveIdentifierRegex = /^[^[.]+/;
+
     function Path(input) {
       this.toString = __bind(this.toString, this);
+      this.drop = __bind(this.drop, this);
+      this.take = __bind(this.take, this);
+      this.isPrefixOf = __bind(this.isPrefixOf, this);
       this.prefixes = __bind(this.prefixes, this);
       this.unset = __bind(this.unset, this);
       this.set = __bind(this.set, this);
       this.get = __bind(this.get, this);
       this.path = __bind(this.path, this);
       this.quote = __bind(this.quote, this);
-      this.parse = __bind(this.parse, this);
       if (typeof input === "string") {
-        this.nodes = this.parse(input);
+        this.nodes = Path.parse(input);
       } else {
         this.nodes = input;
       }
     }
 
-    Path.prototype.parse = function(originalPath) {
+    Path.isValid = function(path) {
+      var exn;
+      try {
+        Path.parse(path);
+        return true;
+      } catch (_error) {
+        exn = _error;
+        return false;
+      }
+    };
+
+    Path.normalize = function(path) {
+      var exn;
+      try {
+        return new Path(path).toString();
+      } catch (_error) {
+        exn = _error;
+        return path;
+      }
+    };
+
+    Path.parse = function(originalPath) {
       var identifier, indexField, number, path, skip, string, take, takeString, topLevel;
       path = originalPath;
       skip = function(num) {
@@ -356,7 +381,7 @@
       };
       identifier = function() {
         var match;
-        match = path.match(Path.identifierRegex);
+        match = path.match(Path.permissiveIdentifierRegex);
         if (match) {
           return takeString(match[0]);
         } else {
@@ -520,13 +545,36 @@
       return ans;
     };
 
+    Path.prototype.isPrefixOf = function(path) {
+      var a, b, num, _i, _ref;
+      a = this.nodes;
+      b = path.nodes;
+      if (a.length > b.length) {
+        return false;
+      }
+      for (num = _i = 0, _ref = a.length; 0 <= _ref ? _i < _ref : _i > _ref; num = 0 <= _ref ? ++_i : --_i) {
+        if (a[num] !== b[num]) {
+          return false;
+        }
+      }
+      return true;
+    };
+
+    Path.prototype.take = function(num) {
+      return new Path(_.take(this.nodes, num));
+    };
+
+    Path.prototype.drop = function(num) {
+      return new Path(_.drop(this.nodes, num));
+    };
+
     Path.prototype.toString = function() {
       return this.path();
     };
 
     return Path;
 
-  })();
+  }).call(this);
 
   Myna.Settings = (function(_super) {
     __extends(Settings, _super);
@@ -554,13 +602,11 @@
     }
 
     Settings.prototype.get = function(path, orElse) {
-      var ans, _ref;
+      var _ref;
       if (orElse == null) {
         orElse = void 0;
       }
-      ans = (_ref = new Myna.Settings.Path(path).get(this.data)) != null ? _ref : orElse;
-      Myna.log("Myna.Settings.get", path, orElse, ans);
-      return ans;
+      return (_ref = new Myna.Settings.Path(path).get(this.data)) != null ? _ref : orElse;
     };
 
     Settings.prototype.set = function() {
@@ -571,7 +617,6 @@
       if (typeof arguments[0] === "object") {
         updates = arguments[0];
         options = Myna.extend({}, Myna.Settings.defaultSetOptions, (_ref = arguments[1]) != null ? _ref : {});
-        Myna.log("Myna.Settings.set", updates, options);
         paths = [];
         for (pathStr in updates) {
           value = updates[pathStr];
@@ -635,7 +680,6 @@
         }
       };
       visit(this.data);
-      Myna.log("Myna.Settings.pathValuePairs", ans);
       return ans;
     };
 
@@ -647,7 +691,6 @@
 
     Settings.prototype.triggerChange = function(paths) {
       var path, prefix, _i, _j, _len, _len1, _ref;
-      Myna.log("Myna.Settings.triggerChange", paths, this.data, this._events);
       for (_i = 0, _len = paths.length; _i < _len; _i++) {
         path = paths[_i];
         _ref = path.prefixes();
