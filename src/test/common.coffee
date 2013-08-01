@@ -6,7 +6,7 @@ beforeEach ->
       this.message = -> "#{this.actual} has not been written yet."
       false
 
-window.testApiRoot = "http://localhost:8080"
+window.testApiRoot = "http://api.mynaweb.com"
 
 # Helper function - grab a suggestion and pass it to the argument:
 window.withSuggestion = (expt, fn) ->

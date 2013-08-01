@@ -32,13 +32,13 @@ class Myna.GoogleAnalytics extends Myna.Events
   # Event constructors:
 
   viewEvent: (expt, variant) =>
-    ["_trackEvent", "myna", @eventName(expt, "view"), variant.id]
+    ["_trackEvent", "myna", @eventName(expt, "view"), variant.id, null, false]
 
   rewardEvent: (expt, variant, amount) =>
     # The "amount" field in _trackEvent is an integer.
     # We have to scale the reward amount up to make it greater than 1.
     m = @rewardMultiplier(expt)
-    ["_trackEvent", "myna", @eventName(expt, "reward"), variant.id, Math.round(m * amount)]
+    ["_trackEvent", "myna", @eventName(expt, "reward"), variant.id, Math.round(m * amount), true]
 
   # Settings:
 

@@ -1582,13 +1582,13 @@
     };
 
     GoogleAnalytics.prototype.viewEvent = function(expt, variant) {
-      return ["_trackEvent", "myna", this.eventName(expt, "view"), variant.id];
+      return ["_trackEvent", "myna", this.eventName(expt, "view"), variant.id, null, false];
     };
 
     GoogleAnalytics.prototype.rewardEvent = function(expt, variant, amount) {
       var m;
       m = this.rewardMultiplier(expt);
-      return ["_trackEvent", "myna", this.eventName(expt, "reward"), variant.id, Math.round(m * amount)];
+      return ["_trackEvent", "myna", this.eventName(expt, "reward"), variant.id, Math.round(m * amount), true];
     };
 
     GoogleAnalytics.prototype.enabled = function(expt) {
