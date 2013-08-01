@@ -219,6 +219,7 @@ class Myna.Inspector
           inspectorButton.text('Hide inspector')
 
       closeButton.on 'click', =>
+        Myna.setPreview(false)
         @remove()
 
       return
