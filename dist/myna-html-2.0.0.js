@@ -1684,6 +1684,10 @@
     }
   };
 
+  Myna.setPreview = function(preview) {
+    Myna.cache.save("myna-preview", !!preview);
+  };
+
 }).call(this);
 
 (function() {
@@ -1945,6 +1949,7 @@
           }
         });
         closeButton.on('click', function() {
+          Myna.setPreview(false);
           return _this.remove();
         });
       }

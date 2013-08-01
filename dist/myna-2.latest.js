@@ -1684,6 +1684,10 @@
     }
   };
 
+  Myna.setPreview = function(preview) {
+    Myna.cache.save("myna-preview", !!preview);
+  };
+
 }).call(this);
 
 (function() {
