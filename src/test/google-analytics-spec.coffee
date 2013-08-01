@@ -37,7 +37,7 @@ describe "Myna.GoogleAnalytics.record", ->
 
     runs ->
       expect(_gaq).toEqual [
-        ["_trackEvent", "myna", "id-view", variant.id]
+        ["_trackEvent", "myna", "id-view", variant.id, null, false]
       ]
 
   it "should record reward events", initialized ->
@@ -53,8 +53,8 @@ describe "Myna.GoogleAnalytics.record", ->
 
     runs ->
       expect(_gaq).toEqual [
-        ["_trackEvent", "myna", "id-view", variant.id]
-        ["_trackEvent", "myna", "id-reward", variant.id, 100]
+        ["_trackEvent", "myna", "id-view", variant.id, null, false]
+        ["_trackEvent", "myna", "id-reward", variant.id, 100, true]
       ]
 
   it "should do nothing if disabled", initialized ->
@@ -93,6 +93,6 @@ describe "Myna.GoogleAnalytics.record", ->
 
     runs ->
       expect(_gaq).toEqual [
-        ["_trackEvent", "myna", "foo", variant.id]
-        ["_trackEvent", "myna", "bar", variant.id, 200] # 0.8 * 250
+        ["_trackEvent", "myna", "foo", variant.id, null, false]
+        ["_trackEvent", "myna", "bar", variant.id, 200, true] # 0.8 * 250
       ]
