@@ -45,6 +45,7 @@ module.exports = (grunt) ->
       "recorder.coffee"
       "google-analytics.coffee"
       "client.coffee"
+      "preview.coffee"
       outro...
     ]
 

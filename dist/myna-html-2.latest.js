@@ -1675,6 +1675,18 @@
 }).call(this);
 
 (function() {
+  Myna.preview = function() {
+    if (window.location.hash === "#preview") {
+      Myna.cache.save("myna-preview", true);
+      return true;
+    } else {
+      return !!Myna.cache.load("myna-preview");
+    }
+  };
+
+}).call(this);
+
+(function() {
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
     __slice = [].slice;
 
@@ -1777,9 +1789,10 @@
     };
 
     Binder.prototype.bindBind = function(expt, variant, dataAttr, elem) {
-      var lhs, rhs, self, _ref, _ref1, _ref2, _ref3, _ref4;
+      var attrString, lhs, rhs, self, _ref, _ref1, _ref2, _ref3, _ref4;
       Myna.log("Myna.Binder.bindBind", expt, dataAttr, elem);
       self = Myna.$(elem);
+      attrString = self.data(dataAttr);
       _ref = attrString.split("="), lhs = _ref[0], rhs = _ref[1];
       if (!(lhs && rhs)) {
         return;
@@ -1793,7 +1806,7 @@
           return self.addClass((_ref3 = variant.settings.get(rhs)) != null ? _ref3 : "");
         default:
           if (lhs[0] === "@") {
-            return self.attr(lsh.substring(1), (_ref4 = variant.settings.get(rhs)) != null ? _ref4 : "");
+            return self.attr(lhs.substring(1), (_ref4 = variant.settings.get(rhs)) != null ? _ref4 : "");
           }
       }
     };
@@ -1878,10 +1891,6 @@
       this.client = client;
       this.binder = binder;
     }
-
-    Inspector.active = function() {
-      return window.location.hash === "#debug" || !!Myna.cache.load("myna-inspector");
-    };
 
     Inspector.prototype.init = function() {
       var expt, id, _ref;
@@ -2048,12 +2057,23 @@
 
     return Inspector;
 
-  }).call(this);
+  })();
 
 }).call(this);
 
 (function() {
   Myna.init = function(options) {
+    Myna.log("Myna.init", options);
+    if (Myna.preview() && options.latest) {
+      Myna.initRemote({
+        url: options.latest
+      });
+    } else {
+      Myna.initLocal(options);
+    }
+  };
+
+  Myna.initLocal = function(options) {
     var apiKey, apiRoot, experiments, expt, _ref, _ref1;
     Myna.log("Myna.init", options);
     apiKey = (_ref = options.apiKey) != null ? _ref : Myna.error("Myna.init", "no apiKey in options", options);
@@ -2074,7 +2094,7 @@
       experiments: experiments
     });
     Myna.binder = new Myna.Binder(Myna.client);
-    if (Myna.Inspector.active()) {
+    if (Myna.preview()) {
       Myna.inspector = new Myna.Inspector(Myna.client, Myna.binder);
       Myna.$(function() {
         Myna.inspector.init();
@@ -2098,11 +2118,11 @@
     url = (_ref = options.url) != null ? _ref : Myna.error("Myna.Client.initRemote", "no url specified in options", options);
     success = (_ref1 = options.success) != null ? _ref1 : (function() {});
     error = (_ref2 = options.error) != null ? _ref2 : (function() {});
-    return Myna.jsonp.request({
+    Myna.jsonp.request({
       url: url,
       success: function(json) {
         Myna.log("Myna.initRemote", "response", json);
-        return success(Myna.init(json));
+        return success(Myna.initLocal(json));
       },
       error: error
     });

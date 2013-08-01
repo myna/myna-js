@@ -1675,7 +1675,30 @@
 }).call(this);
 
 (function() {
+  Myna.preview = function() {
+    if (window.location.hash === "#preview") {
+      Myna.cache.save("myna-preview", true);
+      return true;
+    } else {
+      return !!Myna.cache.load("myna-preview");
+    }
+  };
+
+}).call(this);
+
+(function() {
   Myna.init = function(options) {
+    Myna.log("Myna.init", options);
+    if (Myna.preview() && options.latest) {
+      Myna.initRemote({
+        url: options.latest
+      });
+    } else {
+      Myna.initLocal(options);
+    }
+  };
+
+  Myna.initLocal = function(options) {
     var apiKey, apiRoot, experiments, expt, _ref, _ref1;
     Myna.log("Myna.init", options);
     apiKey = (_ref = options.apiKey) != null ? _ref : Myna.error("Myna.init", "no apiKey in options", options);
@@ -1695,7 +1718,7 @@
       apiRoot: apiRoot,
       experiments: experiments
     });
-    if (Myna.Inspector.active()) {
+    if (Myna.preview()) {
       Myna.inspector = new Myna.Inspector(Myna.client);
       Myna.$(function() {
         return Myna.inspector.init();
@@ -1715,11 +1738,11 @@
     url = (_ref = options.url) != null ? _ref : Myna.error("Myna.Client.initRemote", "no url specified in options", options);
     success = (_ref1 = options.success) != null ? _ref1 : (function() {});
     error = (_ref2 = options.error) != null ? _ref2 : (function() {});
-    return Myna.jsonp.request({
+    Myna.jsonp.request({
       url: url,
       success: function(json) {
         Myna.log("Myna.initRemote", "response", json);
-        return success(Myna.init(json));
+        return success(Myna.initLocal(json));
       },
       error: error
     });

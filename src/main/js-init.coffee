@@ -2,6 +2,17 @@
 Myna.init = (options) ->
   Myna.log("Myna.init", options)
 
+  if Myna.preview() && options.latest
+    Myna.initRemote { url: options.latest }
+  else
+    Myna.initLocal(options)
+
+  return
+
+# deploymentJson boolean -> void
+Myna.initLocal = (options) ->
+  Myna.log("Myna.init", options)
+
   apiKey      = options.apiKey  ? Myna.error("Myna.init", "no apiKey in options", options)
   apiRoot     = options.apiRoot ? "//api.mynaweb.com"
   experiments = for expt in (options.experiments ? [])
@@ -9,7 +20,7 @@ Myna.init = (options) ->
 
   Myna.client = new Myna.Client({ apiKey, apiRoot, experiments })
 
-  if Myna.Inspector.active()
+  if Myna.preview()
     Myna.inspector = new Myna.Inspector(Myna.client)
     Myna.$ ->
       Myna.inspector.init()
@@ -33,5 +44,7 @@ Myna.initRemote = (options) ->
     url:     url
     success: (json) ->
       Myna.log("Myna.initRemote", "response", json)
-      success(Myna.init(json))
+      success(Myna.initLocal(json))
     error:   error
+
+  return

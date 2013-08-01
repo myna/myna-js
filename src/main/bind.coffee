@@ -68,6 +68,7 @@ class Myna.Binder
     Myna.log("Myna.Binder.bindBind", expt, dataAttr, elem)
 
     self = Myna.$(elem)
+    attrString = self.data(dataAttr)
     [ lhs, rhs ] = attrString.split("=")
 
     unless lhs && rhs then return
@@ -78,7 +79,7 @@ class Myna.Binder
       when "class" then self.addClass(variant.settings.get(rhs) ? "")
       else
         if lhs[0] == "@"
-          self.attr(lsh.substring(1), variant.settings.get(rhs) ? "")
+          self.attr(lhs.substring(1), variant.settings.get(rhs) ? "")
 
   bindGoal: (expt, variant, dataAttr, elem) =>
     Myna.log("Myna.Binder.bindGoal", expt, dataAttr, elem)
