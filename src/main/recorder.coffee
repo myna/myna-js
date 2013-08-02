@@ -1,5 +1,6 @@
 class Myna.Recorder extends Myna.Events
   constructor: (client) ->
+    super()
     Myna.log("Myna.Recorder.constructor", client)
 
     @client     = client
@@ -84,7 +85,8 @@ class Myna.Recorder extends Myna.Events
         events = @clearQueuedEvents()
         Myna.log("Myna.Recorder.sync.start", events, waiting.length)
         if @trigger('beforeSync', events) == false
-          @requeueEvents(events)
+          # @requeueEvents(events)
+          finish([], events, true)
         else
           syncAll(events, [], [])
 
@@ -99,15 +101,17 @@ class Myna.Recorder extends Myna.Events
       syncOne = (event, otherEvents, successEvents, errorEvents) =>
         Myna.log("Myna.Recorder.sync.syncOne", event, otherEvents, successEvents, errorEvents)
 
-        params = Myna.deleteKeys(event, 'experiment')
+        params = Myna.extend({}, event, { uuid: event.experiment.uuid, apikey: @apiKey })
+        params = Myna.deleteKeys(params, 'experiment')
+
         Myna.jsonp.request
           url:     "#{@apiRoot}/v2/experiment/#{event.experiment}/record"
           success: -> syncAll(otherEvents, successEvents.concat([ event ]), errorEvents)
           error:   -> syncAll(otherEvents, successEvents, errorEvents.concat([ event ]))
           timeout: @timeout
-          params:  Myna.extend({}, params, { apikey: @apiKey })
+          params:  params
 
-      finish = (successEvents, errorEvents) =>
+      finish = (successEvents, errorEvents, cancelled = false) =>
         Myna.log("Myna.Recorder.sync.finish", successEvents, errorEvents)
 
         if errorEvents.length > 0
@@ -116,11 +120,13 @@ class Myna.Recorder extends Myna.Events
         else
           for item in waiting then item.success(successEvents, errorEvents)
 
-        @trigger('afterSync', successEvents, errorEvents)
+        unless cancelled
+          @trigger('sync', successEvents, errorEvents)
 
         @semaphore--
 
-        if @waiting.length > 0 then @sync() # start another sync
+        if !cancelled && @waiting.length > 0
+          @sync() # start another sync
 
       start()
 

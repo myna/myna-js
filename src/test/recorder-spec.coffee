@@ -12,25 +12,25 @@ for denyAccess in [ false, true ]
 
   accessStatus = if denyAccess then "deny access" else "allow access"
 
-  expt = new Myna.Experiment
-    uuid:     "45923780-80ed-47c6-aa46-15e2ae7a0e8c"
-    id:       "id"
-    settings: "myna.js.sticky": false
-    variants: [
-      { id: "variant1", weight: 0.5 }
-      { id: "variant2", weight: 0.5 }
-    ]
-
-  client = new Myna.Client
-    apiKey:   apiKey
-    apiRoot:  testApiRoot
-    settings: "myna.web.autoSync":  false
-    experiments: [ expt ]
-
-  recorder = new Myna.Recorder client
-
   initialized = (fn) ->
     return ->
+      expt = new Myna.Experiment
+        uuid:     "45923780-80ed-47c6-aa46-15e2ae7a0e8c"
+        id:       "id"
+        settings: "myna.web.sticky": false
+        variants: [
+          { id: "variant1", weight: 0.5 }
+          { id: "variant2", weight: 0.5 }
+        ]
+
+      client = new Myna.Client
+        apiKey:   apiKey
+        apiRoot:  testApiRoot
+        settings: "myna.web.autoSync":  false
+        experiments: [ expt ]
+
+      recorder = new Myna.Recorder client
+
       expt.off()
       expt.unstick()
       recorder.off()
@@ -38,10 +38,10 @@ for denyAccess in [ false, true ]
       recorder.clearQueuedEvents()
       recorder.semaphore = 0
       recorder.waiting = []
-      fn()
+      fn(expt, client, recorder)
 
-  describe "Myna.Experiment.record (#{accessStatus})", ->
-    it "should record a single event", initialized ->
+  describe "Myna.Recorder.sync (#{accessStatus})", ->
+    it "should record a single event", initialized (expt, client, recorder) ->
       variant  = null
       success  = false
       error    = false
@@ -70,7 +70,7 @@ for denyAccess in [ false, true ]
 
         expect(recorderState(recorder)).toEqual(if denyAccess then [ 1, 0, 0 ] else [ 0, 0, 0 ])
 
-    it "should record multiple events (#{accessStatus})", initialized ->
+    it "should record multiple events (#{accessStatus})", initialized (expt, client, recorder) ->
       variant1 = null
       variant2 = null
       success  = false
@@ -103,7 +103,7 @@ for denyAccess in [ false, true ]
         expect(error).toEqual(if denyAccess then true else false)
         expect(recorderState(recorder)).toEqual(if denyAccess then [ 4, 0, 0 ] else [ 0, 0, 0 ])
 
-    it "should handle multiple concurrent calls to record (#{accessStatus})", initialized ->
+    it "should handle multiple concurrent calls to record (#{accessStatus})", initialized (expt, client, recorder) ->
       # Myna.log statements show the likely order of execution.
 
       variant1 = null
@@ -167,3 +167,115 @@ for denyAccess in [ false, true ]
         expect(error1).toEqual(if denyAccess then true else false)
         expect(error2).toEqual(if denyAccess then true else false)
         expect(recorderState(recorder)).toEqual(if denyAccess then [ 4, 0, 0 ] else [ 0, 0, 0 ])
+
+    it "should fire beforeSync and sync events (#{accessStatus})", initialized (expt, client, recorder) ->
+      variant  = null
+      success  = false
+      error    = false
+      calls    = []
+
+      recorder.on 'beforeSync', jasmine.createSpy('beforeSync').andCallFake (unrecorded) ->
+        calls.push { event: 'beforeSync', unrecorded }
+
+      recorder.on 'sync', jasmine.createSpy('sync').andCallFake (recorded, unrecorded) ->
+        calls.push { event: 'sync', recorded, unrecorded }
+
+      withSuggestion expt, (v) ->
+        variant = v
+
+      waitsFor -> variant
+
+      runs ->
+        recorder.sync(
+          -> success = true
+          -> error = true
+        )
+
+      waitsFor -> success || error
+
+      runs ->
+        expect(success).toEqual(if denyAccess then false else true)
+        expect(error).toEqual(if denyAccess then true else false)
+
+        expect(calls.length).toEqual(2)
+
+        expect(calls[0].event).toEqual('beforeSync')
+        expect(calls[0].unrecorded.length).toEqual(1)
+
+        expect(calls[0].unrecorded[0].timestamp).toBeDefined()
+        delete calls[0].unrecorded[0].timestamp
+        expect(calls[0].unrecorded[0]).toEqual {
+          typename:   'view'
+          experiment: expt.uuid
+          variant:    variant.id
+        }
+
+        if denyAccess
+          expect(calls[1].event).toEqual('sync')
+          expect(calls[1].unrecorded.length).toEqual(1)
+          expect(calls[1].recorded.length).toEqual(0)
+
+          # Timestamp was already deleted above:
+          expect(calls[1].unrecorded[0]).toEqual {
+            typename:   'view'
+            experiment: expt.uuid
+            variant:    variant.id
+          }
+        else
+          expect(calls[1].event).toEqual('sync')
+          expect(calls[1].recorded.length).toEqual(1)
+          expect(calls[1].unrecorded.length).toEqual(0)
+
+          # Timestamp was already deleted above:
+          expect(calls[1].recorded[0]).toEqual {
+            typename:   'view'
+            experiment: expt.uuid
+            variant:    variant.id
+          }
+
+        @removeAllSpies()
+
+    it "should allow beforeSync to cancel the sync (#{accessStatus})", initialized (expt, client, recorder) ->
+      variant  = null
+      success  = false
+      error    = false
+      calls    = []
+
+      recorder.on 'beforeSync', jasmine.createSpy('beforeSync').andCallFake (unrecorded) ->
+        calls.push { event: 'beforeSync', unrecorded }
+        false
+
+      recorder.on 'sync', jasmine.createSpy('sync').andCallFake (recorded, unrecorded) ->
+        calls.push { event: 'sync', recorded, unrecorded }
+
+      withSuggestion expt, (v) ->
+        variant = v
+
+      waitsFor -> variant
+
+      runs ->
+        recorder.sync(
+          -> success = true
+          -> error = true
+        )
+
+      waitsFor -> success || error
+
+      runs ->
+        expect(success).toEqual(if denyAccess then false else true)
+        expect(error).toEqual(if denyAccess then true else false)
+
+        expect(calls.length).toEqual(1)
+
+        expect(calls[0].event).toEqual('beforeSync')
+        expect(calls[0].unrecorded.length).toEqual(1)
+
+        expect(calls[0].unrecorded[0].timestamp).toBeDefined()
+        delete calls[0].unrecorded[0].timestamp
+        expect(calls[0].unrecorded[0]).toEqual {
+          typename:   'view'
+          experiment: expt.uuid
+          variant:    variant.id
+        }
+
+        @removeAllSpies()
