@@ -1,7 +1,7 @@
 expt = window.expt = new Myna.Experiment
   uuid:     "45923780-80ed-47c6-aa46-15e2ae7a0e8c"
   id:       "id"
-  settings: "myna.js.sticky": false
+  settings: "myna.web.sticky": false
   variants: [
     { id: "variant1", weight: 0.5 }
     { id: "variant2", weight: 0.5 }

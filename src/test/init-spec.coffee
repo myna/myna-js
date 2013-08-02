@@ -7,7 +7,7 @@ describe "Myna.init", ->
         {
           uuid:     "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
           id:       "a"
-          settings: "myna.js.sticky": false
+          settings: "myna.web.sticky": false
           variants: [
             { id: variant1, weight: 0.4 }
             { id: variant2, weight: 0.6 }
@@ -16,7 +16,7 @@ describe "Myna.init", ->
         {
           uuid:     "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
           id:       "b"
-          settings: "myna.js.sticky": true
+          settings: "myna.web.sticky": true
           variants: [
             { id: foo, weight: 0.2 }
             { id: bar, weight: 0.8 }
