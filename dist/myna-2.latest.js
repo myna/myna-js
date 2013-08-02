@@ -1180,20 +1180,16 @@
     }
 
     Experiment.prototype.sticky = function() {
-      return !!this.settings.get("myna.js.sticky", true);
+      return !!this.settings.get("myna.web.sticky", true);
     };
 
     Experiment.prototype.loadVariantsForSuggest = function() {
       var sticky;
-      if (this.sticky()) {
-        sticky = this.loadStickySuggestion();
-        return {
-          variant: sticky != null ? sticky : this.randomVariant(),
-          viewed: sticky
-        };
-      } else {
-        return Experiment.__super__.loadVariantsForSuggest.call(this);
-      }
+      sticky = this.loadStickySuggestion();
+      return {
+        variant: sticky != null ? sticky : this.randomVariant(),
+        viewed: sticky != null ? sticky : null
+      };
     };
 
     Experiment.prototype.loadVariantsForView = function(variant) {
@@ -1234,7 +1230,11 @@
     };
 
     Experiment.prototype.loadStickySuggestion = function() {
-      return this.loadVariant('stickySuggestion');
+      if (this.sticky()) {
+        return this.loadVariant('stickySuggestion');
+      } else {
+        return null;
+      }
     };
 
     Experiment.prototype.saveStickySuggestion = function(variant) {
@@ -1248,7 +1248,11 @@
     };
 
     Experiment.prototype.loadStickyReward = function() {
-      return this.loadVariant('stickyReward');
+      if (this.sticky()) {
+        return this.loadVariant('stickyReward');
+      } else {
+        return null;
+      }
     };
 
     Experiment.prototype.saveStickyReward = function(variant) {
@@ -1288,6 +1292,7 @@
       this.listenTo = __bind(this.listenTo, this);
       this.init = __bind(this.init, this);
       var _ref, _ref1;
+      Recorder.__super__.constructor.call(this);
       Myna.log("Myna.Recorder.constructor", client);
       this.client = client;
       this.apiKey = (_ref = client.apiKey) != null ? _ref : Myna.error("Myna.Recorder.constructor", "no apiKey in options", options);
@@ -1390,7 +1395,7 @@
           events = _this.clearQueuedEvents();
           Myna.log("Myna.Recorder.sync.start", events, waiting.length);
           if (_this.trigger('beforeSync', events) === false) {
-            return _this.requeueEvents(events);
+            return finish([], events, true);
           } else {
             return syncAll(events, [], []);
           }
@@ -1408,7 +1413,11 @@
         syncOne = function(event, otherEvents, successEvents, errorEvents) {
           var params;
           Myna.log("Myna.Recorder.sync.syncOne", event, otherEvents, successEvents, errorEvents);
-          params = Myna.deleteKeys(event, 'experiment');
+          params = Myna.extend({}, event, {
+            uuid: event.experiment.uuid,
+            apikey: _this.apiKey
+          });
+          params = Myna.deleteKeys(params, 'experiment');
           return Myna.jsonp.request({
             url: "" + _this.apiRoot + "/v2/experiment/" + event.experiment + "/record",
             success: function() {
@@ -1418,13 +1427,14 @@
               return syncAll(otherEvents, successEvents, errorEvents.concat([event]));
             },
             timeout: _this.timeout,
-            params: Myna.extend({}, params, {
-              apikey: _this.apiKey
-            })
+            params: params
           });
         };
-        finish = function(successEvents, errorEvents) {
+        finish = function(successEvents, errorEvents, cancelled) {
           var item, _i, _j, _len, _len1;
+          if (cancelled == null) {
+            cancelled = false;
+          }
           Myna.log("Myna.Recorder.sync.finish", successEvents, errorEvents);
           if (errorEvents.length > 0) {
             _this.requeueEvents(errorEvents);
@@ -1438,9 +1448,11 @@
               item.success(successEvents, errorEvents);
             }
           }
-          _this.trigger('afterSync', successEvents, errorEvents);
+          if (!cancelled) {
+            _this.trigger('sync', successEvents, errorEvents);
+          }
           _this.semaphore--;
-          if (_this.waiting.length > 0) {
+          if (!cancelled && _this.waiting.length > 0) {
             return _this.sync();
           }
         };
