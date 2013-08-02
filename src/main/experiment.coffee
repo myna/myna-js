@@ -2,15 +2,12 @@ class Myna.Experiment extends Myna.BaseExperiment
 
   # -> boolean
   sticky: =>
-    !!@settings.get("myna.js.sticky", true)
+    !!@settings.get("myna.web.sticky", true)
 
   # -> boolean
   loadVariantsForSuggest: =>
-    if @sticky()
-      sticky = @loadStickySuggestion()
-      { variant: sticky ? @randomVariant(), viewed: sticky }
-    else
-      super()
+    sticky = @loadStickySuggestion()
+    { variant: sticky ? @randomVariant(), viewed: sticky ? null }
 
   loadVariantsForView: (variant) =>
     super(variant)
@@ -40,7 +37,7 @@ class Myna.Experiment extends Myna.BaseExperiment
 
   # => U(variant null)
   loadStickySuggestion: =>
-    @loadVariant('stickySuggestion')
+    if @sticky() then @loadVariant('stickySuggestion') else null
 
   # variant => void
   saveStickySuggestion: (variant) =>
@@ -54,7 +51,7 @@ class Myna.Experiment extends Myna.BaseExperiment
 
   # => U(variant null)
   loadStickyReward: =>
-    @loadVariant('stickyReward')
+    if @sticky() then @sticky() else @loadVariant('stickyReward')
 
   # variant => void
   saveStickyReward: (variant) =>

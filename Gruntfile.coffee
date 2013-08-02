@@ -155,7 +155,14 @@ module.exports = (grunt) ->
       mynaHtmlLatest: { src: [ mynaHtmlDistLatest ], dest: mynaHtmlDistLatestMin }
 
     watch:
-      main: { files: sources("src/maintest", mynaJsMainSources, ".coffee"), tasls: [ "myna-js", "myna-html" ] }
+      main:
+        files: [].concat(
+          sources("src/main", mynaJsMainSources,   ".coffee")
+          sources("src/test", mynaJsTestSources,   ".coffee")
+          sources("src/main", mynaHtmlMainSources, ".coffee")
+          sources("src/test", mynaHtmlTestSources, ".coffee")
+        )
+        tasks: [ "myna-js", "myna-html" ]
   })
 
   grunt.loadNpmTasks "grunt-contrib-coffee"
