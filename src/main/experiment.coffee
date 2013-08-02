@@ -51,7 +51,7 @@ class Myna.Experiment extends Myna.BaseExperiment
 
   # => U(variant null)
   loadStickyReward: =>
-    if @sticky() then @sticky() else @loadVariant('stickyReward')
+    if @sticky() then @loadVariant('stickyReward') else null
 
   # variant => void
   saveStickyReward: (variant) =>
