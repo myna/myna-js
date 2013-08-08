@@ -6,10 +6,13 @@ class Myna.Binder
 
     @boundHandlers = []
 
-  # Detect experiments and
-  init: =>
+  # Detect experiments and suggest variants.
+  #
+  # Pass options.all == true to suggest variants for all experiments,
+  # regardless of whether or not they appear on the page.
+  init: (options = {}) =>
     for id, expt of @client.experiments
-      if @detect(expt)
+      if options.all || @detect(expt)
         @listenTo(expt)
         expt.suggest()
 
@@ -71,15 +74,17 @@ class Myna.Binder
     attrString = self.data(dataAttr)
     [ lhs, rhs ] = attrString.split("=")
 
-    unless lhs && rhs then return
+    rhsValue = if rhs then variant.settings.get(rhs, "") else variant.id
+
+    unless lhs then return
 
     switch lhs
-      when "text"  then self.text(variant.settings.get(rhs) ? "")
-      when "html"  then self.html(variant.settings.get(rhs) ? "")
-      when "class" then self.addClass(variant.settings.get(rhs) ? "")
+      when "text"    then self.text(rhsValue)
+      when "html"    then self.html(rhsValue)
+      when "class"   then self.addClass(rhsValue)
       else
         if lhs[0] == "@"
-          self.attr(lhs.substring(1), variant.settings.get(rhs) ? "")
+          self.attr(lhs.substring(1), rhsValue)
 
   bindGoal: (expt, variant, dataAttr, elem) =>
     Myna.log("Myna.Binder.bindGoal", expt, dataAttr, elem)
