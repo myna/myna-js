@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Jasmine Spec Runner</title>
+
+    <% css.forEach(function(src) { %>
+      <link rel="stylesheet" type="text/css" href="<%= src %>">
+    <% }); %>
+
+    <% [].concat(scripts.jasmine, scripts.vendor, scripts.helpers, scripts.src, scripts.specs, scripts.reporters).forEach(function(src) { %>
+      <script src="<%= src %>"></script>
+    <% }); %>
+
+    <script>
+      (function() {
+        var jasmineEnv = jasmine.getEnv();
+        jasmineEnv.updateInterval = 1000;
+
+        // If we're NOT running the tests on PhantomJs,
+        // we should be able to set up and HtmlReporter:
+        if(jasmine.HtmlReporter) {
+          var htmlReporter = new jasmine.HtmlReporter();
+
+          jasmineEnv.addReporter(htmlReporter);
+
+          jasmineEnv.specFilter = function(spec) {
+            return htmlReporter.specFilter(spec);
+          };
+        }
+
+        var currentWindowOnload = window.onload;
+
+        window.onload = function() {
+          if (currentWindowOnload) {
+            currentWindowOnload();
+          }
+          execJasmine();
+        };
+
+        function execJasmine() {
+          jasmineEnv.execute();
+        }
+      })();
+    </script>
+
+    <style>
+      #experiments {
+        padding: 20px 0;
+        text-align: center;
+        font-family: sans-serif;
+        font-size: .8em
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="experiments"></div>
+  </body>
+</html>
