@@ -6,7 +6,9 @@
     window.Myna = {};
   }
 
-  Myna.debug = true;
+  if (Myna.debug == null) {
+    Myna.debug = false;
+  }
 
   Myna.log = function() {
     var args, _ref;
@@ -863,8 +865,7 @@
 (function() {
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
     __hasProp = {}.hasOwnProperty,
-    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
-    __slice = [].slice;
+    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
   Myna.BaseExperiment = (function(_super) {
     __extends(BaseExperiment, _super);
@@ -1037,9 +1038,8 @@
             success.call(_this, variant, amount, true);
             return _this.trigger('reward', variant, amount, true);
           }, function() {
-            var args;
-            args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-            return error.call.apply(error, [_this].concat(__slice.call(args)));
+            _this.saveVariantFromReward(variant);
+            error.call(_this);
           });
         }
       } else {
@@ -1385,7 +1385,7 @@
         error: error
       });
       if (this.semaphore > 0) {
-        return Myna.log("Myna.Recorder.sync", "queued");
+        return Myna.log("Myna.Recorder.sync", "queued", this.waiting.length);
       } else {
         this.semaphore++;
         waiting = this.waiting;
@@ -1435,7 +1435,7 @@
           if (cancelled == null) {
             cancelled = false;
           }
-          Myna.log("Myna.Recorder.sync.finish", successEvents, errorEvents);
+          Myna.log("Myna.Recorder.sync.finish", successEvents, errorEvents, _this.waiting.length);
           if (errorEvents.length > 0) {
             _this.requeueEvents(errorEvents);
             for (_i = 0, _len = waiting.length; _i < _len; _i++) {

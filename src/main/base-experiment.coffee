@@ -101,8 +101,10 @@ class Myna.BaseExperiment extends Myna.Events
             @saveVariantFromReward(variant)
             success.call(this, variant, amount, true)
             @trigger('reward', variant, amount, true)
-          (args...) =>
-            error.call(this, args...)
+          =>
+            @saveVariantFromReward(variant)
+            error.call(this)
+            return
     else
       error(Myna.problem("no-variant"))
 

@@ -6,6 +6,7 @@ beforeEach ->
       this.message = -> "#{this.actual} has not been written yet."
       false
 
+window.testApiKey  = "092c90f6-a8f2-11e2-a2b9-7c6d628b25f7"
 window.testApiRoot = "http://api.mynaweb.com"
 
 # Helper function - grab a suggestion and pass it to the argument:

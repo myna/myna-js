@@ -74,7 +74,7 @@ class Myna.Recorder extends Myna.Events
     @waiting.push({ success, error })
 
     if @semaphore > 0
-      Myna.log("Myna.Recorder.sync", "queued")
+      Myna.log("Myna.Recorder.sync", "queued", @waiting.length)
     else
       @semaphore++
 
@@ -112,7 +112,7 @@ class Myna.Recorder extends Myna.Events
           params:  params
 
       finish = (successEvents, errorEvents, cancelled = false) =>
-        Myna.log("Myna.Recorder.sync.finish", successEvents, errorEvents)
+        Myna.log("Myna.Recorder.sync.finish", successEvents, errorEvents, @waiting.length)
 
         if errorEvents.length > 0
           @requeueEvents(errorEvents)

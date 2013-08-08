@@ -1,4 +1,4 @@
-goodApiKey = "092c90f6-a8f2-11e2-a2b9-7c6d628b25f7"
+goodApiKey = testApiKey
 badApiKey  = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
 
 recorderState = (recorder) -> [
