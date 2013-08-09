@@ -26,13 +26,13 @@ Myna.init = (options) ->
 Myna.initLocal = (options) ->
   Myna.log("Myna.init", options)
 
-  apiKey      = options.apiKey  ? Myna.error("Myna.init", "no apiKey in options", options)
-  apiRoot     = options.apiRoot ? "//api.mynaweb.com"
-  experiments = for expt in (options.experiments ? [])
-                  new Myna.Experiment(expt)
-
-  Myna.client = new Myna.Client({ apiKey, apiRoot, experiments })
-  Myna.binder = new Myna.Binder(Myna.client)
+  apiKey               = options.apiKey  ? Myna.error("Myna.init", "no apiKey in options", options)
+  apiRoot              = options.apiRoot ? "//api.mynaweb.com"
+  experiments          = for expt in (options.experiments ? []) then new Myna.Experiment(expt)
+  Myna.client          = new Myna.Client({ apiKey, apiRoot, experiments })
+  Myna.recorder        = new Myna.Recorder(Myna.client)
+  Myna.binder          = new Myna.Binder(Myna.client)
+  Myna.googleAnalytics = new Myna.GoogleAnalytics(Myna.client)
 
   if Myna.preview()
     Myna.inspector = new Myna.Inspector(Myna.client, Myna.binder)
@@ -41,8 +41,6 @@ Myna.initLocal = (options) ->
       Myna.inspector.init()
       Myna.binder.init()
   else
-    Myna.recorder = new Myna.Recorder(Myna.client)
-    Myna.googleAnalytics = new Myna.GoogleAnalytics(Myna.client)
     Myna.$ ->
       Myna.triggerReady(Myna.client)
       Myna.recorder.init()

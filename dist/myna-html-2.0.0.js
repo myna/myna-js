@@ -2193,7 +2193,9 @@
       apiRoot: apiRoot,
       experiments: experiments
     });
+    Myna.recorder = new Myna.Recorder(Myna.client);
     Myna.binder = new Myna.Binder(Myna.client);
+    Myna.googleAnalytics = new Myna.GoogleAnalytics(Myna.client);
     if (Myna.preview()) {
       Myna.inspector = new Myna.Inspector(Myna.client, Myna.binder);
       Myna.$(function() {
@@ -2202,8 +2204,6 @@
         return Myna.binder.init();
       });
     } else {
-      Myna.recorder = new Myna.Recorder(Myna.client);
-      Myna.googleAnalytics = new Myna.GoogleAnalytics(Myna.client);
       Myna.$(function() {
         Myna.triggerReady(Myna.client);
         Myna.recorder.init();

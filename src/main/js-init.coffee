@@ -26,12 +26,12 @@ Myna.init = (options) ->
 Myna.initLocal = (options) ->
   Myna.log("Myna.init", options)
 
-  apiKey      = options.apiKey  ? Myna.error("Myna.init", "no apiKey in options", options)
-  apiRoot     = options.apiRoot ? "//api.mynaweb.com"
-  experiments = for expt in (options.experiments ? [])
-                  new Myna.Experiment(expt)
-
-  Myna.client = new Myna.Client({ apiKey, apiRoot, experiments })
+  apiKey               = options.apiKey  ? Myna.error("Myna.init", "no apiKey in options", options)
+  apiRoot              = options.apiRoot ? "//api.mynaweb.com"
+  experiments          = for expt in (options.experiments ? []) then new Myna.Experiment(expt)
+  Myna.client          = new Myna.Client({ apiKey, apiRoot, experiments })
+  Myna.recorder        = new Myna.Recorder(Myna.client)
+  Myna.googleAnalytics = new Myna.GoogleAnalytics(Myna.client)
 
   if Myna.preview()
     # We can only run the inspector if we have jQuery.
@@ -42,8 +42,6 @@ Myna.initLocal = (options) ->
         Myna.triggerReady(Myna.client)
         Myna.inspector.init()
   else
-    Myna.recorder = new Myna.Recorder(Myna.client)
-    Myna.googleAnalytics = new Myna.GoogleAnalytics(Myna.client)
     Myna.triggerReady(Myna.client)
     Myna.recorder.init()
     Myna.googleAnalytics.init()
