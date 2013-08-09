@@ -104,6 +104,48 @@
 }).call(this);
 
 (function() {
+  Myna.parseHashParams = function(hash) {
+    var ans, lhs, part, rhs, _i, _len, _ref, _ref1;
+    if (hash == null) {
+      hash = window.location.hash;
+    }
+    hash = !hash ? "" : hash[0] === "#" ? hash.substring(1) : hash;
+    ans = {};
+    _ref = hash.split("&");
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      part = _ref[_i];
+      if (!(part !== "")) {
+        continue;
+      }
+      _ref1 = part.split("="), lhs = _ref1[0], rhs = _ref1[1];
+      ans[decodeURIComponent(lhs)] = decodeURIComponent(rhs != null ? rhs : lhs);
+    }
+    Myna.log("parseHashParams", ans);
+    return ans;
+  };
+
+  Myna.hashParams = Myna.parseHashParams();
+
+  if (Myna.hashParams["debug"]) {
+    Myna.debug = true;
+  }
+
+  Myna.preview = function() {
+    if (Myna.hashParams["preview"]) {
+      Myna.cache.save("myna-preview", true);
+      return true;
+    } else {
+      return !!Myna.cache.load("myna-preview");
+    }
+  };
+
+  Myna.setPreview = function(preview) {
+    Myna.cache.save("myna-preview", !!preview);
+  };
+
+}).call(this);
+
+(function() {
   Myna.jsonp = {
     callbacks: {},
     counter: 0,
@@ -1683,22 +1725,6 @@
     return Client;
 
   })();
-
-}).call(this);
-
-(function() {
-  Myna.preview = function() {
-    if (window.location.hash === "#preview") {
-      Myna.cache.save("myna-preview", true);
-      return true;
-    } else {
-      return !!Myna.cache.load("myna-preview");
-    }
-  };
-
-  Myna.setPreview = function(preview) {
-    Myna.cache.save("myna-preview", !!preview);
-  };
 
 }).call(this);
 
