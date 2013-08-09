@@ -1,14 +1,19 @@
 Myna.parseHashParams = (hash = window.location.hash) ->
   hash = if !hash then "" else if hash[0] == "#" then hash.substring(1) else hash
-  parts = if hash == "" then [] else hash.split("&")
 
   ans = {}
-  for part in parts
+  for part in hash.split("&") when part != ""
     [ lhs, rhs ] = part.split("=")
     ans[decodeURIComponent(lhs)] = decodeURIComponent(rhs ? lhs)
+
+  Myna.log("parseHashParams", ans)
+
   ans
 
 Myna.hashParams = Myna.parseHashParams()
+
+if Myna.hashParams["debug"]
+  Myna.debug = true
 
 # -> boolean
 Myna.preview = ->

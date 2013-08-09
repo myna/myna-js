@@ -14,7 +14,12 @@ class Myna.Binder
     for id, expt of @client.experiments
       if options.all || @detect(expt)
         @listenTo(expt)
-        expt.suggest()
+        variantId = Myna.hashParams[expt.id]
+        if variantId && expt.variants[variantId]
+          expt.view(variantId)
+        else
+          expt.suggest()
+    return
 
   listenTo: (expt) =>
     Myna.log("Myna.Binder.listenTo", expt)
