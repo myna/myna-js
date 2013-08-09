@@ -1729,6 +1729,27 @@
 }).call(this);
 
 (function() {
+  Myna.readyHandlers = [];
+
+  Myna.ready = function(callback) {
+    if (Myna.client) {
+      callback(Myna.client);
+    } else {
+      Myna.readyHandlers.push(callback);
+    }
+  };
+
+  Myna.triggerReady = function(client) {
+    var callback, _i, _len, _ref, _results;
+    _ref = Myna.readyHandlers;
+    _results = [];
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      callback = _ref[_i];
+      _results.push(callback.call(Myna, client));
+    }
+    return _results;
+  };
+
   Myna.init = function(options) {
     Myna.log("Myna.init", options);
     if (Myna.preview() && options.latest) {
@@ -1763,12 +1784,14 @@
     if (Myna.preview()) {
       Myna.inspector = new Myna.Inspector(Myna.client);
       Myna.$(function() {
+        Myna.triggerReady(Myna.client);
         return Myna.inspector.init();
       });
     } else {
       Myna.recorder = new Myna.Recorder(Myna.client);
-      Myna.recorder.init();
       Myna.googleAnalytics = new Myna.GoogleAnalytics(Myna.client);
+      Myna.triggerReady(Myna.client);
+      Myna.recorder.init();
       Myna.googleAnalytics.init();
     }
     return Myna.client;
