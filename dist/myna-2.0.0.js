@@ -889,13 +889,14 @@
 (function() {
   Myna.Variant = (function() {
     function Variant(options) {
-      var _ref, _ref1, _ref2;
+      var _ref, _ref1, _ref2, _ref3;
       if (options == null) {
         options = {};
       }
       this.id = (_ref = options.id) != null ? _ref : Myna.error("Myna.Variant.constructor", "no id in options", options);
-      this.weight = (_ref1 = options.weight) != null ? _ref1 : Myna.error("Myna.Variant.constructor", "no weight in options", options);
-      this.settings = new Myna.Settings((_ref2 = options.settings) != null ? _ref2 : {});
+      this.name = (_ref1 = options.name) != null ? _ref1 : this.id;
+      this.weight = (_ref2 = options.weight) != null ? _ref2 : Myna.error("Myna.Variant.constructor", "no weight in options", options);
+      this.settings = new Myna.Settings((_ref3 = options.settings) != null ? _ref3 : {});
     }
 
     return Variant;
@@ -1782,11 +1783,13 @@
       experiments: experiments
     });
     if (Myna.preview()) {
-      Myna.inspector = new Myna.Inspector(Myna.client);
-      Myna.$(function() {
-        Myna.triggerReady(Myna.client);
-        return Myna.inspector.init();
-      });
+      if (Myna.$) {
+        Myna.inspector = new Myna.Inspector(Myna.client);
+        Myna.$(function() {
+          Myna.triggerReady(Myna.client);
+          return Myna.inspector.init();
+        });
+      }
     } else {
       Myna.recorder = new Myna.Recorder(Myna.client);
       Myna.googleAnalytics = new Myna.GoogleAnalytics(Myna.client);

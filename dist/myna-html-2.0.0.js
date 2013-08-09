@@ -889,13 +889,14 @@
 (function() {
   Myna.Variant = (function() {
     function Variant(options) {
-      var _ref, _ref1, _ref2;
+      var _ref, _ref1, _ref2, _ref3;
       if (options == null) {
         options = {};
       }
       this.id = (_ref = options.id) != null ? _ref : Myna.error("Myna.Variant.constructor", "no id in options", options);
-      this.weight = (_ref1 = options.weight) != null ? _ref1 : Myna.error("Myna.Variant.constructor", "no weight in options", options);
-      this.settings = new Myna.Settings((_ref2 = options.settings) != null ? _ref2 : {});
+      this.name = (_ref1 = options.name) != null ? _ref1 : this.id;
+      this.weight = (_ref2 = options.weight) != null ? _ref2 : Myna.error("Myna.Variant.constructor", "no weight in options", options);
+      this.settings = new Myna.Settings((_ref3 = options.settings) != null ? _ref3 : {});
     }
 
     return Variant;
@@ -1737,6 +1738,7 @@
       this.createClickHandler = __bind(this.createClickHandler, this);
       this.bindGoal = __bind(this.bindGoal, this);
       this.bindBind = __bind(this.bindBind, this);
+      this.bindHide = __bind(this.bindHide, this);
       this.bindShow = __bind(this.bindShow, this);
       this.unbind = __bind(this.unbind, this);
       this.bind = __bind(this.bind, this);
@@ -1783,23 +1785,28 @@
     };
 
     Binder.prototype.bind = function(expt, variant) {
-      var allElems, bindElems, cssClass, dataBind, dataGoal, dataPrefix, dataShow, goalElems, showElems, _ref, _ref1,
+      var allElems, bindElems, cssClass, dataBind, dataGoal, dataHide, dataPrefix, dataShow, goalElems, hideElems, showElems, _ref, _ref1,
         _this = this;
       Myna.log("Myna.Binder.bind", expt);
       this.unbind();
       cssClass = (_ref = expt.settings.get("myna.html.cssClass")) != null ? _ref : "myna-" + expt.id;
       dataPrefix = (_ref1 = expt.settings.get("myna.html.dataPrefix")) != null ? _ref1 : null;
       dataShow = dataPrefix ? "" + this.dataPrefix + "-show" : "show";
+      dataHide = dataPrefix ? "" + this.dataPrefix + "-hide" : "hide";
       dataBind = dataPrefix ? "" + this.dataPrefix + "-bind" : "bind";
       dataGoal = dataPrefix ? "" + this.dataPrefix + "-goal" : "goal";
-      Myna.log("Myna.Binder.bind", "searchParams", cssClass, dataShow, dataBind, dataGoal);
+      Myna.log("Myna.Binder.bind", "searchParams", cssClass, dataShow, dataHide, dataBind, dataGoal);
       allElems = cssClass ? Myna.$("." + cssClass) : null;
       showElems = cssClass ? allElems.filter("[data-" + dataShow + "]") : Myna.$("[data-" + dataShow + "]");
+      hideElems = cssClass ? allElems.filter("[data-" + dataHide + "]") : Myna.$("[data-" + dataHide + "]");
       bindElems = cssClass ? allElems.filter("[data-" + dataBind + "]") : Myna.$("[data-" + dataBind + "]");
       goalElems = cssClass ? allElems.filter("[data-" + dataGoal + "]") : Myna.$("[data-" + dataGoal + "]");
-      Myna.log("Myna.Binder.bind", "elements", allElems, showElems, bindElems, goalElems);
+      Myna.log("Myna.Binder.bind", "elements", allElems, showElems, hideElems, bindElems, goalElems);
       showElems.each(function(index, elem) {
         return _this.bindShow(expt, variant, dataShow, elem);
+      });
+      hideElems.each(function(index, elem) {
+        return _this.bindHide(expt, variant, dataHide, elem);
       });
       bindElems.each(function(index, elem) {
         return _this.bindBind(expt, variant, dataBind, elem);
@@ -1834,13 +1841,37 @@
       }
     };
 
+    Binder.prototype.bindHide = function(expt, variant, dataAttr, elem) {
+      var path, self;
+      Myna.log("Myna.Binder.bindHide", expt, dataAttr, elem);
+      self = Myna.$(elem);
+      path = self.data(dataAttr);
+      if (variant.id === path || variant.settings.get(path)) {
+        return self.hide();
+      } else {
+        return self.show();
+      }
+    };
+
     Binder.prototype.bindBind = function(expt, variant, dataAttr, elem) {
       var attrString, lhs, rhs, rhsValue, self, _ref;
       Myna.log("Myna.Binder.bindBind", expt, dataAttr, elem);
       self = Myna.$(elem);
       attrString = self.data(dataAttr);
       _ref = attrString.split("="), lhs = _ref[0], rhs = _ref[1];
-      rhsValue = rhs ? variant.settings.get(rhs, "") : variant.id;
+      rhsValue = (function() {
+        switch (rhs) {
+          case "id":
+            return variant.id;
+          case "name":
+          case "":
+          case null:
+          case void 0:
+            return variant.name;
+          default:
+            return variant.settings.get(rhs, "");
+        }
+      })();
       if (!lhs) {
         return;
       }
