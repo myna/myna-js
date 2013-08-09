@@ -9,8 +9,8 @@ initialized = (fn) ->
       id:       "expt1"
       settings: "myna.web.sticky": false
       variants: [
-        { id: "variant1", weight: 0.5, settings: { title: "title1", cssClass: "class1", html: "<v1>" }  }
-        { id: "variant2", weight: 0.5, settings: { title: "title2", cssClass: "class2", html: "<v2>" }  }
+        { id: "variant1", name: "Variant 1.1", weight: 0.5, settings: { title: "title1", cssClass: "class1", html: "<v1>" }  }
+        { id: "variant2", name: "Variant 1.2", weight: 0.5, settings: { title: "title2", cssClass: "class2", html: "<v2>" }  }
       ]
 
     expt2 = new Myna.Experiment
@@ -18,8 +18,8 @@ initialized = (fn) ->
       id:       "expt2"
       settings: "myna.web.sticky": true
       variants: [
-        { id: "variant1", weight: 0.5, settings: { style: "display: inline-block" } }
-        { id: "variant2", weight: 0.5, settings: { style: "display: block" } }
+        { id: "variant1", name: "Variant 2.1", weight: 0.5, settings: { style: "display: inline-block" } }
+        { id: "variant2", name: "Variant 2.2", weight: 0.5, settings: { style: "display: block" } }
       ]
 
     expt1.unstick()
@@ -39,12 +39,14 @@ initialized = (fn) ->
 
     fn(client, binder, recorder)
 
-describe "data-show", ->
+describe "data-show,data-hide", ->
   it "should show/hide elements", initialized (client, binder, recorder) ->
     Myna.$("#experiments").html(
       '''
       <span id="v1" class="myna-expt1" data-show="variant1">V1</span>
       <span id="v2" class="myna-expt1" data-show="variant2">V2</span>
+      <span id="v3" class="myna-expt2" data-hide="variant1">V3</span>
+      <span id="v4" class="myna-expt2" data-hide="variant2">V4</span>
       '''
     )
 
@@ -52,14 +54,32 @@ describe "data-show", ->
 
     expect(Myna.$("#v1").is(":visible")).toEqual(true)
     expect(Myna.$("#v2").is(":visible")).toEqual(true)
+    expect(Myna.$("#v3").is(":visible")).toEqual(true)
+    expect(Myna.$("#v4").is(":visible")).toEqual(true)
 
     client.experiments.expt1.view("variant1")
     expect(Myna.$("#v1").is(":visible")).toEqual(true)
     expect(Myna.$("#v2").is(":visible")).toEqual(false)
+    expect(Myna.$("#v3").is(":visible")).toEqual(true)
+    expect(Myna.$("#v4").is(":visible")).toEqual(true)
 
     client.experiments.expt1.view("variant2")
     expect(Myna.$("#v1").is(":visible")).toEqual(false)
     expect(Myna.$("#v2").is(":visible")).toEqual(true)
+    expect(Myna.$("#v3").is(":visible")).toEqual(true)
+    expect(Myna.$("#v4").is(":visible")).toEqual(true)
+
+    client.experiments.expt2.view("variant1")
+    expect(Myna.$("#v1").is(":visible")).toEqual(false)
+    expect(Myna.$("#v2").is(":visible")).toEqual(true)
+    expect(Myna.$("#v3").is(":visible")).toEqual(false)
+    expect(Myna.$("#v4").is(":visible")).toEqual(true)
+
+    client.experiments.expt2.view("variant2")
+    expect(Myna.$("#v1").is(":visible")).toEqual(false)
+    expect(Myna.$("#v2").is(":visible")).toEqual(true)
+    expect(Myna.$("#v3").is(":visible")).toEqual(true)
+    expect(Myna.$("#v4").is(":visible")).toEqual(false)
 
     return
 
@@ -68,8 +88,8 @@ describe "data-show", ->
       '''
       <span id="v1" class="myna-expt1" data-show="variant1">V1</span>
       <span id="v2" class="myna-expt1" data-show="variant2">V2</span>
-      <span id="v3" class="myna-expt2" data-show="variant1">V1</span>
-      <span id="v4" class="myna-expt2" data-show="variant2">V2</span>
+      <span id="v3" class="myna-expt2" data-hide="variant1">V3</span>
+      <span id="v4" class="myna-expt2" data-hide="variant2">V4</span>
       '''
     )
 
@@ -87,14 +107,14 @@ describe "data-show", ->
     client.experiments.expt2.view("variant2")
     expect(Myna.$("#v1").is(":visible")).toEqual(true)
     expect(Myna.$("#v2").is(":visible")).toEqual(false)
-    expect(Myna.$("#v3").is(":visible")).toEqual(false)
-    expect(Myna.$("#v4").is(":visible")).toEqual(true)
+    expect(Myna.$("#v3").is(":visible")).toEqual(true)
+    expect(Myna.$("#v4").is(":visible")).toEqual(false)
 
     client.experiments.expt1.view("variant2")
     expect(Myna.$("#v1").is(":visible")).toEqual(false)
     expect(Myna.$("#v2").is(":visible")).toEqual(true)
-    expect(Myna.$("#v3").is(":visible")).toEqual(false)
-    expect(Myna.$("#v4").is(":visible")).toEqual(true)
+    expect(Myna.$("#v3").is(":visible")).toEqual(true)
+    expect(Myna.$("#v4").is(":visible")).toEqual(false)
 
     return
 
@@ -111,11 +131,11 @@ describe "data-bind", ->
     expect(Myna.$("#v1b").html()).toEqual("")
 
     client.experiments.expt1.view("variant1")
-    expect(Myna.$("#v1a").html()).toEqual("variant1")
+    expect(Myna.$("#v1a").html()).toEqual("Variant 1.1")
     expect(Myna.$("#v1b").html()).toEqual("&lt;v1&gt;")
 
     client.experiments.expt1.view("variant2")
-    expect(Myna.$("#v1a").html()).toEqual("variant2")
+    expect(Myna.$("#v1a").html()).toEqual("Variant 1.2")
     expect(Myna.$("#v1b").html()).toEqual("&lt;v2&gt;")
 
     return
@@ -132,11 +152,11 @@ describe "data-bind", ->
     expect(Myna.$("#v1b").html()).toEqual("")
 
     client.experiments.expt1.view("variant1")
-    expect(Myna.$("#v1a").html()).toEqual("variant1")
+    expect(Myna.$("#v1a").html()).toEqual("Variant 1.1")
     expect(Myna.$("#v1b").html()).toEqual("<v1></v1>")
 
     client.experiments.expt1.view("variant2")
-    expect(Myna.$("#v1a").html()).toEqual("variant2")
+    expect(Myna.$("#v1a").html()).toEqual("Variant 1.2")
     expect(Myna.$("#v1b").html()).toEqual("<v2></v2>")
 
     return
@@ -153,11 +173,11 @@ describe "data-bind", ->
     expect(Myna.$("#v1b").attr("class")).toEqual("myna-expt1")
 
     client.experiments.expt1.view("variant1")
-    expect(Myna.$("#v1a").attr("class")).toEqual("myna-expt1 variant1")
+    expect(Myna.$("#v1a").attr("class")).toEqual("myna-expt1 Variant 1.1")
     expect(Myna.$("#v1b").attr("class")).toEqual("myna-expt1 class1")
 
     client.experiments.expt1.view("variant2")
-    expect(Myna.$("#v1a").attr("class")).toEqual("myna-expt1 variant1 variant2")
+    expect(Myna.$("#v1a").attr("class")).toEqual("myna-expt1 Variant 1.1 1.2")
     expect(Myna.$("#v1b").attr("class")).toEqual("myna-expt1 class1 class2")
 
     return
@@ -174,11 +194,11 @@ describe "data-bind", ->
     expect(Myna.$("#v1b").attr("title")).toEqual(null)
 
     client.experiments.expt1.view("variant1")
-    expect(Myna.$("#v1a").attr("title")).toEqual("variant1")
+    expect(Myna.$("#v1a").attr("title")).toEqual("Variant 1.1")
     expect(Myna.$("#v1b").attr("title")).toEqual("title1")
 
     client.experiments.expt1.view("variant2")
-    expect(Myna.$("#v1a").attr("title")).toEqual("variant2")
+    expect(Myna.$("#v1a").attr("title")).toEqual("Variant 1.2")
     expect(Myna.$("#v1b").attr("title")).toEqual("title2")
 
     return
