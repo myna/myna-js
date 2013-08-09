@@ -1,3 +1,16 @@
+# arrayOf(client -> void)
+Myna.readyHandlers = []
+
+# (client -> void) -> void
+Myna.ready = (callback) ->
+  if Myna.client then callback(Myna.client) else Myna.readyHandlers.push(callback)
+  return
+
+# client -> void
+Myna.triggerReady = (client) ->
+  for callback in Myna.readyHandlers
+    callback.call(Myna, client)
+
 # deploymentJson -> void
 Myna.init = (options) ->
   Myna.log("Myna.init", options)
@@ -21,13 +34,18 @@ Myna.initLocal = (options) ->
   Myna.client = new Myna.Client({ apiKey, apiRoot, experiments })
 
   if Myna.preview()
-    Myna.inspector = new Myna.Inspector(Myna.client)
-    Myna.$ ->
-      Myna.inspector.init()
+    # We can only run the inspector if we have jQuery.
+    # Otherwise we have to silently fail.
+    if Myna.$
+      Myna.inspector = new Myna.Inspector(Myna.client)
+      Myna.$ ->
+        Myna.triggerReady(Myna.client)
+        Myna.inspector.init()
   else
     Myna.recorder = new Myna.Recorder(Myna.client)
-    Myna.recorder.init()
     Myna.googleAnalytics = new Myna.GoogleAnalytics(Myna.client)
+    Myna.triggerReady(Myna.client)
+    Myna.recorder.init()
     Myna.googleAnalytics.init()
 
   Myna.client

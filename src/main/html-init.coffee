@@ -1,3 +1,16 @@
+# arrayOf(client -> void)
+Myna.readyHandlers = []
+
+# (client -> void) -> void
+Myna.ready = (callback) ->
+  if Myna.client then callback(Myna.client) else Myna.readyHandlers.push(callback)
+  return
+
+# client -> void
+Myna.triggerReady = (client) ->
+  for callback in Myna.readyHandlers
+    callback.call(Myna, client)
+
 # deploymentJson -> void
 Myna.init = (options) ->
   Myna.log("Myna.init", options)
@@ -24,14 +37,16 @@ Myna.initLocal = (options) ->
   if Myna.preview()
     Myna.inspector = new Myna.Inspector(Myna.client, Myna.binder)
     Myna.$ ->
+      Myna.triggerReady(Myna.client)
       Myna.inspector.init()
       Myna.binder.init()
   else
     Myna.recorder = new Myna.Recorder(Myna.client)
-    Myna.recorder.init()
     Myna.googleAnalytics = new Myna.GoogleAnalytics(Myna.client)
-    Myna.googleAnalytics.init()
     Myna.$ ->
+      Myna.triggerReady(Myna.client)
+      Myna.recorder.init()
+      Myna.googleAnalytics.init()
       Myna.binder.init()
 
   Myna.client
