@@ -35,6 +35,7 @@ module.exports = (grunt) ->
     [
       intro...
       "core.coffee"
+      "hash.coffee"
       "jsonp.coffee"
       "events.coffee"
       "settings.coffee"
@@ -45,7 +46,6 @@ module.exports = (grunt) ->
       "recorder.coffee"
       "google-analytics.coffee"
       "client.coffee"
-      "preview.coffee"
       outro...
     ]
 
@@ -54,6 +54,7 @@ module.exports = (grunt) ->
       intro...
       "common.coffee"
       "core-spec.coffee"
+      "hash-spec.coffee"
       "jsonp-spec.coffee"
       "settings-spec.coffee"
       "variant-spec.coffee"

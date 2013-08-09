@@ -16,6 +16,8 @@ class Myna.Inspector
       if @binder == null || @binder.detect(expt)
         @addExperiment(expt)
 
+    @hashParams = Myna.Inspector.parseHashParams(window.location.hash || "#")
+
     return
 
   remove: =>
