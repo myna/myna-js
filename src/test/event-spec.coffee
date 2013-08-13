@@ -116,10 +116,10 @@ describe "events", ->
       expect(findCall(calls, "beforeSync",      0)).toEqual([ "beforeSync",      [[ 'view',   variant.id, null ]] ])
       expect(findCall(calls, "beforeReward",    0)).toEqual([ "beforeReward",    variant, 0.8, true ])
       expect(findCall(calls, "reward",          0)).toEqual([ "reward",          variant, 0.8, true ])
-      expect(findCall(calls, "sync",            0)).toEqual([ "sync",       [[ 'view',   variant.id, null ]], [] ])
+      expect(findCall(calls, "sync",            0)).toEqual([ "sync",            [[ 'view',   variant.id, null ]], [], [] ])
       expect(findCall(calls, "beforeSync",      1)).toEqual([ "beforeSync",      [[ 'reward', variant.id, 0.8  ]] ])
       expect(findCall(calls, "rewardCallback",  0)).toEqual([ "rewardCallback",  variant, 0.8, true ])
-      expect(findCall(calls, "sync",            1)).toEqual([ "sync",       [[ 'reward', variant.id, 0.8  ]], [] ])
+      expect(findCall(calls, "sync",            1)).toEqual([ "sync",            [[ 'reward', variant.id, 0.8  ]], [], [] ])
 
       @removeAllSpies()
 
@@ -193,6 +193,6 @@ describe "beforeReward event", ->
       expect(findCall(calls, "view",            0)).toEqual([ "view",            variant, true ])
       expect(findCall(calls, "beforeSync",      0)).toEqual([ "beforeSync",      [[ 'view', variant.id, null ]] ])
       expect(findCall(calls, "beforeReward",    0)).toEqual([ "beforeReward",    variant, 0.8, true ])
-      expect(findCall(calls, "sync",            0)).toEqual([ "sync",            [[ 'view', variant.id, null ]], [] ])
+      expect(findCall(calls, "sync",            0)).toEqual([ "sync",            [[ 'view', variant.id, null ]], [], [] ])
 
       @removeAllSpies()

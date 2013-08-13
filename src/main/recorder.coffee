@@ -85,43 +85,48 @@ class Myna.Recorder extends Myna.Events
         events = @clearQueuedEvents()
         Myna.log("Myna.Recorder.sync.start", events, waiting.length)
         if @trigger('beforeSync', events) == false
-          # @requeueEvents(events)
-          finish([], events, true)
+          finish([], [], events, true)
         else
-          syncAll(events, [], [])
+          syncAll(events, [], [], [])
 
-      syncAll = (events, successEvents, errorEvents) =>
-        Myna.log("Myna.Recorder.sync.syncAll", events, successEvents, errorEvents)
+      syncAll = (events, successEvents, discardedEvents, requeuedEvents) =>
+        Myna.log("Myna.Recorder.sync.syncAll", events, successEvents, discardedEvents, requeuedEvents)
         if events.length == 0
-          finish(successEvents, errorEvents)
+          finish(successEvents, discardedEvents, requeuedEvents)
         else
           [ head, tail ... ] = events
-          syncOne(head, tail, successEvents, errorEvents)
+          syncOne(head, tail, successEvents, discardedEvents, requeuedEvents)
 
-      syncOne = (event, otherEvents, successEvents, errorEvents) =>
-        Myna.log("Myna.Recorder.sync.syncOne", event, otherEvents, successEvents, errorEvents)
+      syncOne = (event, otherEvents, successEvents, discardedEvents, requeuedEvents) =>
+        Myna.log("Myna.Recorder.sync.syncOne", event, otherEvents, successEvents, discardedEvents, requeuedEvents)
 
         params = Myna.extend({}, event, { apikey: @apiKey })
         params = Myna.deleteKeys(params, 'experiment')
 
         Myna.jsonp.request
           url:     "#{@apiRoot}/v2/experiment/#{event.experiment}/record"
-          success: -> syncAll(otherEvents, successEvents.concat([ event ]), errorEvents)
-          error:   -> syncAll(otherEvents, successEvents, errorEvents.concat([ event ]))
+          success: -> syncAll(otherEvents, successEvents.concat([ event ]), discardedEvents, requeuedEvents)
+          error: (response) ->
+            if response.status && response.status >= 500
+              syncAll(otherEvents, successEvents, discardedEvents, requeuedEvents.concat([ event ]))
+            else
+              syncAll(otherEvents, successEvents, discardedEvents.concat([ event ]), requeuedEvents)
           timeout: @timeout
           params:  params
 
-      finish = (successEvents, errorEvents, cancelled = false) =>
-        Myna.log("Myna.Recorder.sync.finish", successEvents, errorEvents, @waiting.length)
+      finish = (successEvents, discardedEvents, requeuedEvents, cancelled = false) =>
+        Myna.log("Myna.Recorder.sync.finish", successEvents, discardedEvents, requeuedEvents, @waiting.length)
 
-        if errorEvents.length > 0
-          @requeueEvents(errorEvents)
-          for item in waiting then item.error(successEvents, errorEvents)
+        if requeuedEvents.length > 0
+          @requeueEvents(requeuedEvents)
+
+        if discardedEvents.length > 0 || requeuedEvents.length > 0
+          for item in waiting then item.error(successEvents, discardedEvents, requeuedEvents)
         else
-          for item in waiting then item.success(successEvents, errorEvents)
+          for item in waiting then item.success(successEvents, discardedEvents, requeuedEvents)
 
         unless cancelled
-          @trigger('sync', successEvents, errorEvents)
+          @trigger('sync', successEvents, discardedEvents, requeuedEvents)
 
         @semaphore--
 

@@ -63,7 +63,7 @@ Myna.jsonp =
         Myna.jsonp.remove(callbackName, scriptElem)
         error
           typename: 'problem'
-          subtype: 500
+          status: 500
           messages: [
             typename: 'timeout'
             message:  'request timed out after #{timeout}ms'
