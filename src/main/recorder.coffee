@@ -101,7 +101,7 @@ class Myna.Recorder extends Myna.Events
       syncOne = (event, otherEvents, successEvents, errorEvents) =>
         Myna.log("Myna.Recorder.sync.syncOne", event, otherEvents, successEvents, errorEvents)
 
-        params = Myna.extend({}, event, { uuid: event.experiment.uuid, apikey: @apiKey })
+        params = Myna.extend({}, event, { apikey: @apiKey })
         params = Myna.deleteKeys(params, 'experiment')
 
         Myna.jsonp.request

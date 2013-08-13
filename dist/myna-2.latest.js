@@ -1457,7 +1457,6 @@
           var params;
           Myna.log("Myna.Recorder.sync.syncOne", event, otherEvents, successEvents, errorEvents);
           params = Myna.extend({}, event, {
-            uuid: event.experiment.uuid,
             apikey: _this.apiKey
           });
           params = Myna.deleteKeys(params, 'experiment');
