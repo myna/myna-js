@@ -191,7 +191,7 @@
           Myna.jsonp.remove(callbackName, scriptElem);
           return error({
             typename: 'problem',
-            subtype: 500,
+            status: 500,
             messages: [
               {
                 typename: 'timeout',
@@ -1438,24 +1438,24 @@
           events = _this.clearQueuedEvents();
           Myna.log("Myna.Recorder.sync.start", events, waiting.length);
           if (_this.trigger('beforeSync', events) === false) {
-            return finish([], events, true);
+            return finish([], [], events, true);
           } else {
-            return syncAll(events, [], []);
+            return syncAll(events, [], [], []);
           }
         };
-        syncAll = function(events, successEvents, errorEvents) {
+        syncAll = function(events, successEvents, discardedEvents, requeuedEvents) {
           var head, tail;
-          Myna.log("Myna.Recorder.sync.syncAll", events, successEvents, errorEvents);
+          Myna.log("Myna.Recorder.sync.syncAll", events, successEvents, discardedEvents, requeuedEvents);
           if (events.length === 0) {
-            return finish(successEvents, errorEvents);
+            return finish(successEvents, discardedEvents, requeuedEvents);
           } else {
             head = events[0], tail = 2 <= events.length ? __slice.call(events, 1) : [];
-            return syncOne(head, tail, successEvents, errorEvents);
+            return syncOne(head, tail, successEvents, discardedEvents, requeuedEvents);
           }
         };
-        syncOne = function(event, otherEvents, successEvents, errorEvents) {
+        syncOne = function(event, otherEvents, successEvents, discardedEvents, requeuedEvents) {
           var params;
-          Myna.log("Myna.Recorder.sync.syncOne", event, otherEvents, successEvents, errorEvents);
+          Myna.log("Myna.Recorder.sync.syncOne", event, otherEvents, successEvents, discardedEvents, requeuedEvents);
           params = Myna.extend({}, event, {
             apikey: _this.apiKey
           });
@@ -1463,35 +1463,41 @@
           return Myna.jsonp.request({
             url: "" + _this.apiRoot + "/v2/experiment/" + event.experiment + "/record",
             success: function() {
-              return syncAll(otherEvents, successEvents.concat([event]), errorEvents);
+              return syncAll(otherEvents, successEvents.concat([event]), discardedEvents, requeuedEvents);
             },
-            error: function() {
-              return syncAll(otherEvents, successEvents, errorEvents.concat([event]));
+            error: function(response) {
+              if (response.status && response.status >= 500) {
+                return syncAll(otherEvents, successEvents, discardedEvents, requeuedEvents.concat([event]));
+              } else {
+                return syncAll(otherEvents, successEvents, discardedEvents.concat([event]), requeuedEvents);
+              }
             },
             timeout: _this.timeout,
             params: params
           });
         };
-        finish = function(successEvents, errorEvents, cancelled) {
+        finish = function(successEvents, discardedEvents, requeuedEvents, cancelled) {
           var item, _i, _j, _len, _len1;
           if (cancelled == null) {
             cancelled = false;
           }
-          Myna.log("Myna.Recorder.sync.finish", successEvents, errorEvents, _this.waiting.length);
-          if (errorEvents.length > 0) {
-            _this.requeueEvents(errorEvents);
+          Myna.log("Myna.Recorder.sync.finish", successEvents, discardedEvents, requeuedEvents, _this.waiting.length);
+          if (requeuedEvents.length > 0) {
+            _this.requeueEvents(requeuedEvents);
+          }
+          if (discardedEvents.length > 0 || requeuedEvents.length > 0) {
             for (_i = 0, _len = waiting.length; _i < _len; _i++) {
               item = waiting[_i];
-              item.error(successEvents, errorEvents);
+              item.error(successEvents, discardedEvents, requeuedEvents);
             }
           } else {
             for (_j = 0, _len1 = waiting.length; _j < _len1; _j++) {
               item = waiting[_j];
-              item.success(successEvents, errorEvents);
+              item.success(successEvents, discardedEvents, requeuedEvents);
             }
           }
           if (!cancelled) {
-            _this.trigger('sync', successEvents, errorEvents);
+            _this.trigger('sync', successEvents, discardedEvents, requeuedEvents);
           }
           _this.semaphore--;
           if (!cancelled && _this.waiting.length > 0) {
