@@ -1,7 +1,7 @@
 expt = new Myna.Experiment
   uuid:     "45923780-80ed-47c6-aa46-15e2ae7a0e8c"
   id:       "id"
-  settings: "myna.js.sticky": false
+  settings: "myna.web.sticky": false
   variants: [
     { id: "variant1", weight: 0.5 }
     { id: "variant2", weight: 0.5 }
@@ -50,8 +50,8 @@ initialized = (fn) ->
       calls.push([ "beforeSync", (for events in args then eventSummaries(events))... ])
       logCalls()
 
-    recorder.on 'afterSync', jasmine.createSpy('afterSync').andCallFake (args...) ->
-      calls.push([ "afterSync", (for events in args then eventSummaries(events))... ])
+    recorder.on 'sync', jasmine.createSpy('sync').andCallFake (args...) ->
+      calls.push([ "sync", (for events in args then eventSummaries(events))... ])
       logCalls()
 
     fn(calls, logCalls)
@@ -101,13 +101,13 @@ describe "events", ->
         "view"
 
         "beforeSync"
-        "afterSync"
+        "sync"
 
         "beforeReward"
         "beforeSync"
         "rewardCallback"
         "reward"
-        "afterSync"
+        "sync"
       ]
 
       expect(findCall(calls, "beforeView",      0)).toEqual([ "beforeView",      variant, true ])
@@ -116,10 +116,10 @@ describe "events", ->
       expect(findCall(calls, "beforeSync",      0)).toEqual([ "beforeSync",      [[ 'view',   variant.id, null ]] ])
       expect(findCall(calls, "beforeReward",    0)).toEqual([ "beforeReward",    variant, 0.8, true ])
       expect(findCall(calls, "reward",          0)).toEqual([ "reward",          variant, 0.8, true ])
-      expect(findCall(calls, "afterSync",       0)).toEqual([ "afterSync",       [[ 'view',   variant.id, null ]], [] ])
+      expect(findCall(calls, "sync",            0)).toEqual([ "sync",            [[ 'view',   variant.id, null ]], [], [] ])
       expect(findCall(calls, "beforeSync",      1)).toEqual([ "beforeSync",      [[ 'reward', variant.id, 0.8  ]] ])
       expect(findCall(calls, "rewardCallback",  0)).toEqual([ "rewardCallback",  variant, 0.8, true ])
-      expect(findCall(calls, "afterSync",       1)).toEqual([ "afterSync",       [[ 'reward', variant.id, 0.8  ]], [] ])
+      expect(findCall(calls, "sync",            1)).toEqual([ "sync",            [[ 'reward', variant.id, 0.8  ]], [], [] ])
 
       @removeAllSpies()
 
@@ -184,7 +184,7 @@ describe "beforeReward event", ->
         "suggestCallback"
         "view"
         "beforeSync"
-        "afterSync"
+        "sync"
         "beforeReward"
       ]
 
@@ -193,6 +193,6 @@ describe "beforeReward event", ->
       expect(findCall(calls, "view",            0)).toEqual([ "view",            variant, true ])
       expect(findCall(calls, "beforeSync",      0)).toEqual([ "beforeSync",      [[ 'view', variant.id, null ]] ])
       expect(findCall(calls, "beforeReward",    0)).toEqual([ "beforeReward",    variant, 0.8, true ])
-      expect(findCall(calls, "afterSync",       0)).toEqual([ "afterSync",       [[ 'view', variant.id, null ]], [] ])
+      expect(findCall(calls, "sync",            0)).toEqual([ "sync",            [[ 'view', variant.id, null ]], [], [] ])
 
       @removeAllSpies()

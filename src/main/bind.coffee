@@ -6,12 +6,20 @@ class Myna.Binder
 
     @boundHandlers = []
 
-  # Detect experiments and
-  init: =>
+  # Detect experiments and suggest variants.
+  #
+  # Pass options.all == true to suggest variants for all experiments,
+  # regardless of whether or not they appear on the page.
+  init: (options = {}) =>
     for id, expt of @client.experiments
-      if @detect(expt)
+      if options.all || @detect(expt)
         @listenTo(expt)
-        expt.suggest()
+        variantId = Myna.hashParams[expt.id]
+        if variantId && expt.variants[variantId]
+          expt.view(variantId)
+        else
+          expt.suggest()
+    return
 
   listenTo: (expt) =>
     Myna.log("Myna.Binder.listenTo", expt)
@@ -31,19 +39,22 @@ class Myna.Binder
 
     dataPrefix = expt.settings.get("myna.html.dataPrefix") ? null
     dataShow = if dataPrefix then "#{@dataPrefix}-show" else "show"
+    dataHide = if dataPrefix then "#{@dataPrefix}-hide" else "hide"
     dataBind = if dataPrefix then "#{@dataPrefix}-bind" else "bind"
     dataGoal = if dataPrefix then "#{@dataPrefix}-goal" else "goal"
 
-    Myna.log("Myna.Binder.bind", "searchParams", cssClass, dataShow, dataBind, dataGoal)
+    Myna.log("Myna.Binder.bind", "searchParams", cssClass, dataShow, dataHide, dataBind, dataGoal)
 
     allElems  = if cssClass then Myna.$(".#{cssClass}") else null
     showElems = if cssClass then allElems.filter("[data-#{dataShow}]") else Myna.$("[data-#{dataShow}]")
+    hideElems = if cssClass then allElems.filter("[data-#{dataHide}]") else Myna.$("[data-#{dataHide}]")
     bindElems = if cssClass then allElems.filter("[data-#{dataBind}]") else Myna.$("[data-#{dataBind}]")
     goalElems = if cssClass then allElems.filter("[data-#{dataGoal}]") else Myna.$("[data-#{dataGoal}]")
 
-    Myna.log("Myna.Binder.bind", "elements", allElems, showElems, bindElems, goalElems)
+    Myna.log("Myna.Binder.bind", "elements", allElems, showElems, hideElems, bindElems, goalElems)
 
     showElems.each (index, elem) => @bindShow(expt, variant, dataShow, elem)
+    hideElems.each (index, elem) => @bindHide(expt, variant, dataHide, elem)
     bindElems.each (index, elem) => @bindBind(expt, variant, dataBind, elem)
     goalElems.each (index, elem) => @bindGoal(expt, variant, dataGoal, elem)
 
@@ -59,26 +70,41 @@ class Myna.Binder
     self = Myna.$(elem)
     path = self.data(dataAttr)
 
-    if variant.id == path || variant.settings.get(path)
-      self.show()
-    else
-      self.hide()
+    if variant.id == path || variant.settings.get(path) then self.show() else self.hide()
+
+  bindHide: (expt, variant, dataAttr, elem) =>
+    Myna.log("Myna.Binder.bindHide", expt, dataAttr, elem)
+
+    self = Myna.$(elem)
+    path = self.data(dataAttr)
+
+    if variant.id == path || variant.settings.get(path) then self.hide() else self.show()
 
   bindBind: (expt, variant, dataAttr, elem) =>
     Myna.log("Myna.Binder.bindBind", expt, dataAttr, elem)
 
     self = Myna.$(elem)
+    attrString = self.data(dataAttr)
     [ lhs, rhs ] = attrString.split("=")
 
-    unless lhs && rhs then return
+    rhsValue =
+      switch rhs
+        when "id"
+          variant.id
+        when "name", "", null, undefined
+          variant.name
+        else
+          variant.settings.get(rhs, "")
+
+    unless lhs then return
 
     switch lhs
-      when "text"  then self.text(variant.settings.get(rhs) ? "")
-      when "html"  then self.html(variant.settings.get(rhs) ? "")
-      when "class" then self.addClass(variant.settings.get(rhs) ? "")
+      when "text"  then self.text(rhsValue)
+      when "html"  then self.html(rhsValue)
+      when "class" then self.addClass(rhsValue)
       else
         if lhs[0] == "@"
-          self.attr(lsh.substring(1), variant.settings.get(rhs) ? "")
+          self.attr(lhs.substring(1), rhsValue)
 
   bindGoal: (expt, variant, dataAttr, elem) =>
     Myna.log("Myna.Binder.bindGoal", expt, dataAttr, elem)

@@ -6,7 +6,9 @@
     window.Myna = {};
   }
 
-  Myna.debug = true;
+  if (Myna.debug == null) {
+    Myna.debug = false;
+  }
 
   Myna.log = function() {
     var args, _ref;
@@ -102,6 +104,48 @@
 }).call(this);
 
 (function() {
+  Myna.parseHashParams = function(hash) {
+    var ans, lhs, part, rhs, _i, _len, _ref, _ref1;
+    if (hash == null) {
+      hash = window.location.hash;
+    }
+    hash = !hash ? "" : hash[0] === "#" ? hash.substring(1) : hash;
+    ans = {};
+    _ref = hash.split("&");
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      part = _ref[_i];
+      if (!(part !== "")) {
+        continue;
+      }
+      _ref1 = part.split("="), lhs = _ref1[0], rhs = _ref1[1];
+      ans[decodeURIComponent(lhs)] = decodeURIComponent(rhs != null ? rhs : lhs);
+    }
+    Myna.log("parseHashParams", ans);
+    return ans;
+  };
+
+  Myna.hashParams = Myna.parseHashParams();
+
+  if (Myna.hashParams["debug"]) {
+    Myna.debug = true;
+  }
+
+  Myna.preview = function() {
+    if (Myna.hashParams["preview"]) {
+      Myna.cache.save("myna-preview", true);
+      return true;
+    } else {
+      return !!Myna.cache.load("myna-preview");
+    }
+  };
+
+  Myna.setPreview = function(preview) {
+    Myna.cache.save("myna-preview", !!preview);
+  };
+
+}).call(this);
+
+(function() {
   Myna.jsonp = {
     callbacks: {},
     counter: 0,
@@ -147,7 +191,7 @@
           Myna.jsonp.remove(callbackName, scriptElem);
           return error({
             typename: 'problem',
-            subtype: 500,
+            status: 500,
             messages: [
               {
                 typename: 'timeout',
@@ -845,13 +889,14 @@
 (function() {
   Myna.Variant = (function() {
     function Variant(options) {
-      var _ref, _ref1, _ref2;
+      var _ref, _ref1, _ref2, _ref3;
       if (options == null) {
         options = {};
       }
       this.id = (_ref = options.id) != null ? _ref : Myna.error("Myna.Variant.constructor", "no id in options", options);
-      this.weight = (_ref1 = options.weight) != null ? _ref1 : Myna.error("Myna.Variant.constructor", "no weight in options", options);
-      this.settings = new Myna.Settings((_ref2 = options.settings) != null ? _ref2 : {});
+      this.name = (_ref1 = options.name) != null ? _ref1 : this.id;
+      this.weight = (_ref2 = options.weight) != null ? _ref2 : Myna.error("Myna.Variant.constructor", "no weight in options", options);
+      this.settings = new Myna.Settings((_ref3 = options.settings) != null ? _ref3 : {});
     }
 
     return Variant;
@@ -863,8 +908,7 @@
 (function() {
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
     __hasProp = {}.hasOwnProperty,
-    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
-    __slice = [].slice;
+    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
   Myna.BaseExperiment = (function(_super) {
     __extends(BaseExperiment, _super);
@@ -1037,9 +1081,8 @@
             success.call(_this, variant, amount, true);
             return _this.trigger('reward', variant, amount, true);
           }, function() {
-            var args;
-            args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-            return error.call.apply(error, [_this].concat(__slice.call(args)));
+            _this.saveVariantFromReward(variant);
+            error.call(_this);
           });
         }
       } else {
@@ -1180,20 +1223,16 @@
     }
 
     Experiment.prototype.sticky = function() {
-      return !!this.settings.get("myna.js.sticky", true);
+      return !!this.settings.get("myna.web.sticky", true);
     };
 
     Experiment.prototype.loadVariantsForSuggest = function() {
       var sticky;
-      if (this.sticky()) {
-        sticky = this.loadStickySuggestion();
-        return {
-          variant: sticky != null ? sticky : this.randomVariant(),
-          viewed: sticky
-        };
-      } else {
-        return Experiment.__super__.loadVariantsForSuggest.call(this);
-      }
+      sticky = this.loadStickySuggestion();
+      return {
+        variant: sticky != null ? sticky : this.randomVariant(),
+        viewed: sticky != null ? sticky : null
+      };
     };
 
     Experiment.prototype.loadVariantsForView = function(variant) {
@@ -1234,7 +1273,11 @@
     };
 
     Experiment.prototype.loadStickySuggestion = function() {
-      return this.loadVariant('stickySuggestion');
+      if (this.sticky()) {
+        return this.loadVariant('stickySuggestion');
+      } else {
+        return null;
+      }
     };
 
     Experiment.prototype.saveStickySuggestion = function(variant) {
@@ -1248,7 +1291,11 @@
     };
 
     Experiment.prototype.loadStickyReward = function() {
-      return this.loadVariant('stickyReward');
+      if (this.sticky()) {
+        return this.loadVariant('stickyReward');
+      } else {
+        return null;
+      }
     };
 
     Experiment.prototype.saveStickyReward = function(variant) {
@@ -1288,6 +1335,7 @@
       this.listenTo = __bind(this.listenTo, this);
       this.init = __bind(this.init, this);
       var _ref, _ref1;
+      Recorder.__super__.constructor.call(this);
       Myna.log("Myna.Recorder.constructor", client);
       this.client = client;
       this.apiKey = (_ref = client.apiKey) != null ? _ref : Myna.error("Myna.Recorder.constructor", "no apiKey in options", options);
@@ -1380,7 +1428,7 @@
         error: error
       });
       if (this.semaphore > 0) {
-        return Myna.log("Myna.Recorder.sync", "queued");
+        return Myna.log("Myna.Recorder.sync", "queued", this.waiting.length);
       } else {
         this.semaphore++;
         waiting = this.waiting;
@@ -1390,57 +1438,69 @@
           events = _this.clearQueuedEvents();
           Myna.log("Myna.Recorder.sync.start", events, waiting.length);
           if (_this.trigger('beforeSync', events) === false) {
-            return _this.requeueEvents(events);
+            return finish([], [], events, true);
           } else {
-            return syncAll(events, [], []);
+            return syncAll(events, [], [], []);
           }
         };
-        syncAll = function(events, successEvents, errorEvents) {
+        syncAll = function(events, successEvents, discardedEvents, requeuedEvents) {
           var head, tail;
-          Myna.log("Myna.Recorder.sync.syncAll", events, successEvents, errorEvents);
+          Myna.log("Myna.Recorder.sync.syncAll", events, successEvents, discardedEvents, requeuedEvents);
           if (events.length === 0) {
-            return finish(successEvents, errorEvents);
+            return finish(successEvents, discardedEvents, requeuedEvents);
           } else {
             head = events[0], tail = 2 <= events.length ? __slice.call(events, 1) : [];
-            return syncOne(head, tail, successEvents, errorEvents);
+            return syncOne(head, tail, successEvents, discardedEvents, requeuedEvents);
           }
         };
-        syncOne = function(event, otherEvents, successEvents, errorEvents) {
+        syncOne = function(event, otherEvents, successEvents, discardedEvents, requeuedEvents) {
           var params;
-          Myna.log("Myna.Recorder.sync.syncOne", event, otherEvents, successEvents, errorEvents);
-          params = Myna.deleteKeys(event, 'experiment');
+          Myna.log("Myna.Recorder.sync.syncOne", event, otherEvents, successEvents, discardedEvents, requeuedEvents);
+          params = Myna.extend({}, event, {
+            apikey: _this.apiKey
+          });
+          params = Myna.deleteKeys(params, 'experiment');
           return Myna.jsonp.request({
             url: "" + _this.apiRoot + "/v2/experiment/" + event.experiment + "/record",
             success: function() {
-              return syncAll(otherEvents, successEvents.concat([event]), errorEvents);
+              return syncAll(otherEvents, successEvents.concat([event]), discardedEvents, requeuedEvents);
             },
-            error: function() {
-              return syncAll(otherEvents, successEvents, errorEvents.concat([event]));
+            error: function(response) {
+              if (response.status && response.status >= 500) {
+                return syncAll(otherEvents, successEvents, discardedEvents, requeuedEvents.concat([event]));
+              } else {
+                return syncAll(otherEvents, successEvents, discardedEvents.concat([event]), requeuedEvents);
+              }
             },
             timeout: _this.timeout,
-            params: Myna.extend({}, params, {
-              apikey: _this.apiKey
-            })
+            params: params
           });
         };
-        finish = function(successEvents, errorEvents) {
+        finish = function(successEvents, discardedEvents, requeuedEvents, cancelled) {
           var item, _i, _j, _len, _len1;
-          Myna.log("Myna.Recorder.sync.finish", successEvents, errorEvents);
-          if (errorEvents.length > 0) {
-            _this.requeueEvents(errorEvents);
+          if (cancelled == null) {
+            cancelled = false;
+          }
+          Myna.log("Myna.Recorder.sync.finish", successEvents, discardedEvents, requeuedEvents, _this.waiting.length);
+          if (requeuedEvents.length > 0) {
+            _this.requeueEvents(requeuedEvents);
+          }
+          if (discardedEvents.length > 0 || requeuedEvents.length > 0) {
             for (_i = 0, _len = waiting.length; _i < _len; _i++) {
               item = waiting[_i];
-              item.error(successEvents, errorEvents);
+              item.error(successEvents, discardedEvents, requeuedEvents);
             }
           } else {
             for (_j = 0, _len1 = waiting.length; _j < _len1; _j++) {
               item = waiting[_j];
-              item.success(successEvents, errorEvents);
+              item.success(successEvents, discardedEvents, requeuedEvents);
             }
           }
-          _this.trigger('afterSync', successEvents, errorEvents);
+          if (!cancelled) {
+            _this.trigger('sync', successEvents, discardedEvents, requeuedEvents);
+          }
           _this.semaphore--;
-          if (_this.waiting.length > 0) {
+          if (!cancelled && _this.waiting.length > 0) {
             return _this.sync();
           }
         };
@@ -1582,13 +1642,13 @@
     };
 
     GoogleAnalytics.prototype.viewEvent = function(expt, variant) {
-      return ["_trackEvent", "myna", this.eventName(expt, "view"), variant.id];
+      return ["_trackEvent", "myna", this.eventName(expt, "view"), variant.id, null, false];
     };
 
     GoogleAnalytics.prototype.rewardEvent = function(expt, variant, amount) {
       var m;
       m = this.rewardMultiplier(expt);
-      return ["_trackEvent", "myna", this.eventName(expt, "reward"), variant.id, Math.round(m * amount)];
+      return ["_trackEvent", "myna", this.eventName(expt, "reward"), variant.id, Math.round(m * amount), true];
     };
 
     GoogleAnalytics.prototype.enabled = function(expt) {
@@ -1675,7 +1735,39 @@
 }).call(this);
 
 (function() {
+  Myna.readyHandlers = [];
+
+  Myna.ready = function(callback) {
+    if (Myna.client) {
+      callback(Myna.client);
+    } else {
+      Myna.readyHandlers.push(callback);
+    }
+  };
+
+  Myna.triggerReady = function(client) {
+    var callback, _i, _len, _ref, _results;
+    _ref = Myna.readyHandlers;
+    _results = [];
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      callback = _ref[_i];
+      _results.push(callback.call(Myna, client));
+    }
+    return _results;
+  };
+
   Myna.init = function(options) {
+    Myna.log("Myna.init", options);
+    if (Myna.preview() && options.latest) {
+      Myna.initRemote({
+        url: options.latest
+      });
+    } else {
+      Myna.initLocal(options);
+    }
+  };
+
+  Myna.initLocal = function(options) {
     var apiKey, apiRoot, experiments, expt, _ref, _ref1;
     Myna.log("Myna.init", options);
     apiKey = (_ref = options.apiKey) != null ? _ref : Myna.error("Myna.init", "no apiKey in options", options);
@@ -1695,15 +1787,19 @@
       apiRoot: apiRoot,
       experiments: experiments
     });
-    if (Myna.Inspector.active()) {
-      Myna.inspector = new Myna.Inspector(Myna.client);
-      Myna.$(function() {
-        return Myna.inspector.init();
-      });
+    Myna.recorder = new Myna.Recorder(Myna.client);
+    Myna.googleAnalytics = new Myna.GoogleAnalytics(Myna.client);
+    if (Myna.preview()) {
+      if (Myna.$) {
+        Myna.inspector = new Myna.Inspector(Myna.client);
+        Myna.$(function() {
+          Myna.triggerReady(Myna.client);
+          return Myna.inspector.init();
+        });
+      }
     } else {
-      Myna.recorder = new Myna.Recorder(Myna.client);
+      Myna.triggerReady(Myna.client);
       Myna.recorder.init();
-      Myna.googleAnalytics = new Myna.GoogleAnalytics(Myna.client);
       Myna.googleAnalytics.init();
     }
     return Myna.client;
@@ -1715,11 +1811,11 @@
     url = (_ref = options.url) != null ? _ref : Myna.error("Myna.Client.initRemote", "no url specified in options", options);
     success = (_ref1 = options.success) != null ? _ref1 : (function() {});
     error = (_ref2 = options.error) != null ? _ref2 : (function() {});
-    return Myna.jsonp.request({
+    Myna.jsonp.request({
       url: url,
       success: function(json) {
         Myna.log("Myna.initRemote", "response", json);
-        return success(Myna.init(json));
+        return success(Myna.initLocal(json));
       },
       error: error
     });

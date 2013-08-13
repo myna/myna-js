@@ -5,10 +5,6 @@ class Myna.Inspector
     @client = client
     @binder = binder
 
-  # Should we initialize a inspector?
-  @active: =>
-    window.location.hash == "#debug" || !!Myna.cache.load("myna-inspector")
-
   init: =>
     Myna.log("Myna.Inspector.init")
     @initStylesheet()
@@ -223,6 +219,7 @@ class Myna.Inspector
           inspectorButton.text('Hide inspector')
 
       closeButton.on 'click', =>
+        Myna.setPreview(false)
         @remove()
 
       return
