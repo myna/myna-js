@@ -1,6 +1,6 @@
 window.Myna ?= {}
 
-Myna.debug = true
+Myna.debug ?= false
 
 Myna.log = (args...) ->
   if Myna.debug
@@ -57,5 +57,9 @@ Myna.dateToString = (date) ->
 
 Myna.problem = (msg) ->
   msg
+
+# This allows us to mock out actions that redirect
+Myna.redirect = (url) ->
+  window.location.replace(url)
 
 Myna.$ = window.jQuery ? null

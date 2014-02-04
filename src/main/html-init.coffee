@@ -1,27 +1,50 @@
+# arrayOf(client -> void)
+Myna.readyHandlers = []
+
+# (client -> void) -> void
+Myna.ready = (callback) ->
+  if Myna.client then callback(Myna.client) else Myna.readyHandlers.push(callback)
+  return
+
+# client -> void
+Myna.triggerReady = (client) ->
+  for callback in Myna.readyHandlers
+    callback.call(Myna, client)
+
 # deploymentJson -> void
 Myna.init = (options) ->
   Myna.log("Myna.init", options)
 
-  apiKey      = options.apiKey  ? Myna.error("Myna.init", "no apiKey in options", options)
-  apiRoot     = options.apiRoot ? "//api.mynaweb.com"
-  experiments = for expt in (options.experiments ? [])
-                  new Myna.Experiment(expt)
+  if Myna.preview() && options.latest
+    Myna.initRemote { url: options.latest }
+  else
+    Myna.initLocal(options)
 
-  Myna.client = new Myna.Client({ apiKey, apiRoot, experiments })
+  return
 
-  Myna.binder = new Myna.Binder(Myna.client)
+# deploymentJson -> void
+Myna.initLocal = (options) ->
+  Myna.log("Myna.init", options)
 
-  if Myna.Inspector.active()
+  apiKey               = options.apiKey  ? Myna.error("Myna.init", "no apiKey in options", options)
+  apiRoot              = options.apiRoot ? "//api.mynaweb.com"
+  experiments          = for expt in (options.experiments ? []) then new Myna.Experiment(expt)
+  Myna.client          = new Myna.Client({ apiKey, apiRoot, experiments })
+  Myna.recorder        = new Myna.Recorder(Myna.client)
+  Myna.binder          = new Myna.Binder(Myna.client)
+  Myna.googleAnalytics = new Myna.GoogleAnalytics(Myna.client)
+
+  if Myna.preview()
     Myna.inspector = new Myna.Inspector(Myna.client, Myna.binder)
     Myna.$ ->
+      Myna.triggerReady(Myna.client)
       Myna.inspector.init()
       Myna.binder.init()
   else
-    Myna.recorder = new Myna.Recorder(Myna.client)
-    Myna.recorder.init()
-    Myna.googleAnalytics = new Myna.GoogleAnalytics(Myna.client)
-    Myna.googleAnalytics.init()
     Myna.$ ->
+      Myna.triggerReady(Myna.client)
+      Myna.recorder.init()
+      Myna.googleAnalytics.init()
       Myna.binder.init()
 
   Myna.client
@@ -38,5 +61,7 @@ Myna.initRemote = (options) ->
     url:     url
     success: (json) ->
       Myna.log("Myna.initRemote", "response", json)
-      success(Myna.init(json))
+      success(Myna.initLocal(json))
     error:   error
+
+  return

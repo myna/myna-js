@@ -35,6 +35,7 @@ module.exports = (grunt) ->
     [
       intro...
       "core.coffee"
+      "hash.coffee"
       "jsonp.coffee"
       "events.coffee"
       "settings.coffee"
@@ -48,10 +49,12 @@ module.exports = (grunt) ->
       outro...
     ]
 
-  testSources = (outro) ->
+  testSources = (intro, outro) ->
     [
+      intro...
       "common.coffee"
       "core-spec.coffee"
+      "hash-spec.coffee"
       "jsonp-spec.coffee"
       "settings-spec.coffee"
       "variant-spec.coffee"
@@ -69,7 +72,7 @@ module.exports = (grunt) ->
   ]
 
   mynaJsTestSources   = testSources [ ], [
-    "js-init-spec.coffee"
+    # "js-init-spec.coffee"
   ]
 
   mynaHtmlMainSources = mainSources [ ], [
@@ -79,7 +82,8 @@ module.exports = (grunt) ->
   ]
 
   mynaHtmlTestSources = testSources [ ], [
-    "html-init-spec.coffee"
+    "bind-spec.coffee"
+    # "html-init-spec.coffee"
   ]
 
   sources = (dir, sources, ext = null) ->
@@ -135,15 +139,25 @@ module.exports = (grunt) ->
       mynaJs:
         src: mynaJsDistMain
         options:
-          host:       "http://127.0.0.1:#{jasminePort}/"
+          # host:       "http://127.0.0.1:#{jasminePort}/"
           specs:      sources("temp/test", mynaJsTestSources, ".js")
+          helpers:    [
+                        "lib/jquery-1.10.2.js"
+                        "temp/test/common.js"
+                      ]
+          template:   "src/test/specrunner.template.html"
           outfile:    "myna-js-specrunner.html"
           keepRunner: true
       mynaHtml:
         src: mynaHtmlDistMain
         options:
-          host:       "http://127.0.0.1:#{jasminePort}/"
+          # host:       "http://127.0.0.1:#{jasminePort}/"
           specs:      sources("temp/test", mynaHtmlTestSources, ".js")
+          helpers:    [
+                        "lib/jquery-1.10.2.js"
+                        "temp/test/common.js"
+                      ]
+          template:   "src/test/specrunner.template.html"
           outfile:    "myna-html-specrunner.html"
           keepRunner: true
 
@@ -154,7 +168,10 @@ module.exports = (grunt) ->
       mynaHtmlLatest: { src: [ mynaHtmlDistLatest ], dest: mynaHtmlDistLatestMin }
 
     watch:
-      main: { files: sources("src/maintest", mynaJsMainSources, ".coffee"), tasls: [ "myna-js", "myna-html" ] }
+      main:
+        options: livereload: true
+        files: [ "src/main/**/*", "src/test/**/*" ]
+        tasks: [ "build" ]
   })
 
   grunt.loadNpmTasks "grunt-contrib-coffee"
@@ -166,33 +183,23 @@ module.exports = (grunt) ->
   grunt.loadNpmTasks "grunt-contrib-uglify"
   grunt.loadNpmTasks "grunt-contrib-watch"
 
-  grunt.registerTask "myna-js", [
+  grunt.registerTask "build", [
     "coffee"
     "copy"
-    "concat:mynaJsDist"
-    "concat:mynaJsLatest"
-    # "jshint:mynaJsMain"
-    # "jshint:mynaJsTest"
+    "concat"
+    # "jshint"
     # "connect"
-    # "jasmine:mynaJs"
-    "uglify:mynaJsDist"
-    "uglify:mynaJsLatest"
+    "jasmine:mynaJs:build"
+    "jasmine:mynaHtml:build"
+    "uglify"
   ]
 
-  grunt.registerTask "myna-html", [
-    "coffee"
-    "copy"
-    "concat:mynaHtmlDist"
-    "concat:mynaHtmlLatest"
-    # "jshint:mynaHtmlMain"
-    # "jshint:mynaHtmlTest"
-    # "connect"
-    # "jasmine:mynaHtml"
-    "uglify:mynaHtmlDist"
-    "uglify:mynaHtmlLatest"
+  grunt.registerTask "test", [
+    "build"
+    "jasmine"
   ]
 
   grunt.registerTask "default", [
-    "myna-js"
-    "myna-html"
+    "build"
+    "watch"
   ]

@@ -1,7 +1,7 @@
 expt = new Myna.Experiment
   uuid:     "45923780-80ed-47c6-aa46-15e2ae7a0e8c"
   id:       "id"
-  settings: "myna.js.sticky": true
+  settings: "myna.web.sticky": true
   variants: [
     { id: "a", settings: { buttons: "red"   }, weight: 0.2 }
     { id: "b", settings: { buttons: "green" }, weight: 0.4 }
@@ -22,7 +22,7 @@ for sticky in [false, true]
   initialized = (fn) ->
     return ->
       expt.callbacks = {}
-      expt.settings.set("myna.js.sticky", sticky)
+      expt.settings.set("myna.web.sticky", sticky)
       expt.unstick()
       recorder.clearQueuedEvents()
       fn()
