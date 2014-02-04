@@ -18,8 +18,8 @@ initialized = (fn) ->
       id:       "expt2"
       settings: "myna.web.sticky": true
       variants: [
-        { id: "variant1", name: "Variant 2.1", weight: 0.5, settings: { style: "display: inline-block" } }
-        { id: "variant2", name: "Variant 2.2", weight: 0.5, settings: { style: "display: block" } }
+        { id: "variant1", name: "Variant 2.1", weight: 0.5, settings: { style: "display: inline-block", url: "example.com" } }
+        { id: "variant2", name: "Variant 2.2", weight: 0.5, settings: { style: "display: block", url: "example.com" } }
       ]
 
     expt1.unstick()
@@ -357,3 +357,31 @@ describe "data-goal", ->
   # it "should detect page load events", initialized (client, binder, recorder) ->
   #   # Not sure how to implement this one yet:
   #   expect("tests for data-goal=\"load\"").toEqual("written")
+
+describe "data-redirect", ->
+  it "should stay on the same page when no url in variants", initialized (client, binder, recorder) ->
+    spyOn(Myna, 'redirect').andCallFake (->)
+
+    Myna.$("#experiments").html(
+      '''
+      <div id="v1" class="myna-expt1" data-redirect="url"></div>
+      '''
+    )
+
+    window.client = client
+
+    expect(Myna.redirect.callCount).toEqual(0)
+
+  it "should redirect when a url is present", initialized (client, binder, recorder) ->
+    spyOn(Myna, 'redirect').andCallFake (->)
+
+    Myna.$("#experiments").html(
+      '''
+      <div id="v1" class="myna-expt2" data-redirect="url"></div>
+      '''
+    )
+
+    window.client = client
+
+    expect(Myna.redirect.callCount).toEqual(1)
+    expect(Myna.redirect.mostRecentCall.args).toEqual("example.com")

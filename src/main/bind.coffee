@@ -38,24 +38,28 @@ class Myna.Binder
     cssClass = expt.settings.get("myna.html.cssClass") ? "myna-#{expt.id}"
 
     dataPrefix = expt.settings.get("myna.html.dataPrefix") ? null
-    dataShow = if dataPrefix then "#{@dataPrefix}-show" else "show"
-    dataHide = if dataPrefix then "#{@dataPrefix}-hide" else "hide"
-    dataBind = if dataPrefix then "#{@dataPrefix}-bind" else "bind"
-    dataGoal = if dataPrefix then "#{@dataPrefix}-goal" else "goal"
+    dataShow     = if dataPrefix then "#{@dataPrefix}-show" else "show"
+    dataHide     = if dataPrefix then "#{@dataPrefix}-hide" else "hide"
+    dataBind     = if dataPrefix then "#{@dataPrefix}-bind" else "bind"
+    dataGoal     = if dataPrefix then "#{@dataPrefix}-goal" else "goal"
+    dataRedirect = if dataPrefix then "#{@dataPrefix}-redirect" else "redirect"
 
     Myna.log("Myna.Binder.bind", "searchParams", cssClass, dataShow, dataHide, dataBind, dataGoal)
 
-    allElems  = if cssClass then Myna.$(".#{cssClass}") else null
-    showElems = if cssClass then allElems.filter("[data-#{dataShow}]") else Myna.$("[data-#{dataShow}]")
-    hideElems = if cssClass then allElems.filter("[data-#{dataHide}]") else Myna.$("[data-#{dataHide}]")
-    bindElems = if cssClass then allElems.filter("[data-#{dataBind}]") else Myna.$("[data-#{dataBind}]")
-    goalElems = if cssClass then allElems.filter("[data-#{dataGoal}]") else Myna.$("[data-#{dataGoal}]")
+    allElems      = if cssClass then Myna.$(".#{cssClass}") else null
+    showElems     = if cssClass then allElems.filter("[data-#{dataShow}]") else Myna.$("[data-#{dataShow}]")
+    hideElems     = if cssClass then allElems.filter("[data-#{dataHide}]") else Myna.$("[data-#{dataHide}]")
+    bindElems     = if cssClass then allElems.filter("[data-#{dataBind}]") else Myna.$("[data-#{dataBind}]")
+    redirectElems = if cssClass then allElems.filter("[data-#{dataRedirect}]") else Myna.$("[data-#{dataRedirect}]")
+    goalElems     = if cssClass then allElems.filter("[data-#{dataGoal}]") else Myna.$("[data-#{dataGoal}]")
+
 
     Myna.log("Myna.Binder.bind", "elements", allElems, showElems, hideElems, bindElems, goalElems)
 
     showElems.each (index, elem) => @bindShow(expt, variant, dataShow, elem)
     hideElems.each (index, elem) => @bindHide(expt, variant, dataHide, elem)
     bindElems.each (index, elem) => @bindBind(expt, variant, dataBind, elem)
+    redirectElems.each (index, elem) => @bindRedirect(expt, variant, dataRedirect, elem)
     goalElems.each (index, elem) => @bindGoal(expt, variant, dataGoal, elem)
 
   unbind: =>
@@ -105,6 +109,23 @@ class Myna.Binder
       else
         if lhs[0] == "@"
           self.attr(lhs.substring(1), rhsValue)
+
+  bindRedirect: (expt, variant, dataAttr, elem) =>
+    Myna.log("Myna.Binder.bindRedirect", expt, dataAttr, elem)
+
+    attr = elem.data(dataAttr)
+
+    dest =
+      switch attr
+        when "id"
+          variant.id
+        when "name"
+          variant.name
+        else
+          variant.settings.get(attr, false)
+
+    if dest
+      window.location.replace(dest)
 
   bindGoal: (expt, variant, dataAttr, elem) =>
     Myna.log("Myna.Binder.bindGoal", expt, dataAttr, elem)

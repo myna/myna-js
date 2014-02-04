@@ -58,4 +58,8 @@ Myna.dateToString = (date) ->
 Myna.problem = (msg) ->
   msg
 
+# This allows us to mock out actions that redirect
+Myna.redirect = (url) ->
+  window.location.replace(url)
+
 Myna.$ = window.jQuery ? null
