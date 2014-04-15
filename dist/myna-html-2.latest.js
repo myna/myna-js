@@ -832,7 +832,7 @@
   };
 
   readCookie = function(name) {
-    var cookie, cookieValue, cookies, isNameEQCookie, nameEQ, _i, _len;
+    var cookie, cookieValue, cookies, isNameEQCookie, nameEQ, str, _i, _len;
     nameEQ = "myna-" + name + "=";
     isNameEQCookie = function(cookie) {
       var i;
@@ -848,7 +848,7 @@
     for (_i = 0, _len = cookies.length; _i < _len; _i++) {
       cookie = cookies[_i];
       if (isNameEQCookie(cookie)) {
-        if (cookieValue(cookie) != null) {
+        if ((str = cookieValue(cookie)) != null) {
           return decodeCookieValue(str);
         }
       }

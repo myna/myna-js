@@ -86,7 +86,7 @@ readCookie = (name) ->
 
   cookies = document.cookie.split(';')
   for cookie in cookies when isNameEQCookie(cookie)
-    if cookieValue(cookie)? then return decodeCookieValue(str)
+    if (str = cookieValue(cookie))? then return decodeCookieValue(str)
 
   return null
 
