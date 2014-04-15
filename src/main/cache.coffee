@@ -46,11 +46,11 @@ encodeCookieValue = (obj) ->
   encodeURIComponent(JSON.stringify(obj))
 
 decodeCookieValue = (str) ->
-  if str.indexOf('"') == 0
+  str = if str.indexOf('"') == 0
     # This is a quoted cookie as according to RFC2068: unescape.
-    JSON.parse(str.slice(1, -1).replace(/\\"/g, '"').replace(/\\\\/g, '\\'))
+    str.slice(1, -1).replace(/\\"/g, '"').replace(/\\\\/g, '\\')
   else
-    JSON.parse(str)
+    str
 
   JSON.parse(decodeURIComponent(str.replace(/\+/g, ' ')))
 
@@ -75,17 +75,18 @@ writeCookie = (name, obj, days = 365) ->
 # string -> U(object, null)
 readCookie = (name) ->
   nameEQ = "myna-" + name + "="
+
   isNameEQCookie = (cookie) ->
     i = cookie.indexOf(nameEQ)
     i >=0 and cookie.substring(0,i).match('^\\s*$')
+
   cookieValue = (cookie) ->
     i = cookie.indexOf(nameEQ)
     cookie.substring(i + nameEQ.length, cookie.length)
 
   cookies = document.cookie.split(';')
   for cookie in cookies when isNameEQCookie(cookie)
-    if (str = cookieValue(cookie))?
-      return decodeCookieValue(str)
+    if cookieValue(cookie)? then return decodeCookieValue(str)
 
   return null
 

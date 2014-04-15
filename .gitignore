@@ -7,3 +7,5 @@ myna-html-specrunner.html
 
 *.sublime-project
 *.sublime-workspace
+
+.DS_Store
