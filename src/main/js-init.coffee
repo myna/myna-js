@@ -18,13 +18,28 @@ Myna.init = (options) ->
   if Myna.preview() && options.latest
     Myna.initRemote { url: options.latest }
   else
-    Myna.initLocal(options)
+    success = options.success ? (->)
+    error   = options.error   ? (->)
+    try
+      client = Myna.initLocal(options)
+      success(client)
+    catch exn
+      error(exn)
 
   return
 
-# deploymentJson boolean -> void
+# deploymentJson -> Myna.Client
 Myna.initLocal = (options) ->
   Myna.log("Myna.init", options)
+
+  typename = options.typename
+  Myna.error("Myna.Client.initLocal"
+             """
+             Myna needs a deployment to initialise. The given JSON is not a deployment.
+             It has a typename of "#{typename}". Check you are initialising Myna with the
+             correct UUID if you are calling initRemote
+             """
+             options) unless typename == "deployment"
 
   apiKey               = options.apiKey  ? Myna.error("Myna.init", "no apiKey in options", options)
   apiRoot              = options.apiRoot ? "//api.mynaweb.com"
@@ -60,7 +75,11 @@ Myna.initRemote = (options) ->
     url:     url
     success: (json) ->
       Myna.log("Myna.initRemote", "response", json)
-      success(Myna.initLocal(json))
+      try
+        client = Myna.initLocal(json)
+        success(client)
+      catch exn
+        error(exn)
     error:   error
 
   return
