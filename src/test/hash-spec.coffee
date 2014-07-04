@@ -1,26 +1,28 @@
-describe "Myna.parseHashParams", ->
+hash = require '../app/hash'
+
+describe "hash.parse", ->
   it "should parse a blank hash", ->
-    expect(Myna.parseHashParams(null)).toEqual {}
-    expect(Myna.parseHashParams("")).toEqual {}
-    expect(Myna.parseHashParams("#")).toEqual {}
+    expect(hash.parse(null)).toEqual {}
+    expect(hash.parse("")).toEqual {}
+    expect(hash.parse("#")).toEqual {}
 
   it "should parse key value pairs", ->
-    expect(Myna.parseHashParams("a=b")).toEqual { a: "b" }
-    expect(Myna.parseHashParams("#c=d")).toEqual { c: "d" }
-    expect(Myna.parseHashParams("a=b&c=d")).toEqual { a: "b", c: "d" }
+    expect(hash.parse("a=b")).toEqual { a: "b" }
+    expect(hash.parse("#c=d")).toEqual { c: "d" }
+    expect(hash.parse("a=b&c=d")).toEqual { a: "b", c: "d" }
 
   it "should parse keys without values", ->
-    expect(Myna.parseHashParams("a")).toEqual { a: "a" }
-    expect(Myna.parseHashParams("#c")).toEqual { c: "c" }
-    expect(Myna.parseHashParams("a&c")).toEqual { a: "a", c: "c" }
+    expect(hash.parse("a")).toEqual { a: "a" }
+    expect(hash.parse("#c")).toEqual { c: "c" }
+    expect(hash.parse("a&c")).toEqual { a: "a", c: "c" }
 
   it "should decode escaped characters", ->
-    expect(Myna.parseHashParams(
+    expect(hash.parse(
       "a#{encodeURIComponent("=")}b#{encodeURIComponent("&")}c#{encodeURIComponent("=")}d"
     )).toEqual { "a=b&c=d": "a=b&c=d" }
-    expect(Myna.parseHashParams(
+    expect(hash.parse(
       "a#{encodeURIComponent("=")}b&c#{encodeURIComponent("=")}d"
     )).toEqual { "a=b" : "a=b", "c=d": "c=d" }
-    expect(Myna.parseHashParams(
+    expect(hash.parse(
       "a#{encodeURIComponent("=")}b=c#{encodeURIComponent("=")}d"
     )).toEqual { "a=b" : "c=d" }

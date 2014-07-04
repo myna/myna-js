@@ -1,6 +1,9 @@
-class Myna.GoogleAnalytics extends Myna.Events
+log    = require './log'
+Events = require './events'
+
+class GoogleAnalytics extends Events
   constructor: (client) ->
-    Myna.log("Myna.GoogleAnalytics.constructor", client)
+    log.debug("GoogleAnalytics.constructor", client)
     @client = client
 
   # Start listening for results
@@ -9,7 +12,7 @@ class Myna.GoogleAnalytics extends Myna.Events
       @listenTo(expt)
 
   listenTo: (expt) =>
-    Myna.log("Myna.GoogleAnalytics.listenTo", expt.id)
+    log.debug("GoogleAnalytics.listenTo", expt.id)
 
     expt.on 'recordView', (variant, success, error) =>
       @recordView(expt, variant, success, error)
@@ -20,12 +23,12 @@ class Myna.GoogleAnalytics extends Myna.Events
   # Record methods:
 
   recordView: (expt, variant, success = (->), error = (->)) =>
-    Myna.log("Myna.GoogleAnalytics.recordView", expt, variant, success, error)
+    log.debug("GoogleAnalytics.recordView", expt, variant, success, error)
     if @enabled(expt) then _gaq?.push @viewEvent(expt, variant)
     success()
 
   recordReward: (expt, variant, amount, success = (->), error = (->)) =>
-    Myna.log("Myna.GoogleAnalytics.recordReward", expt, variant, success, error)
+    log.debug("GoogleAnalytics.recordReward", expt, variant, success, error)
     if @enabled(expt) then _gaq?.push @rewardEvent(expt, variant, amount)
     success()
 
@@ -50,3 +53,5 @@ class Myna.GoogleAnalytics extends Myna.Events
 
   rewardMultiplier: (expt) =>
     expt.settings.get("myna.web.googleAnalytics.rewardMultiplier", 100)
+
+module.exports = GoogleAnalytics

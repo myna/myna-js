@@ -1,4 +1,8 @@
-expt = window.expt = new Myna.Experiment
+Experiment      = require '../app/experiment'
+Client          = require '../app/client'
+GoogleAnalytics = require '../app/google-analytics'
+
+expt = new Experiment
   uuid:     "45923780-80ed-47c6-aa46-15e2ae7a0e8c"
   id:       "id"
   settings: "myna.web.sticky": false
@@ -7,12 +11,12 @@ expt = window.expt = new Myna.Experiment
     { id: "variant2", weight: 0.5 }
   ]
 
-client = new Myna.Client
+client = new Client
   apiKey:   "092c90f6-a8f2-11e2-a2b9-7c6d628b25f7"
   apiRoot:  testApiRoot
   experiments: [ expt ]
 
-ga = new Myna.GoogleAnalytics client
+ga = new GoogleAnalytics client
 
 initialized = (fn) ->
   return ->
@@ -24,7 +28,7 @@ initialized = (fn) ->
     client.settings.set("myna.googleAnalytics", null)
     fn()
 
-describe "Myna.GoogleAnalytics.record", ->
+describe "GoogleAnalytics.record", ->
   it "should record view events", initialized ->
     variant  = null
     success  = false

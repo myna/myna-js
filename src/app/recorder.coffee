@@ -1,10 +1,16 @@
-class Myna.Recorder extends Myna.Events
+log    = require './log'
+util   = require './util'
+cache  = require './cache'
+jsonp  = require './jsonp'
+Events = require './events'
+
+class Recorder extends Events
   constructor: (client) ->
     super()
-    Myna.log("Myna.Recorder.constructor", client)
+    log.debug("Recorder.constructor", client)
 
     @client     = client
-    @apiKey     = client.apiKey     ? Myna.error("Myna.Recorder.constructor", "no apiKey in options", options)
+    @apiKey     = client.apiKey     ? log.error("Recorder.constructor", "no apiKey in options", options)
     @apiRoot    = client.apiRoot    ? "//api.mynaweb.com"
 
     @storageKey = client.settings.get("myna.web.storageKey", "myna")
@@ -27,7 +33,7 @@ class Myna.Recorder extends Myna.Events
       @listenTo(expt)
 
   listenTo: (expt) =>
-    Myna.log("Myna.Recorder.listenTo", expt.id)
+    log.debug("Recorder.listenTo", expt.id)
 
     expt.on 'recordView', (variant, success, error) =>
       @recordView(expt, variant, success, error)
@@ -38,26 +44,26 @@ class Myna.Recorder extends Myna.Events
   # Record a view event, caching it in local storage and possibly
   # synchronising it to the Myna servers before calling the success callback.
   recordView: (expt, variant, success = (->), error = (->)) =>
-    Myna.log("Myna.Recorder.recordView", expt.id, variant.id)
+    log.debug("Recorder.recordView", expt.id, variant.id)
     @queueEvent
       typename:   "view"
       experiment: expt.uuid
       variant:    variant.id
-      timestamp:  Myna.dateToString(new Date())
-    Myna.log("Myna.Recorder.recordReward", "aboutToSync", @autoSync)
+      timestamp:  util.dateToString(new Date())
+    log.debug("Recorder.recordReward", "aboutToSync", @autoSync)
     if @autoSync then @sync(success, error) else success()
 
   # Record a reward event, caching it in local storage and possibly
   # synchronising it to the Myna servers before calling the success callback.
   recordReward: (expt, variant, amount, success = (->), error = (->)) =>
-    Myna.log("Myna.Recorder.recordReward", expt.id, variant.id, amount)
+    log.debug("Recorder.recordReward", expt.id, variant.id, amount)
     @queueEvent
       typename:   "reward"
       experiment: expt.uuid
       variant:    variant.id
       amount:     amount
-      timestamp:  Myna.dateToString(new Date())
-    Myna.log("Myna.Recorder.recordReward", "aboutToSync", @autoSync)
+      timestamp:  util.dateToString(new Date())
+    log.debug("Recorder.recordReward", "aboutToSync", @autoSync)
     if @autoSync then @sync(success, error) else success()
 
   # Call the `record` endpoint on the Myna API servers, synchronising view/reward
@@ -74,7 +80,7 @@ class Myna.Recorder extends Myna.Events
     @waiting.push({ success, error })
 
     if @semaphore > 0
-      Myna.log("Myna.Recorder.sync", "queued", @waiting.length)
+      log.debug("Recorder.sync", "queued", @waiting.length)
     else
       @semaphore++
 
@@ -83,14 +89,14 @@ class Myna.Recorder extends Myna.Events
 
       start = =>
         events = @clearQueuedEvents()
-        Myna.log("Myna.Recorder.sync.start", events, waiting.length)
+        log.debug("Recorder.sync.start", events, waiting.length)
         if @trigger('beforeSync', events) == false
           finish([], [], events, true)
         else
           syncAll(events, [], [], [])
 
       syncAll = (events, successEvents, discardedEvents, requeuedEvents) =>
-        Myna.log("Myna.Recorder.sync.syncAll", events, successEvents, discardedEvents, requeuedEvents)
+        log.debug("Recorder.sync.syncAll", events, successEvents, discardedEvents, requeuedEvents)
         if events.length == 0
           finish(successEvents, discardedEvents, requeuedEvents)
         else
@@ -98,12 +104,12 @@ class Myna.Recorder extends Myna.Events
           syncOne(head, tail, successEvents, discardedEvents, requeuedEvents)
 
       syncOne = (event, otherEvents, successEvents, discardedEvents, requeuedEvents) =>
-        Myna.log("Myna.Recorder.sync.syncOne", event, otherEvents, successEvents, discardedEvents, requeuedEvents)
+        log.debug("Recorder.sync.syncOne", event, otherEvents, successEvents, discardedEvents, requeuedEvents)
 
-        params = Myna.extend({}, event, { apikey: @apiKey })
-        params = Myna.deleteKeys(params, 'experiment')
+        params = util.extend({}, event, { apikey: @apiKey })
+        params = util.deleteKeys(params, 'experiment')
 
-        Myna.jsonp.request
+        jsonp.request
           url:     "#{@apiRoot}/v2/experiment/#{event.experiment}/record"
           success: -> syncAll(otherEvents, successEvents.concat([ event ]), discardedEvents, requeuedEvents)
           error: (response) ->
@@ -115,7 +121,7 @@ class Myna.Recorder extends Myna.Events
           params:  params
 
       finish = (successEvents, discardedEvents, requeuedEvents, cancelled = false) =>
-        Myna.log("Myna.Recorder.sync.finish", successEvents, discardedEvents, requeuedEvents, @waiting.length)
+        log.debug("Recorder.sync.finish", successEvents, discardedEvents, requeuedEvents, @waiting.length)
 
         if requeuedEvents.length > 0
           @requeueEvents(requeuedEvents)
@@ -137,23 +143,23 @@ class Myna.Recorder extends Myna.Events
 
   queuedEvents: =>
     ans = @load().queuedEvents ? []
-    Myna.log("Myna.Recorder.queuedEvents", ans)
+    log.debug("Recorder.queuedEvents", ans)
     ans
 
   queueEvent: (event) =>
-    Myna.log("Myna.Recorder.queueEvent", event)
+    log.debug("Recorder.queueEvent", event)
     @loadAndSave (saved) ->
       saved.queuedEvents = (saved.queuedEvents ? []).concat([ event ])
       saved
 
   requeueEvents: (events) =>
-    Myna.log("Myna.Recorder.requeueEvents", events)
+    log.debug("Recorder.requeueEvents", events)
     @loadAndSave (saved) ->
       saved.queuedEvents = events.concat(saved.queuedEvents ? [])
       saved
 
   clearQueuedEvents: =>
-    Myna.log("Myna.Recorder.clearQueuedEvents")
+    log.debug("Recorder.clearQueuedEvents")
     ans = []
     @loadAndSave (saved) ->
       ans = saved.queuedEvents ? []
@@ -165,8 +171,9 @@ class Myna.Recorder extends Myna.Events
     @save(func(@load() ? {}))
 
   load: =>
-    Myna.cache.load(@storageKey)
+    cache.load(@storageKey)
 
   save: (state) =>
-    Myna.cache.save(@storageKey, state)
+    cache.save(@storageKey, state)
 
+module.exports = Recorder

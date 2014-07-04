@@ -1,3 +1,9 @@
+log        = require '../app/log'
+jsonp      = require '../app/jsonp'
+Experiment = require '../app/Experiment'
+Client     = require '../app/client'
+Recorder   = require '../app/recorder'
+
 goodApiKey = testApiKey
 badApiKey  = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
 
@@ -21,7 +27,7 @@ for errorCase in [ "success", "client", "server" ]
 
     initialized = (fn) ->
       return ->
-        expt = new Myna.Experiment
+        expt = new Experiment
           uuid:     "45923780-80ed-47c6-aa46-15e2ae7a0e8c"
           id:       "id"
           settings: "myna.web.sticky": false
@@ -30,13 +36,13 @@ for errorCase in [ "success", "client", "server" ]
             { id: "variant2", weight: 0.5 }
           ]
 
-        client = new Myna.Client
+        client = new Client
           apiKey:   apiKey
           apiRoot:  testApiRoot
           settings: "myna.web.autoSync":  false
           experiments: [ expt ]
 
-        recorder = new Myna.Recorder client
+        recorder = new Recorder client
 
         switch errorCase
           # when "success"
@@ -44,7 +50,7 @@ for errorCase in [ "success", "client", "server" ]
           # when "client"
           #   # Do nothing
           when "server"
-            spyOn(Myna.jsonp, "request").andCallFake (options) ->
+            spyOn(jsonp, "request").andCallFake (options) ->
               options.error({ typename: "problem", status: 500 })
               return
 
@@ -63,7 +69,7 @@ for errorCase in [ "success", "client", "server" ]
 
         return
 
-    describe "Myna.Recorder.sync (#{errorStatus})", ->
+    describe "Recorder.sync (#{errorStatus})", ->
       it "should record a single event", initialized (expt, client, recorder) ->
         variant  = null
         success  = false
@@ -180,7 +186,7 @@ for errorCase in [ "success", "client", "server" ]
           )
 
       it "should handle multiple concurrent calls to record (#{errorStatus})", initialized (expt, client, recorder) ->
-        # Myna.log statements show the likely order of execution.
+        # log.debug statements show the likely order of execution.
 
         variant1 = null
         variant2 = null
@@ -196,11 +202,11 @@ for errorCase in [ "success", "client", "server" ]
         waitsFor -> variant1
 
         runs ->
-          Myna.log("BLOCK 1")
+          log.debug("BLOCK 1")
           expect(recorderState(recorder)).toEqual([ 2, 0, 0 ])
           recorder.sync(
             ->
-              Myna.log("BLOCK 4a")
+              log.debug("BLOCK 4a")
               expect(errorCase).toEqual("success")
               expect(recorderState(recorder)).toEqual(
                 switch errorCase
@@ -210,7 +216,7 @@ for errorCase in [ "success", "client", "server" ]
               )
               success1 = true
             ->
-              Myna.log("BLOCK 4b")
+              log.debug("BLOCK 4b")
               expect(errorCase).not.toEqual("success")
               expect(recorderState(recorder)).toEqual(
                 switch errorCase
@@ -222,13 +228,13 @@ for errorCase in [ "success", "client", "server" ]
           )
 
         runs ->
-          Myna.log("BLOCK 2")
+          log.debug("BLOCK 2")
           withView expt, "variant2", (v2) ->
             withReward expt, 1.0, ->
               variant2 = v2
 
         runs ->
-          Myna.log("BLOCK 3")
+          log.debug("BLOCK 3")
           expect(recorderState(recorder)).toEqual(
             switch errorCase
               when "success" then [ 2, 1, 0 ]
@@ -237,7 +243,7 @@ for errorCase in [ "success", "client", "server" ]
           )
           recorder.sync(
             ->
-              Myna.log("BLOCK 5a")
+              log.debug("BLOCK 5a")
               expect(errorCase).toEqual("success")
               expect(recorderState(recorder)).toEqual(
                 switch errorCase
@@ -247,7 +253,7 @@ for errorCase in [ "success", "client", "server" ]
               )
               success2 = true
             ->
-              Myna.log("BLOCK 5b")
+              log.debug("BLOCK 5b")
               expect(errorCase).not.toEqual("success")
               expect(recorderState(recorder)).toEqual(
                 switch errorCase
@@ -262,7 +268,7 @@ for errorCase in [ "success", "client", "server" ]
 
         # 6
         runs ->
-          Myna.log("BLOCK 6")
+          log.debug("BLOCK 6")
           expect(success1).toEqual(
             switch errorCase
               when "success" then true

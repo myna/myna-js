@@ -1,4 +1,7 @@
-class Myna.Experiment extends Myna.BaseExperiment
+log            = require './log'
+BaseExperiment = require './base-experiment'
+
+class Experiment extends BaseExperiment
 
   # -> boolean
   sticky: =>
@@ -29,7 +32,7 @@ class Myna.Experiment extends Myna.BaseExperiment
     super(variant)
 
   unstick: =>
-    Myna.log("Myna.Experiment.unstick", @id)
+    log.debug("Experiment.unstick", @id)
     @clearLastView()
     @clearLastReward()
     @clearStickySuggestion()
@@ -60,3 +63,5 @@ class Myna.Experiment extends Myna.BaseExperiment
   # => void
   clearStickyReward: =>
     @clearVariant('stickyReward')
+
+module.exports = Experiment

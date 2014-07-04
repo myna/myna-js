@@ -1,6 +1,6 @@
 {
   "name": "myna",
-  "version": "2.1.1",
+  "version": "2.2.0",
   "series": "2",
   "description": "Javascript client for Myna. See http://mynaweb.com/",
   "homepage": "http://mynaweb.com/",
@@ -23,21 +23,9 @@
       "web": "http://www.mynaweb.com"
     }
   ],
-  "contributors": [
-    {
-      "name": "Noel Welsh",
-      "email": "noel@mynaweb.com",
-      "web": "http://www.mynaweb.com"
-    },
-    {
-      "name": "Dave Gurnell",
-      "email": "dave@mynaweb.com",
-      "web": "http://www.mynaweb.com"
-    }
-  ],
   "bugs": {
     "mail": "noel@mynaweb.com",
-    "web": "https://github.com/myna/myna-js"
+    "url": "https://github.com/myna/myna-js"
   },
   "licenses": [
     {
@@ -45,13 +33,13 @@
       "url": "https://github.com/myna/myna-js/LICENSE.txt"
     }
   ],
-  "repositories": [
-    {
-      "type": "git",
-      "url": "https://github.com/myna/myna-js"
-    }
-  ],
-  "dependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/myna/myna-js"
+  },
+  "dependencies": {
+    "jquery": "~1.11.1"
+  },
   "devDependencies": {
     "grunt": "~0.4.1",
     "grunt-contrib-jshint": "~0.4",
@@ -62,6 +50,24 @@
     "grunt-contrib-watch": "~0.4.3",
     "grunt-contrib-jasmine": "~0.4",
     "grunt-contrib-coffee": "~0.6",
-    "grunt-contrib-copy": "~0.4.1"
+    "grunt-contrib-copy": "~0.4.1",
+    "gulp": "~3.8.5",
+    "underscore": "~1.6.0",
+    "coffeeify": "~0.6.0",
+    "watchify": "~0.6.4",
+    "gulp-watchify": "~0.2.0",
+    "partialify": "~3.1.1",
+    "gulp-angular-injector": "~1.0.0",
+    "gulp-rename": "~1.2.0",
+    "gulp-streamify": "0.0.5",
+    "gulp-uglify": "~0.3.1",
+    "yargs": "~1.2.6",
+    "gulp-util": "~2.2.19",
+    "browser-sync": "~1.1.2",
+    "coffee-script": "~1.7.1",
+    "browserify": "~4.2.0",
+    "karma": "~0.12.16",
+    "karma-browserify": "~0.2.1",
+    "karma-jasmine": "~0.1.5"
   }
 }

@@ -1,4 +1,5 @@
-'use strict'
+util   = require './util'
+Events = require './events'
 
 class Path
   @identifierRegex: /^[a-z_$][a-z0-9_$]*/i
@@ -96,7 +97,7 @@ class Path
           ans.push identifier()
       ans
 
-    path = Myna.trim(path)
+    path = util.trim(path)
     if path == ""
       []
     else if path[0] == "." || path[0] == "["
@@ -185,7 +186,7 @@ class Path
   toString: =>
     @path()
 
-class Myna.Settings extends Myna.Events
+class Settings extends Events
   @Path: Path
 
   @defaultSetOptions =
@@ -197,22 +198,22 @@ class Myna.Settings extends Myna.Events
     @set(data)
 
   get: (path, orElse = undefined) =>
-    new Myna.Settings.Path(path).get(@data) ? orElse
+    new Settings.Path(path).get(@data) ? orElse
 
   # Two possible method signatures:
   # updatesObject optionsObject -> Settings
   # pathString anyValue optionsObject -> Settings
   set: =>
     if arguments.length == 0
-      throw [ "Myna.Settings.set", "not enough arguments", arguments ]
+      throw [ "Settings.set", "not enough arguments", arguments ]
 
     if typeof arguments[0] == "object"
       updates = arguments[0]
-      options = Myna.extend({}, Myna.Settings.defaultSetOptions, arguments[1] ? {})
+      options = util.extend({}, Settings.defaultSetOptions, arguments[1] ? {})
 
       paths = []
       for pathStr, value of updates
-        path  = new Myna.Settings.Path(pathStr)
+        path  = new Settings.Path(pathStr)
         @data = path.set(@data, value)
         paths.push(path)
 
@@ -238,10 +239,10 @@ class Myna.Settings extends Myna.Events
       if path[0] == "." then path.substring(1) else path
 
     visit = (value, path = "") ->
-      if Myna.isArray(value)
+      if util.isArray(value)
         for i, v in value
           visit(v, path + "[" + i + "]")
-      else if Myna.isObject(value)
+      else if util.isObject(value)
         for k, v of value
           visit(v, path + "." + k)
       else
@@ -262,3 +263,5 @@ class Myna.Settings extends Myna.Events
 
   toJSON: (options = {}) =>
     @data
+
+module.exports = Settings

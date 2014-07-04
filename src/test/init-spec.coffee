@@ -1,3 +1,9 @@
+log        = require '../app/log'
+Client     = require '../app/client'
+Experiment = require '../app/experiment'
+Variant    = require '../app/variant'
+Myna       = require '../app/myna-js'
+
 deployment =
   apiKey: "092c90f6-a8f2-11e2-a2b9-7c6d628b25f7"
   apiRoot: "//api.mynaweb.com"
@@ -60,15 +66,15 @@ describe "Myna.init", ->
     waitsFor -> client != null
 
     runs ->
-      expect(client).toBeInstanceOf(Myna.Client)
+      expect(client).toBeInstanceOf(Client)
 
-      expect(client.experiments.experiment1).toBeInstanceOf(Myna.Experiment)
-      expect(client.experiments.experiment2).toBeInstanceOf(Myna.Experiment)
+      expect(client.experiments.experiment1).toBeInstanceOf(Experiment)
+      expect(client.experiments.experiment2).toBeInstanceOf(Experiment)
 
-      expect(client.experiments.experiment1.variants.variant1).toBeInstanceOf(Myna.Variant)
-      expect(client.experiments.experiment1.variants.variant2).toBeInstanceOf(Myna.Variant)
-      expect(client.experiments.experiment2.variants.variant1).toBeInstanceOf(Myna.Variant)
-      expect(client.experiments.experiment2.variants.variant2).toBeInstanceOf(Myna.Variant)
+      expect(client.experiments.experiment1.variants.variant1).toBeInstanceOf(Variant)
+      expect(client.experiments.experiment1.variants.variant2).toBeInstanceOf(Variant)
+      expect(client.experiments.experiment2.variants.variant1).toBeInstanceOf(Variant)
+      expect(client.experiments.experiment2.variants.variant2).toBeInstanceOf(Variant)
 
 describe "Myna.initRemote", ->
   it "should create a client", ->
@@ -84,15 +90,15 @@ describe "Myna.initRemote", ->
     waitsFor -> client != null
 
     runs ->
-      expect(client).toBeInstanceOf(Myna.Client)
+      expect(client).toBeInstanceOf(Client)
 
       for id, expt of client.experiments
-        Myna.log(" - ", id, expt)
+        log.debug(" - ", id, expt)
 
-      expect(client.experiments.test).toBeInstanceOf(Myna.Experiment)
+      expect(client.experiments.test).toBeInstanceOf(Experiment)
 
-      expect(client.experiments.test.variants.variant1).toBeInstanceOf(Myna.Variant)
-      expect(client.experiments.test.variants.variant2).toBeInstanceOf(Myna.Variant)
+      expect(client.experiments.test.variants.variant1).toBeInstanceOf(Variant)
+      expect(client.experiments.test.variants.variant2).toBeInstanceOf(Variant)
 
 describe "Myna.initLocal", ->
   it "should raise an exception on error", ->
@@ -104,11 +110,11 @@ describe "Myna.initLocal", ->
   it "should return a client on success", ->
     client = Myna.initLocal(deployment)
 
-    expect(client).toBeInstanceOf(Myna.Client)
-    expect(client.experiments.experiment1).toBeInstanceOf(Myna.Experiment)
-    expect(client.experiments.experiment2).toBeInstanceOf(Myna.Experiment)
+    expect(client).toBeInstanceOf(Client)
+    expect(client.experiments.experiment1).toBeInstanceOf(Experiment)
+    expect(client.experiments.experiment2).toBeInstanceOf(Experiment)
 
-    expect(client.experiments.experiment1.variants.variant1).toBeInstanceOf(Myna.Variant)
-    expect(client.experiments.experiment1.variants.variant2).toBeInstanceOf(Myna.Variant)
-    expect(client.experiments.experiment2.variants.variant1).toBeInstanceOf(Myna.Variant)
-    expect(client.experiments.experiment2.variants.variant2).toBeInstanceOf(Myna.Variant)
+    expect(client.experiments.experiment1.variants.variant1).toBeInstanceOf(Variant)
+    expect(client.experiments.experiment1.variants.variant2).toBeInstanceOf(Variant)
+    expect(client.experiments.experiment2.variants.variant1).toBeInstanceOf(Variant)
+    expect(client.experiments.experiment2.variants.variant2).toBeInstanceOf(Variant)

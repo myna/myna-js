@@ -1,6 +1,8 @@
+Client = require '../app/client'
+
 describe "Client.constructor", ->
   it "should accept custom options", ->
-    actual = new Myna.Client
+    actual = new Client
       apiRoot:     testApiRoot
       apiKey:      "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
       experiments: []

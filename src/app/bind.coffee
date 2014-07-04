@@ -1,6 +1,10 @@
-class Myna.Binder
+$    = require 'jquery'
+log  = require './log'
+hash = require './hash'
+
+class Binder
   constructor: (client) ->
-    Myna.log("Myna.Binder.constructor", client)
+    log.debug("Binder.constructor", client)
 
     @client = client
 
@@ -14,7 +18,7 @@ class Myna.Binder
     for id, expt of @client.experiments
       if options.all || @detect(expt)
         @listenTo(expt)
-        variantId = Myna.hashParams[expt.id]
+        variantId = hash.params[expt.id]
         if variantId && expt.variants[variantId]
           expt.view(variantId)
         else
@@ -22,16 +26,16 @@ class Myna.Binder
     return
 
   listenTo: (expt) =>
-    Myna.log("Myna.Binder.listenTo", expt)
+    log.debug("Binder.listenTo", expt)
     expt.on 'view', (variant) => @bind(expt, variant)
 
   # experiment -> boolean
   detect: (expt) =>
     cssClass = expt.settings.get("myna.html.cssClass") ? "myna-#{expt.id}"
-    Myna.$(".#{cssClass}").length > 0
+    $(".#{cssClass}").length > 0
 
   bind: (expt, variant) =>
-    Myna.log("Myna.Binder.bind", expt)
+    log.debug("Binder.bind", expt)
 
     @unbind()
 
@@ -44,17 +48,17 @@ class Myna.Binder
     dataGoal     = if dataPrefix then "#{@dataPrefix}-goal" else "goal"
     dataRedirect = if dataPrefix then "#{@dataPrefix}-redirect" else "redirect"
 
-    Myna.log("Myna.Binder.bind", "searchParams", cssClass, dataShow, dataHide, dataBind, dataGoal)
+    log.debug("Binder.bind", "searchParams", cssClass, dataShow, dataHide, dataBind, dataGoal)
 
-    allElems      = if cssClass then Myna.$(".#{cssClass}") else null
-    showElems     = if cssClass then allElems.filter("[data-#{dataShow}]") else Myna.$("[data-#{dataShow}]")
-    hideElems     = if cssClass then allElems.filter("[data-#{dataHide}]") else Myna.$("[data-#{dataHide}]")
-    bindElems     = if cssClass then allElems.filter("[data-#{dataBind}]") else Myna.$("[data-#{dataBind}]")
-    redirectElems = if cssClass then allElems.filter("[data-#{dataRedirect}]") else Myna.$("[data-#{dataRedirect}]")
-    goalElems     = if cssClass then allElems.filter("[data-#{dataGoal}]") else Myna.$("[data-#{dataGoal}]")
+    allElems      = if cssClass then $(".#{cssClass}") else null
+    showElems     = if cssClass then allElems.filter("[data-#{dataShow}]") else $("[data-#{dataShow}]")
+    hideElems     = if cssClass then allElems.filter("[data-#{dataHide}]") else $("[data-#{dataHide}]")
+    bindElems     = if cssClass then allElems.filter("[data-#{dataBind}]") else $("[data-#{dataBind}]")
+    redirectElems = if cssClass then allElems.filter("[data-#{dataRedirect}]") else $("[data-#{dataRedirect}]")
+    goalElems     = if cssClass then allElems.filter("[data-#{dataGoal}]") else $("[data-#{dataGoal}]")
 
 
-    Myna.log("Myna.Binder.bind", "elements", allElems, showElems, hideElems, bindElems, goalElems)
+    log.debug("Binder.bind", "elements", allElems, showElems, hideElems, bindElems, goalElems)
 
     showElems.each (index, elem) => @bindShow(expt, variant, dataShow, elem)
     hideElems.each (index, elem) => @bindHide(expt, variant, dataHide, elem)
@@ -63,31 +67,31 @@ class Myna.Binder
     goalElems.each (index, elem) => @bindGoal(expt, variant, dataGoal, elem)
 
   unbind: =>
-    Myna.log("Myna.Binder.unbind", @boundHandlers)
+    log.debug("Binder.unbind", @boundHandlers)
     for [ elem, event, handler ] in @boundHandlers
-      Myna.log("Myna.Binder.unbind", elem, event, handler)
-      Myna.$(elem).off(event, handler)
+      log.debug("Binder.unbind", elem, event, handler)
+      $(elem).off(event, handler)
 
   bindShow: (expt, variant, dataAttr, elem) =>
-    Myna.log("Myna.Binder.bindShow", expt, dataAttr, elem)
+    log.debug("Binder.bindShow", expt, dataAttr, elem)
 
-    self = Myna.$(elem)
+    self = $(elem)
     path = self.data(dataAttr)
 
     if variant.id == path || variant.settings.get(path) then self.show() else self.hide()
 
   bindHide: (expt, variant, dataAttr, elem) =>
-    Myna.log("Myna.Binder.bindHide", expt, dataAttr, elem)
+    log.debug("Binder.bindHide", expt, dataAttr, elem)
 
-    self = Myna.$(elem)
+    self = $(elem)
     path = self.data(dataAttr)
 
     if variant.id == path || variant.settings.get(path) then self.hide() else self.show()
 
   bindBind: (expt, variant, dataAttr, elem) =>
-    Myna.log("Myna.Binder.bindBind", expt, dataAttr, elem)
+    log.debug("Binder.bindBind", expt, dataAttr, elem)
 
-    self = Myna.$(elem)
+    self = $(elem)
     attrString = self.data(dataAttr)
     [ lhs, rhs ] = attrString.split("=")
 
@@ -111,7 +115,7 @@ class Myna.Binder
           self.attr(lhs.substring(1), rhsValue)
 
   bindRedirect: (expt, variant, dataAttr, elem) =>
-    Myna.log("Myna.Binder.bindRedirect", expt, dataAttr, elem)
+    log.debug("Binder.bindRedirect", expt, dataAttr, elem)
 
     attr = elem.data(dataAttr)
 
@@ -128,40 +132,40 @@ class Myna.Binder
       window.location.replace(dest)
 
   bindGoal: (expt, variant, dataAttr, elem) =>
-    Myna.log("Myna.Binder.bindGoal", expt, dataAttr, elem)
+    log.debug("Binder.bindGoal", expt, dataAttr, elem)
 
-    self  = Myna.$(elem)
+    self  = $(elem)
     event = self.data(dataAttr)
 
     unless event then return
 
     switch event
       when "load"
-        Myna.$(=> expt.reward())
+        $(=> expt.reward())
       when "click"
         handler = @createClickHandler(expt)
         @boundHandlers.push([elem, "click", handler])
-        Myna.log("Myna.Binder.bindGoal", "attach", elem, "click", handler, @boundHandlers )
+        log.debug("Binder.bindGoal", "attach", elem, "click", handler, @boundHandlers )
         self.on("click", handler)
 
   # (event any ... -> void) -> (event any ... -> void)
   createClickHandler: (expt, innerHandler = (->)) =>
-    Myna.log("Myna.Binder.createClickHandler", expt, innerHandler)
+    log.debug("Binder.createClickHandler", expt, innerHandler)
 
     handler = (evt, args...) ->
-      Myna.log("Myna.Binder.clickHandler", evt, args...)
+      log.debug("Binder.clickHandler", evt, args...)
 
       elem = this
-      self = Myna.$(elem)
+      self = $(elem)
 
       rewarded = expt.loadStickyReward() || expt.loadLastReward()
 
       if rewarded?
-        Myna.log("Myna.Binder.clickHandler", "pass-through")
+        log.debug("Binder.clickHandler", "pass-through")
 
         innerHandler.call(this, evt, args...)
       else
-        Myna.log("Myna.Binder.clickHandler", "pass-through")
+        log.debug("Binder.clickHandler", "pass-through")
 
         evt.stopPropagation()
         evt.preventDefault()
@@ -175,3 +179,5 @@ class Myna.Binder
 
         expt.reward(1.0, complete, complete)
       return
+
+module.exports = Binder

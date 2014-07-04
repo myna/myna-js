@@ -1,41 +1,27 @@
-window.Myna ?= {}
-
-Myna.debug ?= false
-
-Myna.log = (args...) ->
-  if Myna.debug
-    window.console?.log(args)
-  return
-
-Myna.error = (args...) ->
-  if Myna.debug
-    window.console?.error(args)
-  throw args
-
 # Adapted from jQuery:
-Myna.trim = (str) ->
+trim = (str) ->
   if str == null then "" else str.replace /^\s+|\s+$/g, ''
 
 # From underscore.js:
-Myna.isArray = Array.isArray || (obj) ->
+isArray = Array.isArray || (obj) ->
   Object.prototype.toString.call(obj) == '[object Array]'
 
 # From underscore.js:
-Myna.isObject = (obj) ->
+isObject = (obj) ->
   obj == Object(obj)
 
-Myna.extend = (des, sources...) ->
+extend = (des, sources...) ->
   for src in sources
     for key, value of src
       des[key] = value
   des
 
-Myna.deleteKeys = (obj, keys...) ->
-  ans = Myna.extend({}, obj)
+deleteKeys = (obj, keys...) ->
+  ans = extend({}, obj)
   for key in keys then delete ans[key]
   ans
 
-Myna.dateToString = (date) ->
+dateToString = (date) ->
   if Date.prototype.toISOString
     date.toISOString()
   else
@@ -55,11 +41,20 @@ Myna.dateToString = (date) ->
 
     "#{year}-#{month}-#{day}T#{hour}:#{minute}:#{second}.#{milli}Z"
 
-Myna.problem = (msg) ->
-  msg
+problem = (msg) ->
+  new Error(msg)
 
 # This allows us to mock out actions that redirect
-Myna.redirect = (url) ->
+redirect = (url) ->
   window.location.replace(url)
 
-Myna.$ = window.jQuery ? null
+module.exports = {
+  trim
+  isArray
+  isObject
+  extend
+  deleteKeys
+  dateToString
+  problem
+  redirect
+}

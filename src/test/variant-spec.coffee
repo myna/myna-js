@@ -1,6 +1,8 @@
-describe "Myna.Variant.constructor", ->
+Variant = require '../app/variant'
+
+describe "Variant.constructor", ->
   it "should accept custom options", ->
-    variant = new Myna.Variant
+    variant = new Variant
       id: "id"
       settings: a: b: c: 1
       weight: 0.5
@@ -9,10 +11,10 @@ describe "Myna.Variant.constructor", ->
     expect(variant.weight).toEqual(0.5)
 
   it "should fail if no weight provided", ->
-    expect(-> new Myna.Variant id: "id").toThrow()
+    expect(-> new Variant id: "id").toThrow()
 
   it "should provide sensible defaults", ->
-    variant = new Myna.Variant
+    variant = new Variant
       id: "id"
       weight: 0.3
     expect(variant.id).toEqual("id")

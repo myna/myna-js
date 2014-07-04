@@ -1,15 +1,17 @@
-describe "Myna.jsonp.request", ->
+jsonp = require '../app/jsonp'
+
+describe "jsonp.request", ->
   it "should fetch data", ->
     data  = null
     error = null
 
     runs ->
-      Myna.jsonp.request
+      jsonp.request
         url: "#{testApiRoot}/v1/version"
         success: (d) -> data  = d
         error:   (e) -> error = e
 
-      expect(Myna.jsonp.callbacks).not.toEqual({})
+      expect(jsonp.callbacks).not.toEqual({})
       expect(document.getElementsByClassName('myna-jsonp').length).toEqual(1)
 
     waitsFor -> data || error
@@ -20,7 +22,7 @@ describe "Myna.jsonp.request", ->
       expect(typeof data).toEqual("object")
       expect(data.version).toMatch(/^[a-z0-9]{40}$/)
 
-      expect(Myna.jsonp.callbacks).toEqual({})
+      expect(jsonp.callbacks).toEqual({})
       expect(document.getElementsByClassName('myna-jsonp').length).toEqual(0)
 
   it "should call the error callback if the request times out", ->
@@ -28,7 +30,7 @@ describe "Myna.jsonp.request", ->
     error = null
 
     # Replace createScriptElem with a method that creates an invalid script tag:
-    spyOn(Myna.jsonp, "createScriptElem").andCallFake (url, callbackName) ->
+    spyOn(jsonp, "createScriptElem").andCallFake (url, callbackName) ->
       scriptElem = document.createElement("script")
       scriptElem.setAttribute("type","text/javascript")
       scriptElem.setAttribute("class", "myna-jsonp")
@@ -36,7 +38,7 @@ describe "Myna.jsonp.request", ->
       scriptElem
 
     runs ->
-      Myna.jsonp.request
+      jsonp.request
         url:     "#{testApiRoot}/v1/version"
         success: (d) -> data  = d
         error:   (e) -> error = e
@@ -52,16 +54,16 @@ describe "Myna.jsonp.request", ->
       expect(typeof error).toEqual("object")
       expect(error.messages[0].typename).toEqual("timeout")
 
-      expect(Myna.jsonp.callbacks).toEqual({})
+      expect(jsonp.callbacks).toEqual({})
       expect(document.getElementsByClassName('myna-jsonp').length).toEqual(0)
 
-describe "Myna.jsonp.remove", ->
+describe "jsonp.removeCallback", ->
   it "should remove a callback even if the scriptElem argument is null", ->
-    Myna.jsonp.callbacks.a = (->)
-    expect(Myna.jsonp.callbacks).not.toEqual({})
+    jsonp.callbacks.a = (->)
+    expect(jsonp.callbacks).not.toEqual({})
 
-    Myna.jsonp.remove('a', null)
-    expect(Myna.jsonp.callbacks).toEqual({})
+    jsonp.removeCallback('a', null)
+    expect(jsonp.callbacks).toEqual({})
 
   it "should remove a script tag even if the callbackName argument is null", ->
     scriptElem = document.createElement("script")
@@ -69,5 +71,5 @@ describe "Myna.jsonp.remove", ->
     document.getElementsByTagName("head")[0].appendChild(scriptElem)
     expect(document.getElementById('myscript')).toEqual(scriptElem)
 
-    Myna.jsonp.remove(null, scriptElem)
+    jsonp.removeCallback(null, scriptElem)
     expect(document.getElementById('myscript')).toEqual(null)

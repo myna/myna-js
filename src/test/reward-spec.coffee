@@ -1,4 +1,9 @@
-expt = new Myna.Experiment
+Experiment = require '../app/experiment'
+Client     = require '../app/client'
+Recorder   = require '../app/recorder'
+Variant    = require '../app/variant'
+
+expt = new Experiment
   uuid:     "45923780-80ed-47c6-aa46-15e2ae7a0e8c"
   id:       "id"
   settings: "myna.web.sticky": true
@@ -8,13 +13,13 @@ expt = new Myna.Experiment
     { id: "c", settings: { buttons: "blue"  }, weight: 0.6 }
   ]
 
-client = new Myna.Client
+client = new Client
   apiKey:   "092c90f6-a8f2-11e2-a2b9-7c6d628b25f7"
   apiRoot:  testApiRoot
   settings: "myna.web.autoSync":  false
   experiments: [ expt ]
 
-recorder = new Myna.Recorder client
+recorder = new Recorder client
 
 recorder.listenTo(expt)
 
@@ -28,7 +33,7 @@ for sticky in [false, true]
       fn()
       @removeAllSpies()
 
-  describe "Myna.Experiment.reward (#{(if sticky then 'sticky' else 'non-sticky')})", ->
+  describe "Experiment.reward (#{(if sticky then 'sticky' else 'non-sticky')})", ->
     it "should reward the last suggestion", initialized ->
       withSuggestion expt, (variant) ->
         withReward expt, 0.8, ->
@@ -65,7 +70,7 @@ for sticky in [false, true]
       finished = false
 
       withSuggestion expt, (variant) ->
-        expect(variant).toBeInstanceOf(Myna.Variant)
+        expect(variant).toBeInstanceOf(Variant)
         withReward expt, 0.8, ->
           withReward expt, 0.6, ->
             expect(eventSummaries(recorder.queuedEvents())).toEqual [
@@ -81,7 +86,7 @@ for sticky in [false, true]
       finished = false
 
       withSuggestion expt, (v1) ->
-        expect(v1).toBeInstanceOf(Myna.Variant)
+        expect(v1).toBeInstanceOf(Variant)
         withReward expt, 0.8, ->
           withSuggestion expt, (v2) ->
             withReward expt, 0.6, ->

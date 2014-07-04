@@ -1,4 +1,6 @@
-class Myna.Events
+log = require './log'
+
+class Events
   constructor: () ->
     @eventHandlers = {}
 
@@ -6,7 +8,7 @@ class Myna.Events
   #
   # string any ... -> undefined
   trigger: (event, args...) =>
-    Myna.log("Myna.Events.trigger", event, args...)
+    log.debug("Events.trigger", event, args...)
 
     cancel = false
     for handler in (@eventHandlers[event] ? [])
@@ -24,10 +26,10 @@ class Myna.Events
   #
   # string any ... (-> any) (-> any) -> undefined
   triggerAsync: (event, args..., success, error) =>
-    Myna.log("Myna.Events.triggerAsync", event, args...)
+    log.debug("Events.triggerAsync", event, args...)
 
     triggerAll = (handlers) =>
-      Myna.log("Myna.Events.triggerAsync.triggerAll", handlers)
+      log.debug("Events.triggerAsync.triggerAll", handlers)
       if handlers.length == 0
         success()
       else
@@ -38,7 +40,7 @@ class Myna.Events
 
   on: (event, handler) =>
     @eventHandlers[event] = (@eventHandlers[event] ? []).concat([ handler ])
-    Myna.log("Myna.Events.on", event, handler, @eventHandlers[event])
+    log.debug("Events.on", event, handler, @eventHandlers[event])
 
   off: (event, handler = null) =>
     switch arguments.length
@@ -47,4 +49,6 @@ class Myna.Events
       else
         [ event, handler ] = arguments
         @eventHandlers[event] = for h in @eventHandlers[event] when h != handler then h
-    Myna.log("Myna.Events.off", event, handler, @eventHandlers[event])
+    log.debug("Events.off", event, handler, @eventHandlers[event])
+
+module.exports = Events

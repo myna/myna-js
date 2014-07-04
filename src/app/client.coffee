@@ -1,11 +1,14 @@
-class Myna.Client
+log      = require './log'
+Settings = require './settings'
+
+class Client
   constructor: (options = {}) ->
-    Myna.log("Myna.Client.constructor", options)
+    log.debug("Client.constructor", options)
 
     @uuid        = options.uuid       ? null
-    @apiKey      = options.apiKey     ? Myna.error("Myna.Deployment.constructor", "no apiKey in options", options)
+    @apiKey      = options.apiKey     ? log.error("Client.constructor", "no apiKey in options", options)
     @apiRoot     = options.apiRoot    ? "//api.mynaweb.com"
-    @settings    = new Myna.Settings(options.settings ? {})
+    @settings    = new Settings(options.settings ? {})
 
     @experiments = {}
     for expt in (options.experiments ? [])
@@ -19,3 +22,5 @@ class Myna.Client
 
   reward: (exptId, amount = 1.0, success = (->), error = (->)) =>
     @experiments[exptId].reward(amount, success, error)
+
+module.exports = Client

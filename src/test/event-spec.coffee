@@ -1,4 +1,9 @@
-expt = new Myna.Experiment
+log        = require '../app/log'
+Experiment = require '../app/experiment'
+Client     = require '../app/client'
+Recorder   = require '../app/recorder'
+
+expt = new Experiment
   uuid:     "45923780-80ed-47c6-aa46-15e2ae7a0e8c"
   id:       "id"
   settings: "myna.web.sticky": false
@@ -7,12 +12,12 @@ expt = new Myna.Experiment
     { id: "variant2", weight: 0.5 }
   ]
 
-client = new Myna.Client
+client = new Client
   apiKey:   "092c90f6-a8f2-11e2-a2b9-7c6d628b25f7"
   apiRoot:  testApiRoot
   experiments: [ expt ]
 
-recorder = new Myna.Recorder client
+recorder = new Recorder client
 
 initialized = (fn) ->
   return ->
@@ -28,7 +33,7 @@ initialized = (fn) ->
 
     logCalls = ->
       for call in calls
-        Myna.log("...", call)
+        log.debug("...", call)
 
     expt.on 'beforeView', jasmine.createSpy('beforeView').andCallFake (args...) ->
       calls.push([ "beforeView", args... ])
@@ -85,7 +90,7 @@ describe "events", ->
       window.setTimeout( (-> expt.reward(0.8, rewardCallback)), 500 )
 
     runs ->
-      Myna.log("BLOCK 1")
+      log.debug("BLOCK 1")
       expt.suggest suggestCallback
 
     waitsFor ->
@@ -94,7 +99,7 @@ describe "events", ->
     waits 250
 
     runs ->
-      Myna.log("BLOCK 2")
+      log.debug("BLOCK 2")
       expect(for call in calls then call[0]).toEqual [
         "beforeView"
         "suggestCallback"
