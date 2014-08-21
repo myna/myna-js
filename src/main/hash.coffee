@@ -1,8 +1,7 @@
 log   = require './log'
-log   = require './log'
 cache = require './cache'
 
-parse = (hash = window.location.hash) ->
+parse = (hash) ->
   hash = if !hash then "" else if hash[0] == "#" then hash.substring(1) else hash
 
   ans = {}
@@ -14,7 +13,7 @@ parse = (hash = window.location.hash) ->
 
   ans
 
-params = parse()
+params = parse(window.location.hash)
 
 if params["debug"]
   log.enabled = true
@@ -33,6 +32,7 @@ setPreview = (preview) ->
   return
 
 module.exports = {
+  parse # for tests
   params
   preview
   setPreview

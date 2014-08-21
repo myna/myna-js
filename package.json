@@ -1,8 +1,8 @@
 {
   "name": "myna",
   "version": "3.0.0",
-  "description": "Javascript client for Myna. See http://mynaweb.com/",
-  "homepage": "http://mynaweb.com/",
+  "description": "Javascript client for Myna. See http://mynaweb.com",
+  "homepage": "http://mynaweb.com",
   "keywords": [
     "myna",
     "multi-armed bandit",

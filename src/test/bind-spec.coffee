@@ -3,6 +3,7 @@ Experiment = require '../main/experiment'
 Client     = require '../main/client'
 Binder     = require '../main/bind'
 Recorder   = require '../main/recorder'
+util       = require '../main/util'
 
 $("body").append("<div id='experiments'></div>")
 

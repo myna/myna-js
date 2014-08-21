@@ -1,6 +1,9 @@
 hash = require '../main/hash'
 
 describe "hash.parse", ->
+  it "should be defined", ->
+    expect(hash.parse).toBeTruthy()
+
   it "should parse a blank hash", ->
     expect(hash.parse(null)).toEqual {}
     expect(hash.parse("")).toEqual {}

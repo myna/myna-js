@@ -10,42 +10,41 @@ module.exports = (grunt) ->
   minify      = grunt.option('minify') ? false
 
   pkg         = grunt.file.readJSON("package.json")
-
   name        = pkg.name
   series      = pkg.version.split("\.")[0]
   version     = pkg.version
-
   homepage    = pkg.homepage
-  maintainer  = pkg.maintainers[0].name
   license     = (for license in pkg.licenses then license.type).join(", ")
   today       = grunt.template.today("yyyy-mm-dd")
   thisYear    = grunt.template.today("yyyy")
-
-  jasminePort = 8001
 
   mynaJsBanner =
     """
     /*! Myna JS v#{version} - #{today}
      * #{homepage}
-     * Copyright (c) #{thisYear} #{maintainer}; Licensed #{license}
+     * Copyright (c) #{thisYear} Myna Limited; Licensed #{license}
      */
+
     """
 
   mynaHtmlBanner =
     """
     /*! Myna HTML v#{version} - #{today}
      * #{homepage}
-     * Copyright (c) #{thisYear} #{maintainer}; Licensed #{license}
+     * Copyright (c) #{thisYear} Myna Limited; Licensed #{license}
      */
+
     """
 
   mynaJsSrcMain         = "src/main/myna-js.coffee"
+  mynaJsTempMain        = "temp/myna.js"
   mynaJsDistMain        = "dist/myna-#{version}.js"
   mynaJsDistMainMin     = "dist/myna-#{version}.min.js"
   mynaJsDistLatest      = "dist/myna-#{series}.latest.js"
   mynaJsDistLatestMin   = "dist/myna-#{series}.latest.min.js"
 
   mynaHtmlSrcMain       = "src/main/myna-html.coffee"
+  mynaHtmlTempMain      = "temp/myna-html.js"
   mynaHtmlDistMain      = "dist/myna-html-#{version}.js"
   mynaHtmlDistMainMin   = "dist/myna-html-#{version}.min.js"
   mynaHtmlDistLatest    = "dist/myna-html-#{series}.latest.js"
@@ -73,7 +72,7 @@ module.exports = (grunt) ->
 
   grunt.registerTask "default", [
     "build"
-    "karma:single:run"
+    "karma:single"
   ]
 
   grunt.registerTask "watchCycle", [
@@ -94,11 +93,11 @@ module.exports = (grunt) ->
     browserify:
       mynaJs:
         src     : mynaJsSrcMain
-        dest    : mynaJsDistMain
+        dest    : mynaJsTempMain
         options : browserifyOptions
       mynaHtml:
         src     : mynaHtmlSrcMain
-        dest    : mynaHtmlDistMain
+        dest    : mynaHtmlTempMain
         options : browserifyOptions
       test:
         expand  : true
@@ -109,20 +108,36 @@ module.exports = (grunt) ->
         ext     : ".js"
 
     uglify:
-      mynaJsDistMin:     { src: [ mynaJsDistMain      ], dest: mynaJsDistMainMin     }
-      mynaHtmlDistMin:   { src: [ mynaHtmlDistMain    ], dest: mynaHtmlDistMainMin   }
+      mynaJsDist:
+        src     : [ mynaJsTempMain ]
+        dest    : mynaJsDistMain
+        options :
+          banner   : mynaJsBanner
+          beautify : true
+      mynaHtmlDist:
+        src     : [ mynaHtmlTempMain ]
+        dest    : mynaHtmlDistMain
+        options :
+          banner   : mynaJsBanner
+          beautify : true
+      mynaJsDistMin:
+        src     : [ mynaJsTempMain ]
+        dest    : mynaJsDistMainMin
+        options :
+          banner   : mynaHtmlBanner
+          beautify : false
+      mynaHtmlDistMin:
+        src     : [ mynaHtmlTempMain ]
+        dest    : mynaHtmlDistMainMin
+        options :
+          banner   : mynaHtmlBanner
+          beautify : false
 
     copy:
       mynaJsDistLatest:      { src: [ mynaJsDistMain      ], dest: mynaJsDistLatest      }
       mynaHtmlDistLatest:    { src: [ mynaHtmlDistMain    ], dest: mynaHtmlDistLatest    }
       mynaJsDistLatestMin:   { src: [ mynaJsDistMainMin   ], dest: mynaJsDistLatestMin   }
       mynaHtmlDistLatestMin: { src: [ mynaHtmlDistMainMin ], dest: mynaHtmlDistLatestMin }
-
-    connect:
-      jasmineSite:
-        options:
-          port: jasminePort
-          base: "."
 
     karma:
       single:

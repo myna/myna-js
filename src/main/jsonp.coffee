@@ -115,7 +115,7 @@ request = (options = {}) ->
 
 module.exports = {
   request
-  callbacks: window.__mynacallbacks
+  callbacks: -> window.__mynacallbacks
   createScriptElem # for debugging
   removeCallback
 }

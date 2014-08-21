@@ -11,7 +11,7 @@ describe "jsonp.request", ->
         success: (d) -> data  = d
         error:   (e) -> error = e
 
-      expect(jsonp.callbacks).not.toEqual({})
+      expect(jsonp.callbacks()).not.toEqual({})
       expect(document.getElementsByClassName('myna-jsonp').length).toEqual(1)
 
     waitsFor -> data || error
@@ -22,7 +22,7 @@ describe "jsonp.request", ->
       expect(typeof data).toEqual("object")
       expect(data.version).toMatch(/^[a-z0-9]{40}$/)
 
-      expect(jsonp.callbacks).toEqual({})
+      expect(jsonp.callbacks()).toEqual({})
       expect(document.getElementsByClassName('myna-jsonp').length).toEqual(0)
 
   it "should call the error callback if the request times out", ->
@@ -54,16 +54,16 @@ describe "jsonp.request", ->
       expect(typeof error).toEqual("object")
       expect(error.messages[0].typename).toEqual("timeout")
 
-      expect(jsonp.callbacks).toEqual({})
+      expect(jsonp.callbacks()).toEqual({})
       expect(document.getElementsByClassName('myna-jsonp').length).toEqual(0)
 
 describe "jsonp.removeCallback", ->
   it "should remove a callback even if the scriptElem argument is null", ->
-    jsonp.callbacks.a = (->)
-    expect(jsonp.callbacks).not.toEqual({})
+    jsonp.callbacks().a = (->)
+    expect(jsonp.callbacks()).not.toEqual({})
 
     jsonp.removeCallback('a', null)
-    expect(jsonp.callbacks).toEqual({})
+    expect(jsonp.callbacks()).toEqual({})
 
   it "should remove a script tag even if the callbackName argument is null", ->
     scriptElem = document.createElement("script")
