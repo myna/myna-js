@@ -53,6 +53,7 @@ module.exports = (grunt) ->
     [
       intro...
       "common.coffee"
+      "init-spec.coffee"
       "core-spec.coffee"
       "hash-spec.coffee"
       "jsonp-spec.coffee"

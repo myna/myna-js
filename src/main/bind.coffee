@@ -113,7 +113,8 @@ class Myna.Binder
   bindRedirect: (expt, variant, dataAttr, elem) =>
     Myna.log("Myna.Binder.bindRedirect", expt, dataAttr, elem)
 
-    attr = elem.data(dataAttr)
+    self = Myna.$(elem)
+    attr = self.data(dataAttr)
 
     dest =
       switch attr
