@@ -1,7 +1,7 @@
-log        = require '../app/log'
-Experiment = require '../app/experiment'
-Client     = require '../app/client'
-Recorder   = require '../app/recorder'
+log        = require '../main/log'
+Experiment = require '../main/experiment'
+Client     = require '../main/client'
+Recorder   = require '../main/recorder'
 
 expt = new Experiment
   uuid:     "45923780-80ed-47c6-aa46-15e2ae7a0e8c"

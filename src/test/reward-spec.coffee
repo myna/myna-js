@@ -1,7 +1,7 @@
-Experiment = require '../app/experiment'
-Client     = require '../app/client'
-Recorder   = require '../app/recorder'
-Variant    = require '../app/variant'
+Experiment = require '../main/experiment'
+Client     = require '../main/client'
+Recorder   = require '../main/recorder'
+Variant    = require '../main/variant'
 
 expt = new Experiment
   uuid:     "45923780-80ed-47c6-aa46-15e2ae7a0e8c"

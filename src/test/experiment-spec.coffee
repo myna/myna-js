@@ -1,6 +1,6 @@
-cache      = require '../app/cache'
-Experiment = require '../app/experiment'
-Variant    = require '../app/variant'
+cache      = require '../main/cache'
+Experiment = require '../main/experiment'
+Variant    = require '../main/variant'
 
 initialized = (fn) ->
   ->

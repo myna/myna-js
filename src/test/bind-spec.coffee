@@ -1,14 +1,14 @@
 $          = require 'jquery'
-Experiment = require '../app/experiment'
-Client     = require '../app/client'
-Binder     = require '../app/bind'
-Recorder   = require '../app/recorder'
+Experiment = require '../main/experiment'
+Client     = require '../main/client'
+Binder     = require '../main/bind'
+Recorder   = require '../main/recorder'
 
-initialHtml = $("#experiments").html()
+$("body").append("<div id='experiments'></div>")
 
 initialized = (fn) ->
   ->
-    $("#experiments").html(initialHtml)
+    $("#experiments").html('')
 
     expt1 = new Experiment
       uuid:     "45923780-80ed-47c6-aa46-15e2ae7a0e8c"

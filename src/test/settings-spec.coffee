@@ -1,4 +1,4 @@
-Settings = require '../app/settings'
+Settings = require '../main/settings'
 
 describe "Settings.Path.constructor", ->
   it "should parse the empty string", ->

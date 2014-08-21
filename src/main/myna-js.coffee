@@ -88,4 +88,4 @@ Myna.initRemote = (options) ->
 
   return
 
-module.exports = Myna
+module.exports = window.Myna = Myna

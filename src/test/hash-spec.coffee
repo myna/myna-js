@@ -1,4 +1,4 @@
-hash = require '../app/hash'
+hash = require '../main/hash'
 
 describe "hash.parse", ->
   it "should parse a blank hash", ->

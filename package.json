@@ -1,7 +1,6 @@
 {
   "name": "myna",
-  "version": "2.2.0",
-  "series": "2",
+  "version": "3.0.0",
   "description": "Javascript client for Myna. See http://mynaweb.com/",
   "homepage": "http://mynaweb.com/",
   "keywords": [
@@ -68,6 +67,9 @@
     "browserify": "~4.2.0",
     "karma": "~0.12.16",
     "karma-browserify": "~0.2.1",
-    "karma-jasmine": "~0.1.5"
+    "karma-jasmine": "~0.1.5",
+    "grunt-karma": "~0.8.3",
+    "grunt-browserify": "~2.1.4",
+    "karma-phantomjs-launcher": "~0.1.4"
   }
 }

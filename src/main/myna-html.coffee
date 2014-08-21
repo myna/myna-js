@@ -5,7 +5,7 @@ jsonp           = require './jsonp'
 Client          = require './client'
 Recorder        = require './recorder'
 Experiment      = require './experiment'
-Binder          = require './binder'
+Binder          = require './bind'
 Inspector       = require './inspector'
 GoogleAnalytics = require './google-analytics'
 
@@ -79,4 +79,4 @@ Myna.initRemote = (options) ->
 
   return
 
-module.exports = Myna
+module.exports = window.Myna = Myna

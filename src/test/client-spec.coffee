@@ -1,4 +1,4 @@
-Client = require '../app/client'
+Client = require '../main/client'
 
 describe "Client.constructor", ->
   it "should accept custom options", ->

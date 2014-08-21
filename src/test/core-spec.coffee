@@ -1,4 +1,4 @@
-util = require '../app/util'
+util = require '../main/util'
 
 describe "util.extend", ->
   it "should add keys to an object", ->

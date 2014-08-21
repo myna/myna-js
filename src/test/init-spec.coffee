@@ -1,8 +1,8 @@
-log        = require '../app/log'
-Client     = require '../app/client'
-Experiment = require '../app/experiment'
-Variant    = require '../app/variant'
-Myna       = require '../app/myna-js'
+log        = require '../main/log'
+Client     = require '../main/client'
+Experiment = require '../main/experiment'
+Variant    = require '../main/variant'
+Myna       = require '../main/myna-js'
 
 deployment =
   apiKey: "092c90f6-a8f2-11e2-a2b9-7c6d628b25f7"

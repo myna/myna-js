@@ -1,4 +1,4 @@
-Variant = require '../app/variant'
+Variant = require '../main/variant'
 
 describe "Variant.constructor", ->
   it "should accept custom options", ->

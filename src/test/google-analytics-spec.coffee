@@ -1,6 +1,6 @@
-Experiment      = require '../app/experiment'
-Client          = require '../app/client'
-GoogleAnalytics = require '../app/google-analytics'
+Experiment      = require '../main/experiment'
+Client          = require '../main/client'
+GoogleAnalytics = require '../main/google-analytics'
 
 expt = new Experiment
   uuid:     "45923780-80ed-47c6-aa46-15e2ae7a0e8c"

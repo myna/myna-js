@@ -1,4 +1,4 @@
-jsonp = require '../app/jsonp'
+jsonp = require '../main/jsonp'
 
 describe "jsonp.request", ->
   it "should fetch data", ->

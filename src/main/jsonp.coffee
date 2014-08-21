@@ -6,13 +6,15 @@ log = require './log'
 window.__mynacallbacks = {}
 
 # string element -> void
-removeCallback: (callbackName = null, scriptElem = null) ->
+removeCallback = (callbackName = null, scriptElem = null) ->
+  log.debug('removeCallback', callbackName, scriptElem, scriptElem?.parentNode)
+
   readyState = scriptElem?.readyState
   unless readyState && readyState != "complete" && readyState != "loaded"
     try
       if scriptElem
         scriptElem.onload = null
-        scriptElem.parentNode.removeCallbackChild(scriptElem)
+        scriptElem.parentNode.removeChild(scriptElem)
     finally
       if callbackName then delete window.__mynacallbacks[callbackName]
   return
@@ -21,7 +23,7 @@ removeCallback: (callbackName = null, scriptElem = null) ->
 #
 # This private method is factored out of jsonp.request
 # so we can hook into it in unit tests. See jsonp-spec.coffee
-createScriptElem: (url, callbackName) ->
+createScriptElem = (url, callbackName) ->
   scriptElem = document.createElement("script")
   scriptElem.setAttribute("type","text/javascript")
   scriptElem.setAttribute("async", "true")
@@ -44,7 +46,7 @@ createScriptElem: (url, callbackName) ->
 # ->
 #   undefined
 # )
-request: (options = {}) ->
+request = (options = {}) ->
   urlRoot      = options.url     ? log.error("jsonp.request", "no url in options", options)
   success      = options.success ? (->)
   error        = options.error   ? (->)
@@ -114,5 +116,6 @@ request: (options = {}) ->
 module.exports = {
   request
   callbacks: window.__mynacallbacks
+  createScriptElem # for debugging
   removeCallback
 }

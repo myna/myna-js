@@ -1,8 +1,8 @@
-log        = require '../app/log'
-jsonp      = require '../app/jsonp'
-Experiment = require '../app/Experiment'
-Client     = require '../app/client'
-Recorder   = require '../app/recorder'
+log        = require '../main/log'
+jsonp      = require '../main/jsonp'
+Experiment = require '../main/Experiment'
+Client     = require '../main/client'
+Recorder   = require '../main/recorder'
 
 goodApiKey = testApiKey
 badApiKey  = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
