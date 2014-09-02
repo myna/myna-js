@@ -50,16 +50,15 @@ module.exports = (grunt) ->
   mynaHtmlDistLatest    = "dist/myna-html-#{series}.latest.js"
   mynaHtmlDistLatestMin = "dist/myna-html-#{series}.latest.min.js"
 
-  testSrcDir            = "src/test/"
-  testSrcFiles          = "**/*.coffee"
-  testDistDir           = "temp/test/"
+  testSrcMain           = "src/test/**/*.coffee"
+  testDistMain          = "temp/test/myna-spec.js"
 
   browserifyOptions     =
     watch     : true
     transform : [ 'coffeeify', 'partialify' ]
     keepAlive : false
     browserifyOptions:
-      debug      : true    # generate source maps
+      debug      : true   # generate source maps
       extensions : [ '.coffee' ]
 
   grunt.renameTask "watch", "watchImpl"
@@ -100,12 +99,9 @@ module.exports = (grunt) ->
         dest    : mynaHtmlTempMain
         options : browserifyOptions
       test:
-        expand  : true
-        cwd     : testSrcDir
-        src     : testSrcFiles
-        dest    : testDistDir
+        src     : testSrcMain
+        dest    : testDistMain
         options : browserifyOptions
-        ext     : ".js"
 
     uglify:
       mynaJsDist:
@@ -142,10 +138,13 @@ module.exports = (grunt) ->
     karma:
       single:
         configFile : 'karma.conf.coffee'
+        background : false
         singleRun  : true
+        autoWatch  : false
       watch:
         configFile : 'karma.conf.coffee'
         background : true
+        singleRun  : false
         autoWatch  : false
 
     watchImpl:

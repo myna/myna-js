@@ -1,10 +1,12 @@
-log             = require './log'
-hash            = require './hash'
-jsonp           = require './jsonp'
+log             = require './common/log'
+hash            = require './common/hash'
+jsonp           = require './common/jsonp'
 Client          = require './client'
-Recorder        = require './recorder'
-Experiment      = require './experiment'
-GoogleAnalytics = require './google-analytics'
+Recorder        = require './client/recorder'
+Experiment      = require './client/experiment'
+GoogleAnalytics = require './client/google-analytics'
+
+if hash.params.debug? then log.enabled = true
 
 Myna = {}
 
@@ -24,18 +26,13 @@ Myna.triggerReady = (client) ->
 # deploymentJson -> void
 Myna.init = (options) ->
   log.debug("Myna.init", options)
-
-  if hash.preview() && options.latest
-    Myna.initRemote { url: options.latest }
-  else
-    success = options.success ? (->)
-    error   = options.error   ? (->)
-    try
-      client = Myna.initLocal(options)
-      success(client)
-    catch exn
-      error(exn)
-
+  success = options.success ? (->)
+  error   = options.error   ? (->)
+  try
+    client = Myna.initLocal(options)
+    success(client)
+  catch exn
+    error(exn)
   return
 
 # deploymentJson -> Myna.Client

@@ -1,13 +1,13 @@
 $               = require 'jquery'
-log             = require './log'
-hash            = require './hash'
-jsonp           = require './jsonp'
+log             = require './common/log'
+hash            = require './common/hash'
+jsonp           = require './common/jsonp'
 Client          = require './client'
-Recorder        = require './recorder'
-Experiment      = require './experiment'
-Binder          = require './bind'
-Inspector       = require './inspector'
-GoogleAnalytics = require './google-analytics'
+Recorder        = require './client/recorder'
+Experiment      = require './client/experiment'
+GoogleAnalytics = require './client/google-analytics'
+
+if hash.params.debug? then log.enabled = true
 
 Myna = {}
 
@@ -27,12 +27,13 @@ Myna.triggerReady = (client) ->
 # deploymentJson -> void
 Myna.init = (options) ->
   log.debug("Myna.init", options)
-
-  if hash.preview() && options.latest
-    Myna.initRemote { url: options.latest }
-  else
-    Myna.initLocal(options)
-
+  success = options.success ? (->)
+  error   = options.error   ? (->)
+  try
+    client = Myna.initLocal(options)
+    success(client)
+  catch exn
+    error(exn)
   return
 
 # deploymentJson -> void
@@ -44,21 +45,12 @@ Myna.initLocal = (options) ->
   experiments          = for expt in (options.experiments ? []) then new Experiment(expt)
   Myna.client          = new Client({ apiKey, apiRoot, experiments })
   Myna.recorder        = new Recorder(Myna.client)
-  Myna.binder          = new Binder(Myna.client)
   Myna.googleAnalytics = new GoogleAnalytics(Myna.client)
 
-  if hash.preview()
-    Myna.inspector = new Inspector(Myna.client, Myna.binder)
-    $ ->
-      Myna.triggerReady(Myna.client)
-      Myna.inspector.init()
-      Myna.binder.init()
-  else
-    $ ->
-      Myna.triggerReady(Myna.client)
-      Myna.recorder.init()
-      Myna.googleAnalytics.init()
-      Myna.binder.init()
+  $ ->
+    Myna.triggerReady(Myna.client)
+    Myna.recorder.init()
+    Myna.googleAnalytics.init()
 
   Myna.client
 

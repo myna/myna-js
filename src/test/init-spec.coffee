@@ -1,7 +1,7 @@
-log        = require '../main/log'
+log        = require '../main/common/log'
 Client     = require '../main/client'
-Experiment = require '../main/experiment'
-Variant    = require '../main/variant'
+Experiment = require '../main/client/experiment'
+Variant    = require '../main/client/variant'
 Myna       = require '../main/myna-js'
 
 deployment =
