@@ -60,13 +60,14 @@ module.exports = (grunt) ->
   testSrcMain       = "src/test/client/event-spec.coffee"
   testDistMain      = "temp/myna-spec.js"
 
-  browserifyOptions =
+  browserifyOptions = (alias) ->
     watch     : true
     transform : [ 'coffeeify', 'partialify' ]
     keepAlive : false
     browserifyOptions:
       debug      : true   # generate source maps
       extensions : [ '.coffee' ]
+      alias      : alias
 
   grunt.renameTask "watch", "watchImpl"
 
@@ -100,15 +101,15 @@ module.exports = (grunt) ->
       myna:
         src     : mynaSrcMain
         dest    : mynaTempMain
-        options : browserifyOptions
+        options : browserifyOptions { Main: mynaSrcMain }
       auto:
         src     : autoSrcMain
         dest    : autoTempMain
-        options : browserifyOptions
+        options : browserifyOptions { Main: autoSrcMain }
       test:
         src     : testSrcMain
         dest    : testDistMain
-        options : browserifyOptions
+        options : browserifyOptions {}
 
     uglify:
       mynaDist:

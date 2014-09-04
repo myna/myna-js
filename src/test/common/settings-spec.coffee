@@ -39,9 +39,9 @@ describe "Path.get", ->
     expect(new Path("a").get(a: b: c: 1)).toEqual(b: c: 1)
     expect(new Path("a.b").get(a: b: c: 1)).toEqual(c: 1)
     expect(new Path("a.b.c").get(a: b: c: 1)).toEqual(1)
-    expect(new Path("a.b.c.d").get(a: b: c: 1)).toEqual(null)
-    expect(new Path("a.b.d").get(a: b: c: 1)).toEqual(null)
-    expect(new Path("d").get(a: b: c: 1)).toEqual(null)
+    expect(new Path("a.b.c.d").get(a: b: c: 1)).toEqual(undefined)
+    expect(new Path("a.b.d").get(a: b: c: 1)).toEqual(undefined)
+    expect(new Path("d").get(a: b: c: 1)).toEqual(undefined)
 
 describe "Path.set", ->
   it "should return appropriate values", ->
@@ -53,7 +53,7 @@ describe "Path.set", ->
     expect(new Path("a.b.d").set(a: b: c: 1, "foo")).toEqual { a: b: { c: 1, d: "foo" } }
     expect(new Path("d").set(a: b: c: 1, "foo")).toEqual { a: { b: c: 1 }, d: "foo" }
 
-  it "should return appropriate valueswhen passed null", ->
+  it "should return appropriate values when passed null", ->
     expect(new Path("").set(a: b: c: 1, null)).toEqual undefined
     expect(new Path("a").set(a: b: c: 1, null)).toEqual { }
     expect(new Path("a.b").set(a: b: c: 1, null)).toEqual { a: {} }
@@ -120,8 +120,8 @@ describe "get", ->
   it "should return a non-leaf value", ->
     expect(settings.get({ a: b: c: 123 }, "a")).toEqual(b: c: 123)
 
-  it "should return null for a missing value", ->
-    expect(settings.get({ a: b: c: 123 }, "a.c.e")).toEqual(null)
+  it "should return undefined for a missing value", ->
+    expect(settings.get({ a: b: c: 123 }, "a.c.e")).toEqual(undefined)
 
   it "should default to the provided value if necessary", ->
     expect(settings.get({ a: b: c: 123 }, "a.b.c", 234)).toEqual(123)
