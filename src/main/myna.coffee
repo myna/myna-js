@@ -3,12 +3,16 @@ bootstrap      = require './bootstrap'
 
 ###
 Myna client library
--------------------
+===================
 
-This is the main entry point for `myna.js`,
-the lightweight Myna library for use by Javascript developers.
+This is the main entry point for `myna.js`, a Myna library
+for use by Javascript developers. The contents of this file
+are exported by Browserify as the global variable `Myna`.
 
-Use one of the following functions to initialise Myna:
+Getting started
+---------------
+
+Use one of the following methods to initialise a Myna client:
 
     # Create a Myna client from a remote deployment configuration URL. For example:
     #
@@ -19,7 +23,10 @@ Use one of the following functions to initialise Myna:
     Myna.initRemote(url, [timeout]) -> promiseOf(client)
 
     # Create a Myna client from a local deployment configuration:
-    Myna.init(deploymentJson) -> promiseOf(client)
+    Myna.initLocal(deploymentJson) -> promiseOf(client)
+
+Running experiments
+-------------------
 
 Once you have a client, use the following methods to suggest/view/reward experiments:
 
