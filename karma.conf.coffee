@@ -1,7 +1,7 @@
 module.exports = (config) ->
   config.set
-    basePath        : 'temp/test'
-    files           : [ '**/*.js' ]
+    basePath        : 'temp'
+    files           : [ 'myna-spec.js' ]
     reporters       : [ 'progress' ]
     colors          : true
     logLevel        : config.LOG_DEBUG
