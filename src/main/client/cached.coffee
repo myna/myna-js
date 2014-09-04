@@ -1,7 +1,7 @@
 Promise     = require('es6-promise').Promise
 log         = require '../common/log'
 BasicClient = require './basic'
-storage     = require './storage'
+variant     = require './variant'
 
 ###
 Cached suggest/view/reward client.
@@ -21,33 +21,47 @@ module.exports = class CachedClient extends BasicClient
   # Remembers the last-suggested variant for use in reward().
   #
   # experiment -> promiseOf(variant)
-  suggest: (expt) ->
-    super(expt).then (variant) ->
-      storage.save(expt, "lastView", variant)
-      variant
+  suggest: (expt) =>
+    log.debug("CachedClient.suggest", expt)
+    super(expt).then (vrnt) =>
+      log.debug("CachedClient.suggest", "variant", vrnt)
+      variant.save(expt, 'lastView', vrnt)
+      vrnt
 
-  view: (expt, variantOrId) ->
-    super(expt, variantOrId).then (variant) ->
-      storage.save(expt, "lastView", variant)
-      variant
+  # View a variant.
+  #
+  # Remembers the last-viewed variant for use in reward().
+  #
+  # experiment or(variant string) -> promiseOf(variant)
+  view: (expt, variantOrId) =>
+    log.debug("CachedClient.view", expt, variantOrId)
+    super(expt, variantOrId).then (vrnt) =>
+      log.debug("CachedClient.view", "variant", vrnt)
+      variant.save(expt, 'lastView', vrnt)
+      vrnt
 
   # Reward the last variant to be returned by suggest() or view().
   #
   # Clears the last viewed variant on completion to avoid double-rewards.
   #
   # experiment 0-to-1 -> promiseOf(variant)
-  reward: (expt, amount = 1.0) ->
-    lastView = storage.load(expt, "lastView")
+  reward: (expt, amount = 1.0) =>
+    log.debug("CachedClient.reward", expt, amount)
+    lastView = variant.load(expt, 'lastView')
+    log.debug("lastView", lastView)
     if lastView
-      super(expt, lastView, amount).then (variant) ->
-        storage.clear(expt, "lastView")
-        variant
+      super(expt, lastView, amount).then (vrnt) =>
+        log.debug("CachedClient.reward", "variant", vrnt)
+        variant.remove(expt, 'lastView')
+        vrnt
     else
+      log.debug("suffering epic fail")
       Promise.reject(new Error("No last view for experiment #{expt.id} (#{expt.uuid})"))
 
-  # Clear any storaged variants from the last view of `expt`.
+  # Clear any cached variants from the last view of `expt`.
   #
   # experiment -> void
-  clear: (expt) ->
-    cache.clear(expt, 'lastView')
+  clear: (expt) =>
+    log.debug("CachedClient.clear", expt)
+    variant.remove(expt, 'lastView')
     return

@@ -1,6 +1,6 @@
 Promise  = require('es6-promise').Promise
 log      = require '../common/log'
-storage  = require './storage'
+variant  = require './variant'
 
 ###
 Sticky suggest/view/reward client.
@@ -19,7 +19,7 @@ module.exports = class StickyCache
   #
   # experiment -> promiseOf(variant)
   loadView: (expt) =>
-    stickyView = @_isSticky(expt) && storage.load(expt, "stickyView")
+    stickyView = @_isSticky(expt) && variant.load(expt, 'stickyView')
     if stickyView
       Promise.resolve(stickyView)
     else
@@ -31,7 +31,7 @@ module.exports = class StickyCache
   #
   # experiment variant -> void
   saveView: (expt, variant) =>
-    if @_isSticky(expt) then storage.save(expt, "stickyView")
+    if @_isSticky(expt) then variant.save(expt, 'stickyView', variant)
     return
 
   # Load the last sticky reward variant for `expt`.
@@ -40,7 +40,7 @@ module.exports = class StickyCache
   #
   # experiment -> promiseOf(variant)
   loadReward: (expt) =>
-    stickyReward = @_isSticky(expt) && storage.load(expt, "stickyReward")
+    stickyReward = @_isSticky(expt) && variant.load(expt, "stickyReward")
     if stickyReward
       Promise.resolve(stickyReward)
     else
@@ -52,7 +52,7 @@ module.exports = class StickyCache
   #
   # experiment variant -> void
   saveReward: (expt, variant) =>
-    if @_isSticky(expt) then storage.save(expt, "stickyReward")
+    if @_isSticky(expt) then variant.save(expt, 'stickyReward', variant)
     return
 
   # Clear any cached sticky variants and variants from previous calls
@@ -60,12 +60,12 @@ module.exports = class StickyCache
   #
   # experiment -> void
   clear: (expt) =>
-    storage.clear(expt, 'stickyView')
-    storage.clear(expt, 'stickyReward')
+    variant.remove(expt, 'stickyView')
+    variant.remove(expt, 'stickyReward')
     return
 
   # Does this experiment use sticky variants?
   #
   # experiment -> boolean
-  @_isSticky: (expt) ->
+  _isSticky: (expt) ->
     !!settings.get(expt.settings, @stickyKey, false)
