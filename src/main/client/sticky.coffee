@@ -1,5 +1,6 @@
 Promise  = require('es6-promise').Promise
 log      = require '../common/log'
+settings = require '../common/settings'
 variant  = require './variant'
 
 ###
@@ -17,42 +18,38 @@ module.exports = class StickyCache
   #
   # If there is no last view, or the experiment does not use sticky variants, fail.
   #
-  # experiment -> promiseOf(variant)
+  # experiment -> or(variant, null)
   loadView: (expt) =>
-    stickyView = @_isSticky(expt) && variant.load(expt, 'stickyView')
-    if stickyView
-      Promise.resolve(stickyView)
-    else
-      Promise.reject(new Error("No cached sticky view"))
+    log.debug('StickyCache.loadView', expt)
+    if @_isSticky(expt) then variant.load(expt, 'stickyView') else null
 
   # Attempt to save a sticky view for `expt`.
   #
   # If the experiment does not use sticky variants, do nothing.
   #
   # experiment variant -> void
-  saveView: (expt, variant) =>
-    if @_isSticky(expt) then variant.save(expt, 'stickyView', variant)
+  saveView: (expt, vrnt) =>
+    log.debug('StickyCache.saveView', expt, vrnt)
+    if @_isSticky(expt) then variant.save(expt, 'stickyView', vrnt)
     return
 
   # Load the last sticky reward variant for `expt`.
   #
   # If there is no last reward, or the experiment does not use sticky variants, fail.
   #
-  # experiment -> promiseOf(variant)
+  # experiment -> or(variant, null)
   loadReward: (expt) =>
-    stickyReward = @_isSticky(expt) && variant.load(expt, "stickyReward")
-    if stickyReward
-      Promise.resolve(stickyReward)
-    else
-      Promise.reject(new Error("No cached sticky reward"))
+    log.debug('StickyCache.loadReward', expt)
+    if @_isSticky(expt) then variant.load(expt, "stickyReward") else null
 
   # Attempt to save a sticky reward for `expt`.
   #
   # If the experiment does not use sticky variants, do nothing.
   #
   # experiment variant -> void
-  saveReward: (expt, variant) =>
-    if @_isSticky(expt) then variant.save(expt, 'stickyReward', variant)
+  saveReward: (expt, vrnt) =>
+    log.debug('StickyCache.saveReward', expt, vrnt)
+    if @_isSticky(expt) then variant.save(expt, 'stickyReward', vrnt)
     return
 
   # Clear any cached sticky variants and variants from previous calls
@@ -60,6 +57,7 @@ module.exports = class StickyCache
   #
   # experiment -> void
   clear: (expt) =>
+    log.debug('StickyCache.clear', expt)
     variant.remove(expt, 'stickyView')
     variant.remove(expt, 'stickyReward')
     return
