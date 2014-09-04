@@ -12,7 +12,7 @@ get = (key) =>
   else
     cookie.get(key)
 
-# string object -> void
+# string object -> object
 set = (key, value) =>
   if localStorage.supported && localStorage.enabled
     localStorage.set(key, value)

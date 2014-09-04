@@ -37,6 +37,7 @@
     "url": "https://github.com/myna/myna-js"
   },
   "dependencies": {
+    "es6-promise": "^1.0.0",
     "jquery": "~1.11.1"
   },
   "devDependencies": {

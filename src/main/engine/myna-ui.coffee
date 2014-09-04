@@ -7,8 +7,8 @@ A changeset is an array of `change` objects representing individual adjustments 
 `changes` take one of the following forms:
 
  - Hide an element      : { typename: 'hide',      location: locationSelector, selector: selector }
- - Change element text  : { typename: 'text',      location: locationSelector, selector: selector, text: string   }
- - Change element HTML  : { typename: 'html',      location: locationSelector, selector: selector, html: string   }
+ - Change element text  : { typename: 'text',      location: locationSelector, selector: selector, text: string }
+ - Change element HTML  : { typename: 'html',      location: locationSelector, selector: selector, html: string }
  - Change element style : { typename: 'css',       location: locationSelector, selector: selector, css: cssObject }
  - Change element attr  : { typename: 'attr',      location: locationSelector, selector: selector, name: string, value: string }
  - DOM event goal       : { typename: 'eventgoal', location: locationSelector, selector: selector, event: string }

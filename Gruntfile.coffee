@@ -1,4 +1,21 @@
-#global module:false
+# global module: false
+
+###
+Myna build script
+-----------------
+
+This script builds two main libraries for use with Browserify:
+
+ - myna.js -- a library for JS developers to use to run Myna experiments.
+   This is the codebase you get if you require Myna from NPM.
+
+ - myna-auto.js -- a library for our internal use that loads myna.js and
+   automatically runs relevant exoeriments.
+
+The script publishes minified and unminified verions of each library
+to the `dist` directory.
+###
+
 module.exports = (grunt) ->
   grunt.loadNpmTasks 'grunt-browserify'
   grunt.loadNpmTasks 'grunt-contrib-connect'
@@ -7,53 +24,43 @@ module.exports = (grunt) ->
   grunt.loadNpmTasks 'grunt-contrib-watch'
   grunt.loadNpmTasks 'grunt-karma'
 
-  minify      = grunt.option('minify') ? false
-
-  pkg         = grunt.file.readJSON("package.json")
-  name        = pkg.name
-  series      = pkg.version.split("\.")[0]
-  version     = pkg.version
-  homepage    = pkg.homepage
-  license     = (for license in pkg.licenses then license.type).join(", ")
-  today       = grunt.template.today("yyyy-mm-dd")
-  thisYear    = grunt.template.today("yyyy")
-
-  mynaJsBanner =
+  minify   = grunt.option('minify') ? false
+  pkg      = grunt.file.readJSON("package.json")
+  name     = pkg.name
+  series   = pkg.version.split("\.")[0]
+  version  = pkg.version
+  homepage = pkg.homepage
+  license  = (for license in pkg.licenses then license.type).join(", ")
+  today    = grunt.template.today("yyyy-mm-dd")
+  thisYear = grunt.template.today("yyyy")
+  banner   =
     """
-    /*! Myna JS v#{version} - #{today}
+    /*! Myna v#{version} - #{today}
      * #{homepage}
      * Copyright (c) #{thisYear} Myna Limited; Licensed #{license}
      */
 
     """
 
-  mynaHtmlBanner =
-    """
-    /*! Myna HTML v#{version} - #{today}
-     * #{homepage}
-     * Copyright (c) #{thisYear} Myna Limited; Licensed #{license}
-     */
+  mynaSrcMain       = "src/main/myna.coffee"
+  mynaTempMain      = "temp/myna.js"
+  mynaDistMain      = "dist/myna-#{version}.js"
+  mynaDistMainMin   = "dist/myna-#{version}.min.js"
+  mynaDistLatest    = "dist/myna-#{series}.latest.js"
+  mynaDistLatestMin = "dist/myna-#{series}.latest.min.js"
 
-    """
+  autoSrcMain       = "src/main/myna-auto.coffee"
+  autoTempMain      = "temp/myna-auto.js"
+  autoDistMain      = "dist/myna-auto-#{version}.js"
+  autoDistMainMin   = "dist/myna-auto-#{version}.min.js"
+  autoDistLatest    = "dist/myna-auto-#{series}.latest.js"
+  autoDistLatestMin = "dist/myna-auto-#{series}.latest.min.js"
 
-  mynaJsSrcMain         = "src/main/myna-js.coffee"
-  mynaJsTempMain        = "temp/myna.js"
-  mynaJsDistMain        = "dist/myna-#{version}.js"
-  mynaJsDistMainMin     = "dist/myna-#{version}.min.js"
-  mynaJsDistLatest      = "dist/myna-#{series}.latest.js"
-  mynaJsDistLatestMin   = "dist/myna-#{series}.latest.min.js"
+  # testSrcMain       = "src/test/**/*.coffee"
+  testSrcMain       = "src/test/client/event-spec.coffee"
+  testDistMain      = "temp/myna-spec.js"
 
-  mynaHtmlSrcMain       = "src/main/myna-html.coffee"
-  mynaHtmlTempMain      = "temp/myna-html.js"
-  mynaHtmlDistMain      = "dist/myna-html-#{version}.js"
-  mynaHtmlDistMainMin   = "dist/myna-html-#{version}.min.js"
-  mynaHtmlDistLatest    = "dist/myna-html-#{series}.latest.js"
-  mynaHtmlDistLatestMin = "dist/myna-html-#{series}.latest.min.js"
-
-  testSrcMain           = "src/test/**/*.coffee"
-  testDistMain          = "temp/test/myna-spec.js"
-
-  browserifyOptions     =
+  browserifyOptions =
     watch     : true
     transform : [ 'coffeeify', 'partialify' ]
     keepAlive : false
@@ -87,16 +94,16 @@ module.exports = (grunt) ->
 
   grunt.initConfig
     pkg: pkg
-    meta: { mynaJsBanner }
+    meta: { banner }
 
     browserify:
-      mynaJs:
-        src     : mynaJsSrcMain
-        dest    : mynaJsTempMain
+      myna:
+        src     : mynaSrcMain
+        dest    : mynaTempMain
         options : browserifyOptions
-      mynaHtml:
-        src     : mynaHtmlSrcMain
-        dest    : mynaHtmlTempMain
+      auto:
+        src     : autoSrcMain
+        dest    : autoTempMain
         options : browserifyOptions
       test:
         src     : testSrcMain
@@ -104,36 +111,36 @@ module.exports = (grunt) ->
         options : browserifyOptions
 
     uglify:
-      mynaJsDist:
-        src     : [ mynaJsTempMain ]
-        dest    : mynaJsDistMain
+      mynaDist:
+        src     : [ mynaTempMain ]
+        dest    : mynaDistMain
         options :
-          banner   : mynaJsBanner
+          banner   : banner
           beautify : true
-      mynaHtmlDist:
-        src     : [ mynaHtmlTempMain ]
-        dest    : mynaHtmlDistMain
+      autoDist:
+        src     : [ autoTempMain ]
+        dest    : autoDistMain
         options :
-          banner   : mynaJsBanner
+          banner   : banner
           beautify : true
-      mynaJsDistMin:
-        src     : [ mynaJsTempMain ]
-        dest    : mynaJsDistMainMin
+      mynaDistMin:
+        src     : [ mynaTempMain ]
+        dest    : mynaDistMainMin
         options :
-          banner   : mynaHtmlBanner
+          banner   : banner
           beautify : false
-      mynaHtmlDistMin:
-        src     : [ mynaHtmlTempMain ]
-        dest    : mynaHtmlDistMainMin
+      autoDistMin:
+        src     : [ autoTempMain ]
+        dest    : autoDistMainMin
         options :
-          banner   : mynaHtmlBanner
+          banner   : banner
           beautify : false
 
     copy:
-      mynaJsDistLatest:      { src: [ mynaJsDistMain      ], dest: mynaJsDistLatest      }
-      mynaHtmlDistLatest:    { src: [ mynaHtmlDistMain    ], dest: mynaHtmlDistLatest    }
-      mynaJsDistLatestMin:   { src: [ mynaJsDistMainMin   ], dest: mynaJsDistLatestMin   }
-      mynaHtmlDistLatestMin: { src: [ mynaHtmlDistMainMin ], dest: mynaHtmlDistLatestMin }
+      mynaDistLatest:    { src: [ mynaDistMain    ], dest: mynaDistLatest    }
+      autoDistLatest:    { src: [ autoDistMain    ], dest: autoDistLatest    }
+      mynaDistLatestMin: { src: [ mynaDistMainMin ], dest: mynaDistLatestMin }
+      autoDistLatestMin: { src: [ autoDistMainMin ], dest: autoDistLatestMin }
 
     karma:
       single:
