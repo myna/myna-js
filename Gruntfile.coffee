@@ -56,18 +56,18 @@ module.exports = (grunt) ->
   autoDistLatest    = "dist/myna-auto-#{series}.latest.js"
   autoDistLatestMin = "dist/myna-auto-#{series}.latest.min.js"
 
-  # testSrcMain       = "src/test/**/*.coffee"
-  testSrcMain       = "src/test/client/event-spec.coffee"
+  testSrcMain       = "src/test/**/*.coffee"
+  # testSrcMain       = "src/test/client/event-spec.coffee"
   testDistMain      = "temp/myna-spec.js"
 
-  browserifyOptions = (alias) ->
+  browserifyOptions = (publicModuleName = undefined) ->
     watch     : true
     transform : [ 'coffeeify', 'partialify' ]
     keepAlive : false
     browserifyOptions:
       debug      : true   # generate source maps
       extensions : [ '.coffee' ]
-      alias      : alias
+      standalone : publicModuleName
 
   grunt.renameTask "watch", "watchImpl"
 
@@ -82,15 +82,15 @@ module.exports = (grunt) ->
     "karma:single"
   ]
 
-  grunt.registerTask "watchCycle", [
-    "build"
-    "karma:watch:run"
-  ]
-
   grunt.registerTask "watch", [
     "karma:watch:start"
     "watchCycle"
     "watchImpl"
+  ]
+
+  grunt.registerTask "watchCycle", [
+    "build"
+    "karma:watch:run"
   ]
 
   grunt.initConfig
@@ -101,15 +101,15 @@ module.exports = (grunt) ->
       myna:
         src     : mynaSrcMain
         dest    : mynaTempMain
-        options : browserifyOptions { Main: mynaSrcMain }
+        options : browserifyOptions("Myna")
       auto:
         src     : autoSrcMain
         dest    : autoTempMain
-        options : browserifyOptions { Main: autoSrcMain }
+        options : browserifyOptions("Myna")
       test:
         src     : testSrcMain
         dest    : testDistMain
-        options : browserifyOptions {}
+        options : browserifyOptions(undefined)
 
     uglify:
       mynaDist:
