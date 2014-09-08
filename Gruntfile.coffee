@@ -57,7 +57,6 @@ module.exports = (grunt) ->
   autoDistLatestMin = "dist/myna-auto-#{series}.latest.min.js"
 
   testSrcMain       = "src/test/**/*.coffee"
-  # testSrcMain       = "src/test/client/default-spec.coffee"
   testDistMain      = "temp/myna-spec.js"
 
   browserifyOptions = (publicModuleName = undefined) ->
