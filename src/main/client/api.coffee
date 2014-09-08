@@ -106,6 +106,12 @@ module.exports = class ApiRecorder
 
     return syncAll()
 
+  # -> void
+  clear: =>
+    log.debug("ApiRecorder.clear")
+    storage.remove(@storageKey)
+    return
+
   # -> arrayOf(event)
   _queue: =>
     ans = storage.get(@storageKey) ? []
