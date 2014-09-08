@@ -24,7 +24,6 @@ describe "jsonp.request", ->
 
     # Replace createScriptElem with a method that creates an invalid script tag:
     spy = spyOn(jsonp, "_createScriptElem").and.callFake (url, callbackId) ->
-      console.log('stubbed _createScriptElem')
       scriptElem = document.createElement("script")
       scriptElem.setAttribute("id", callbackId)
       scriptElem.setAttribute("class", "myna-jsonp")
