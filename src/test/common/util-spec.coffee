@@ -1,5 +1,42 @@
 util = require '../../main/common/util'
 
+describe "util.isObject", ->
+  it "should identify objects", ->
+    expect(util.isObject({})).toEqual(true)
+    expect(util.isObject({ a: 1 })).toEqual(true)
+
+  it "should identify arrays", ->
+    expect(util.isObject([])).toEqual(true)
+    expect(util.isObject([ 1, 2 ])).toEqual(true)
+
+  it "should identify strings", ->
+    expect(util.isObject("")).toEqual(false)
+
+  it "should identify numbers", ->
+    expect(util.isObject(1.0)).toEqual(false)
+    expect(util.isObject(0.0 / 0.0)).toEqual(false)
+
+  it "should identify booleans", ->
+    expect(util.isObject(true)).toEqual(false)
+    expect(util.isObject(false)).toEqual(false)
+
+  it "should identify null / undefined", ->
+    expect(util.isObject(null)).toEqual(false)
+    expect(util.isObject(undefined)).toEqual(false)
+
+describe "util.isEmptyObject", ->
+  it "should identify empty objects", ->
+    expect(util.isEmptyObject({})).toEqual(true)
+    expect(util.isEmptyObject({ a: 1 })).toEqual(false)
+
+  it "should handle prototype chains correctly", ->
+    a = { x: 1 }
+    b = Object.create(a)
+    expect(a.x).toEqual(1)
+    expect(b.x).toEqual(1)
+    expect(util.isEmptyObject(a)).toEqual(false)
+    expect(util.isEmptyObject(b)).toEqual(true)
+
 describe "util.extend", ->
   it "should add keys to an object", ->
     expect(util.extend({ a: 1 }, { b: 2 }, { c: 3 })).toEqual({ a: 1, b: 2, c: 3 })

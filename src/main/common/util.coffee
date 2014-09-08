@@ -10,6 +10,13 @@ isArray = Array.isArray || (obj) ->
 isObject = (obj) ->
   obj == Object(obj)
 
+isEmptyObject = (obj) ->
+  if isObject(obj)
+    hasOwnProperty = Object.prototype.hasOwnProperty
+    for key of obj when hasOwnProperty.call(obj, key) then return false
+    return true
+  else false
+
 extend = (des, sources...) ->
   for src in sources
     for key, value of src
@@ -52,6 +59,7 @@ module.exports = {
   trim
   isArray
   isObject
+  isEmptyObject
   extend
   deleteKeys
   dateToString

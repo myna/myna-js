@@ -1,16 +1,22 @@
+log  = require '../main/common/log'
+util = require '../main/common/util'
+
 beforeEach ->
-  console.log('----- START -----')
-  jasmine.DEFAULT_TIMEOUT_INTERVAL = 5000
+  # console.log("----- START -----")
+  # jasmine.DEFAULT_TIMEOUT_INTERVAL = 2500
   jasmine.addMatchers
     toBeInstanceOf: (expected) ->
       this.actual instanceof expected
-    toBeImplemented: ->
-      this.message = -> "#{this.actual} has not been written yet."
-      false
   return
 
-afterEach ->
-  console.log('----- FINISH -----')
+afterEach (done) ->
+  waitForCleanup = =>
+    if util.isEmptyObject(window.__mynaCallbacks)
+      # console.log("----- FINISH -----")
+      done()
+    else
+      window.setTimeout(waitForCleanup, 50)
+  waitForCleanup()
   return
 
 testApiKey        = "092c90f6-a8f2-11e2-a2b9-7c6d628b25f7"

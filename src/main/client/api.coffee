@@ -7,24 +7,27 @@ util     = require '../common/util'
 
 class SyncResult
   constructor: (@completed = [], @discarded = [], @requeued = []) ->
-  complete: (completed) => return new SyncResult(@completed.concat([ completed ]), @discarded, @requeued)
-  discard:  (discarded) => return new SyncResult(@completed, @discarded.concat([ discarded ]), @requeued)
-  requeue:  (requeued)  => return new SyncResult(@completed, @discarded, @requeued.concat([ requeued ]))
+
+  complete: (completed) =>
+    new SyncResult(@completed.concat([ completed ]), @discarded, @requeued)
+
+  discard: (discarded) =>
+    new SyncResult(@completed, @discarded.concat([ discarded ]), @requeued)
+
+  requeue: (requeued) =>
+    new SyncResult(@completed, @discarded, @requeued.concat([ requeued ]))
+
+  successful: =>
+    @discarded.length == 0 && @requeued.length == 0
 
 module.exports = class ApiRecorder
-  apiKey     : null                # API key
-  apiRoot    : "//api.mynaweb.com" # API root URL
-  storageKey : "myna"              # storage key for the persisted event queue
-  timeout    : 1000                # timeout for API requests
-  attempts   : 5                   # number of timeouts / error 500s before giving up
-
   # clientConfig -> ApiRecorder
-  constructor: (options) ->
-    @apiKey     = options.apiKey     ? @apiKey     ? log.error("record.configure", "missing config key: apiKey", options)
-    @apiRoot    = options.apiRoot    ? @apiRoot    ? log.error("record.configure", "missing config key: apiRoot", options)
-    @storageKey = options.storageKey ? @storageKey ? log.error("record.configure", "missing config key: storageKey", options)
-    @timeout    = options.timeout    ? @timeout    ? log.error("record.configure", "missing config key: timeout", options)
-    @attempts   = options.attempts   ? @attempts   ? log.error("record.configure", "missing config key: attempts", options)
+  constructor: (@apiKey, @apiRoot, options = {}) ->
+    unless @apiKey  then log.error("ApiRecorder.constructor", "missing apiKey")
+    unless @apiRoot then log.error("ApiRecorder.constructor", "missing apiRoot")
+    @storageKey = settings.get(options, "myna.web.storageKey", "myna")
+    @timeout    = settings.get(options, "myna.web.timeout", 1000)
+    @inProgress = null # or(promiseOf(SyncResult), null)
     return
 
   # Enqueue a view event to be transmitted to the server,
@@ -68,15 +71,13 @@ module.exports = class ApiRecorder
   # Callback functions are passed two arguments: an array of successfully submitted
   # events and an array of requeued events.
   #
-  # -> promiseOf(syncResult)
-  #
-  # where syncResult: { completed: arrayOf(event), discarded: arrayOf(event), requeued: arrayOf(event) }
+  # -> promiseOf(SyncResult)
   sync: =>
     log.debug('ApiRecorder.sync', @_queue().length)
 
-    # event arrayOf(event) -> promiseOf(arrayOf(event))
+    # event [SyncResult] -> promiseOf(SyncResult)
     syncOne = (event, accum = new SyncResult) =>
-      # log.debug("ApiRecorder.sync.syncOne", event, accum)
+      log.debug("ApiRecorder.sync.syncOne", event, accum)
 
       params = util.extend({}, event, { apikey: @apiKey })
       params = util.deleteKeys(params, 'experiment')
@@ -86,15 +87,18 @@ module.exports = class ApiRecorder
       jsonp
       .request("#{@apiRoot}/v2/experiment/#{event.experiment}/record", params, @timeout)
       .then (response) =>
-        syncOne(accum.complete(event))
+        log.debug("ApiRecorder.sync.syncOne.then", response)
+        syncAll(accum.complete(event))
       .catch (response) =>
+        log.debug("ApiRecorder.sync.syncOne.catch", response)
         if response.status && response.status >= 500
           accum.requeue(event)
         else
           accum.discard(event)
 
+    # SyncResult -> promiseOf(SyncResult)
     syncAll = (accum = new SyncResult) =>
-      # log.debug("ApiRecorder.sync.syncAll", accum)
+      log.debug("ApiRecorder.sync.syncAll", accum)
 
       event = @_dequeue()
 
@@ -104,7 +108,20 @@ module.exports = class ApiRecorder
         @_enqueue(accum.requeued...)
         Promise.resolve(accum)
 
-    return syncAll()
+    # any -> any
+    onComplete = (result) =>
+      log.debug("ApiRecorder.sync.onComplete", result)
+      @inProgress = null
+      result
+
+    # any -> any
+    onError = (result) =>
+      log.debug("ApiRecorder.sync.onError", result)
+      @inProgress = null
+      Promise.reject(result)
+
+    @inProgress ?= syncAll().then(onComplete, onError)
+    @inProgress
 
   # -> void
   clear: =>

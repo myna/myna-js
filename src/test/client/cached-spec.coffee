@@ -72,17 +72,13 @@ describe "CachedClient", ->
   describe "reward", ->
     it "should reward the last suggested variant", (done) ->
       @client.suggest(@expt).then (viewed) =>
-        console.log("suggest viewed", viewed)
         @client.reward(@expt).then (rewarded) =>
-          console.log("suggest rewarded", rewarded)
           expect(viewed).toEqual(rewarded)
           done()
 
     it "should reward the last viewed variant", (done) ->
       @client.view(@expt, "b").then (viewed) =>
-        console.log("view viewed", viewed)
         @client.reward(@expt).then (rewarded) =>
-          console.log("view rewarded", rewarded)
           expect(viewed).toEqual(rewarded)
           expect(viewed.id).toEqual("b")
           done()

@@ -113,6 +113,19 @@ describe "create", ->
         f: h: 456
         g: 345
 
+  it "should do the right thing with common web settings", ->
+    data = settings.create
+      "myna.web.sticky": true
+      "myna.web.autoSync": false
+
+    console.log("DATA", data)
+
+    expect(data).toEqual
+      myna: web: {
+        sticky: true
+        autoSync: false
+      }
+
 describe "get", ->
   it "should return a leaf value", ->
     expect(settings.get({ a: b: c: 123 }, "a.b.c")).toEqual(123)

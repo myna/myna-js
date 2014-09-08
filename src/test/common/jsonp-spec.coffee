@@ -14,8 +14,10 @@ describe "jsonp.request", ->
       expect(typeof data).toEqual("object")
       expect(data.version).toMatch(/^[a-z0-9]{40}$/)
 
+
       expect(window.__mynaCallbacks).toEqual({})
       expect(document.getElementsByClassName('myna-jsonp').length).toEqual(0)
+
 
       done()
 

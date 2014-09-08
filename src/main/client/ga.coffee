@@ -2,6 +2,9 @@ log      = require '../common/log'
 settings = require '../common/settings'
 
 module.exports = class GaRecorder
+  constructor: (@settings) ->
+    # Do nothing (client settings aren't used here yet)
+
   view: (expt, variant) =>
     log.debug("GoogleAnalytics.view", expt, variant)
     if @_enabled(expt) then window._gaq?.push @_viewEvent(expt, variant)

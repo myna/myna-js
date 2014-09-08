@@ -4,7 +4,6 @@ base          = require '../spec-base'
 
 describe "DefaultClient", ->
   beforeEach (done) ->
-    console.log('beforeEach started')
     @variants = [
       { typename: "variant", id: "a", settings: { buttons: "red"   }, weight: 0.2 }
       { typename: "variant", id: "b", settings: { buttons: "green" }, weight: 0.4 }
@@ -28,8 +27,7 @@ describe "DefaultClient", ->
     )
     @client.record.clear()
     @client.clear('basic').then =>
-      @client.clear('sticky').then ->
-        console.log('beforeEach finish')
+      @client.clear('sticky').then =>
         done()
     return
 
@@ -83,7 +81,7 @@ describe "DefaultClient", ->
         iterate(10)
 
     it "should queue a view event for upload", (done) ->
-      spy = spyOn(@client.record, 'sync').and.callFake (->)
+      spy = spyOn(@client.record, 'sync').and.callFake (-> Promise.resolve(null))
       @client.suggest('basic').then (variant) =>
         queue = @client.record._queue()
         expect(queue.length).toEqual(1)
@@ -121,7 +119,7 @@ describe "DefaultClient", ->
           done()
 
     it "should queue a view event for upload", (done) ->
-      spy = spyOn(@client.record, 'sync').and.callFake (->)
+      spy = spyOn(@client.record, 'sync').and.callFake (-> Promise.resolve(null))
       @client.view('basic', 'b').then (variant) =>
         queue = @client.record._queue()
         expect(queue.length).toEqual(1)
@@ -147,3 +145,18 @@ describe "DefaultClient", ->
     it "should fail if no variant was suggested", (done) ->
       @client.reward('basic').catch (error) =>
         done()
+
+    it "should queue a record event for upload", (done) ->
+      spy = spyOn(@client.record, 'sync').and.callFake (-> Promise.resolve(null))
+      @client.view('basic', 'b').then (variant) =>
+        @client.reward('basic', 0.8).then (variant) =>
+          queue = @client.record._queue()
+          expect(queue.length).toEqual(2)
+          expect(queue[0].typename).toEqual('view')
+          expect(queue[0].experiment).toEqual(@basicExpt.uuid)
+          expect(queue[0].variant).toEqual('b')
+          expect(queue[1].typename).toEqual('reward')
+          expect(queue[1].experiment).toEqual(@basicExpt.uuid)
+          expect(queue[1].variant).toEqual('b')
+          expect(queue[1].amount).toEqual(0.8)
+          done()

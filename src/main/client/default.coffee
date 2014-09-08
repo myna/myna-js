@@ -17,12 +17,13 @@ module.exports = class DefaultClient extends CachedClient
   # arrayOf(experiment) object -> DefaultClient
   constructor: (experiments = [], options = {}) ->
     log.debug("DefaultClient.constructor", options)
-    @settings = settings.create(options)
-    @apiKey   = @settings.apiKey  ? log.error("Client.constructor", "no apiKey in settings", @settings)
-    @apiRoot  = @settings.apiRoot ? "//api.mynaweb.com"
+    @apiKey   = options.apiKey  ? log.error("Client.constructor", "no apiKey specified", options)
+    @apiRoot  = options.apiRoot ? "//api.mynaweb.com"
+    @settings = settings.create(options?.settings ? {})
     @sticky   = new StickyCache()
-    @record   = new ApiRecorder(@settings)
-    @google   = new GaRecorder()
+    @record   = new ApiRecorder(@apiKey, @apiRoot, @settings)
+    @google   = new GaRecorder(@settings)
+    @autoSync = settings.get(@settings, "myna.web.autoSync", true)
 
     @experiments = {}
     for expt in experiments then @experiments[expt.id] = expt
@@ -37,7 +38,7 @@ module.exports = class DefaultClient extends CachedClient
           @sticky.saveView(expt, variant)
           @google.view(expt, variant)
           @record.view(expt, variant)
-          @record.sync() # async
+          if @autoSync then @record.sync() # asynchronous
           variant
 
   # or(experiment, string) or(variant, string) -> promiseOf(variant)
@@ -50,7 +51,7 @@ module.exports = class DefaultClient extends CachedClient
           @sticky.saveView(expt, variant)
           @google.view(expt, variant)
           @record.view(expt, variant)
-          @record.sync() # async
+          if @autoSync then @record.sync() # asynchronous
           variant
 
   # or(experiment, string) [0-to-1] -> promiseOf(variant)
@@ -63,7 +64,10 @@ module.exports = class DefaultClient extends CachedClient
           @sticky.saveReward(expt, variant)
           @google.reward(expt, variant, amount)
           @record.reward(expt, variant, amount)
-          @record.sync().then(-> variant)
+          if @autoSync
+            @record.sync().then(-> variant) # synchronous
+          else
+            variant
 
   # or(experiment, string) -> promiseOf(null)
   clear: (exptOrId) =>
@@ -90,7 +94,7 @@ module.exports = class DefaultClient extends CachedClient
   # experiment -> promiseOf(variant)
   _withStickyView: (expt) =>
     variant = @sticky.loadView(expt)
-    # console.log('DefaultClient._withStickyView', expt?.id, variant?.id)
+    # log.debug('DefaultClient._withStickyView', expt?.id, variant?.id)
     if variant
       Promise.resolve(variant)
     else
@@ -99,7 +103,7 @@ module.exports = class DefaultClient extends CachedClient
   # experiment -> promiseOf(variant)
   _withStickyReward: (expt) =>
     variant = @sticky.loadReward(expt)
-    # console.log('DefaultClient._withStickyReward', expt?.id, variant?.id)
+    # log.debug('DefaultClient._withStickyReward', expt?.id, variant?.id)
     if variant
       Promise.resolve(variant)
     else
