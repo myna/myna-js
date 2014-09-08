@@ -4,6 +4,7 @@ base          = require '../spec-base'
 
 describe "DefaultClient", ->
   beforeEach (done) ->
+    console.log('beforeEach started')
     @variants = [
       { typename: "variant", id: "a", settings: { buttons: "red"   }, weight: 0.2 }
       { typename: "variant", id: "b", settings: { buttons: "green" }, weight: 0.4 }
@@ -25,8 +26,10 @@ describe "DefaultClient", ->
       [ @basicExpt, @stickyExpt ]
       base.testClientOptions
     )
+    @client.record.clear()
     @client.clear('basic').then =>
       @client.clear('sticky').then ->
+        console.log('beforeEach finish')
         done()
     return
 
@@ -79,6 +82,16 @@ describe "DefaultClient", ->
 
         iterate(10)
 
+    it "should queue a view event for upload", (done) ->
+      spy = spyOn(@client.record, 'sync').and.callFake (->)
+      @client.suggest('basic').then (variant) =>
+        queue = @client.record._queue()
+        expect(queue.length).toEqual(1)
+        expect(queue[0].typename).toEqual('view')
+        expect(queue[0].experiment).toEqual(@basicExpt.uuid)
+        expect(queue[0].variant).toEqual(variant.id)
+        done()
+
   describe "view", ->
     it "should find a variant by id", (done) ->
       @client.view('basic', "b").then (variant) =>
@@ -93,19 +106,29 @@ describe "DefaultClient", ->
     it "should fail gracefully if variantOrId is null", (done) ->
       @client.view('basic', "e").then(=> @fail()).catch(=> done())
 
-    it 'should always view the specified variant for a non-sticky experiment', (done) ->
+    it "should always view the specified variant for a non-sticky experiment", (done) ->
       @client.view('basic', 'a').then (variant0) =>
         @client.view('basic', 'b').then (variant1) ->
           expect(variant0.id).toEqual('a')
           expect(variant1.id).toEqual('b')
           done()
 
-    it 'should override with the sticky variant for a sticky experiment', (done) ->
+    it "should override with the sticky variant for a sticky experiment", (done) ->
       @client.view('sticky', 'a').then (variant0) =>
         @client.view('sticky', 'b').then (variant1) ->
           expect(variant0.id).toEqual('a')
           expect(variant1.id).toEqual('a')
           done()
+
+    it "should queue a view event for upload", (done) ->
+      spy = spyOn(@client.record, 'sync').and.callFake (->)
+      @client.view('basic', 'b').then (variant) =>
+        queue = @client.record._queue()
+        expect(queue.length).toEqual(1)
+        expect(queue[0].typename).toEqual('view')
+        expect(queue[0].experiment).toEqual(@basicExpt.uuid)
+        expect(queue[0].variant).toEqual('b')
+        done()
 
   describe "reward", ->
     it "should reward the last-suggested variant", (done) ->
