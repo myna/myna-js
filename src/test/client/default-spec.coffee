@@ -53,7 +53,7 @@ describe "DefaultClient", ->
         expect(ids).toContain("c")
         done()
 
-    it "should skew in favour of the most popular variants for a basic experiment", ->
+    it "should skew in favour of the most popular variants for a basic experiment", (done) ->
       @basicExpt.variants[0].weight = 0.0
       @basicExpt.variants[1].weight = 0.0
 
