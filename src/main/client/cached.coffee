@@ -60,8 +60,8 @@ module.exports = class CachedClient extends BasicClient
 
   # Clear any cached variants from the last view of `expt`.
   #
-  # experiment -> void
+  # experiment -> promiseOf(null)
   clear: (expt) =>
     log.debug("CachedClient.clear", expt)
     variant.remove(expt, 'lastView')
-    return
+    Promise.resolve(null)

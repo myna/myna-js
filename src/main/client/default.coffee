@@ -16,8 +16,7 @@ back to the API server and to Google Analytics when appropriate.
 module.exports = class DefaultClient extends CachedClient
   # arrayOf(experiment) object -> DefaultClient
   constructor: (experiments = [], options = {}) ->
-    log.debug("Client.constructor", options)
-
+    log.debug("DefaultClient.constructor", options)
     @settings = settings.create(options)
     @apiKey   = @settings.apiKey  ? log.error("Client.constructor", "no apiKey in settings", @settings)
     @apiRoot  = @settings.apiRoot ? "//api.mynaweb.com"
@@ -30,7 +29,7 @@ module.exports = class DefaultClient extends CachedClient
 
   # or(experiment, string) -> promiseOf(variant)
   suggest: (exptOrId) =>
-    log.debug('DefaultClient.view', exptOrId)
+    log.debug('DefaultClient.suggest', exptOrId)
     @_withExperiment(exptOrId).then (expt) =>
       @_withStickyView(expt).catch (error) =>
         # Only record on a first view:
@@ -70,9 +69,9 @@ module.exports = class DefaultClient extends CachedClient
   clear: (exptOrId) =>
     log.debug('DefaultClient.clear', exptOrId)
     @_withExperiment(exptOrId).then (expt) =>
-      super(expt)
-      @sticky.clear(expt)
-      Promise.resolve(null)
+      super(expt).then =>
+        @sticky.clear(expt)
+        Promise.resolve(null)
 
   # or(experiment, string) -> promiseOf(experiment)
   _withExperiment: (exptOrId) =>

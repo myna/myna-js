@@ -10,14 +10,14 @@ window.__mynaCallbacks = {}
 
 # string [object] [integer] -> promiseOf(any)
 jsonp.request = (url, params = {}, timeout = 0) ->
-  log.debug("jsonp.request", url, params, timeout)
+  # log.debug("jsonp.request", url, params, timeout)
 
   return new Promise (resolve, reject) ->
     # Safety - avoid race conditions on timeout:
     resolved = false
 
     onTimeout = ->
-      log.debug("jsonp.request.onTimeout", callbackId, timeout, resolved)
+      # log.debug("jsonp.request.onTimeout", callbackId, timeout, resolved)
       unless resolved
         resolved = true
         jsonp._removeCallback(callbackId)
@@ -26,7 +26,7 @@ jsonp.request = (url, params = {}, timeout = 0) ->
 
     # Register callback:
     onComplete = (response) ->
-      log.debug("jsonp.request.onComplete", callbackId, resolved)
+      # log.debug("jsonp.request.onComplete", callbackId, resolved)
       unless resolved
         resolved = true
         window.clearTimeout(timer)
@@ -47,7 +47,7 @@ jsonp.request = (url, params = {}, timeout = 0) ->
 # This private method is factored out of jsonp.request
 # so we can hook into it in unit tests. See jsonp-spec.coffee
 jsonp._createCallback = (url, params, callback) ->
-  log.debug("jsonp._createCallback", url, params, callback)
+  # log.debug("jsonp._createCallback", url, params, callback)
 
   # Register the callback:
   randSuffix = "#{Math.floor(Math.random() * 10000)}"
@@ -68,7 +68,7 @@ jsonp._createCallback = (url, params, callback) ->
 
 # string -> void
 jsonp._removeCallback = (callbackId) ->
-  log.debug('jsonp._removeCallback', callbackId)
+  # log.debug('jsonp._removeCallback', callbackId)
 
   scriptElem = document.getElementById(callbackId)
   scriptElem?.parentNode.removeChild(scriptElem)
@@ -79,7 +79,7 @@ jsonp._removeCallback = (callbackId) ->
 
 # string string -> element
 jsonp._createScriptElem = (url, callbackId) ->
-  log.debug("jsonp._createScriptElem", url, callbackId)
+  # log.debug("jsonp._createScriptElem", url, callbackId)
 
   scriptElem = document.createElement("script")
 
@@ -92,7 +92,7 @@ jsonp._createScriptElem = (url, callbackId) ->
 
   # onreadystatechange is for IE, onload/onerror for everyone else
   scriptElem.onload = scriptElem.onreadystatechange = ->
-    log.debug('jsonp.onload', callbackId)
+    # log.debug('jsonp.onload', callbackId)
     jsonp._removeCallback(callbackId)
     return
 
