@@ -1,3 +1,4 @@
+Promise      = require('es6-promise').Promise
 log          = require '../common/log'
 settings     = require '../common/settings'
 CachedClient = require './cached'
@@ -13,66 +14,94 @@ back to the API server and to Google Analytics when appropriate.
 ###
 
 module.exports = class DefaultClient extends CachedClient
-  # arrayOf(experiment) settings -> DefaultClient
-  constructor: (experiments = [], settings = {}) ->
-    log.debug("Client.constructor", settings)
+  # arrayOf(experiment) object -> DefaultClient
+  constructor: (experiments = [], options = {}) ->
+    log.debug("Client.constructor", options)
 
-    @settings = settings.create(settings)
+    @settings = settings.create(options)
     @apiKey   = @settings.apiKey  ? log.error("Client.constructor", "no apiKey in settings", @settings)
     @apiRoot  = @settings.apiRoot ? "//api.mynaweb.com"
     @sticky   = new StickyCache()
     @record   = new ApiRecorder(@settings)
-    @google   = new GaRecorder(@settings)
+    @google   = new GaRecorder()
 
     @experiments = {}
     for expt in experiments then @experiments[expt.id] = expt
 
-  # string -> promiseOf(variant)
-  suggest: (exptId) =>
-    @_withExperiment exptId, (expt) ->
-      @sticky.loadView(expt).catch (error) ->
+  # or(experiment, string) -> promiseOf(variant)
+  suggest: (exptOrId) =>
+    log.debug('DefaultClient.view', exptOrId)
+    @_withExperiment(exptOrId).then (expt) =>
+      @_withStickyView(expt).catch (error) =>
         # Only record on a first view:
-        super(expt).then (variant) ->
-          @sticky.saveView(variant)
+        super(expt).then (variant) =>
+          @sticky.saveView(expt, variant)
           @google.view(expt, variant)
           @record.view(expt, variant)
-          @record.sync()
+          @record.sync() # async
           variant
 
-  # string or(variant, string) -> promiseOf(variant)
-  view: (exptId, variantOrId) =>
-    @_withExperiment exptId, (expt) ->
-      @sticky.loadView(expt).catch (error) ->
+  # or(experiment, string) or(variant, string) -> promiseOf(variant)
+  view: (exptOrId, variantOrId) =>
+    log.debug('DefaultClient.view', exptOrId, variantOrId)
+    @_withExperiment(exptOrId).then (expt) =>
+      @_withStickyView(expt).catch (error) =>
         # Only record on a first view:
-        super(expt, variantOrId).then (variant) ->
-          @sticky.saveView(variant)
+        super(expt, variantOrId).then (variant) =>
+          @sticky.saveView(expt, variant)
           @google.view(expt, variant)
           @record.view(expt, variant)
-          @record.sync()
+          @record.sync() # async
           variant
 
-  # string [0-to-1] -> promiseOf(variant)
-  reward: (exptId, amount = 1.0) =>
-    @_withExperiment exptId, (expt) ->
-      @sticky.loadReward(expt).catch (error) ->
+  # or(experiment, string) [0-to-1] -> promiseOf(variant)
+  reward: (exptOrId, amount = 1.0) =>
+    log.debug('DefaultClient.reward', exptOrId, amount)
+    @_withExperiment(exptOrId).then (expt) =>
+      @_withStickyReward(expt).catch (error) =>
         # Only record on a first view:
-        super(expt, amount).then (variant) ->
-          @sticky.saveReward(variant)
+        super(expt, amount).then (variant) =>
+          @sticky.saveReward(expt, variant)
           @google.reward(expt, variant, amount)
           @record.reward(expt, variant, amount)
           @record.sync().then(-> variant)
 
-  # string -> promiseOf(null)
-  clear: (exptId) =>
-    @_withExperiment exptId, (expt) ->
+  # or(experiment, string) -> promiseOf(null)
+  clear: (exptOrId) =>
+    log.debug('DefaultClient.clear', exptOrId)
+    @_withExperiment(exptOrId).then (expt) =>
       super(expt)
       @sticky.clear(expt)
       Promise.resolve(null)
 
-  # string (experiment -> promiseOf(any)) -> promiseOf(any)
-  _withExperiment: (exptId, func) =>
-    expt = @experiments[exptId]
-    unless expt
-      Promise.reject(new Error("Experiment not found: #{exptId}"))
+  # or(experiment, string) -> promiseOf(experiment)
+  _withExperiment: (exptOrId) =>
+    if typeof exptOrId == "string"
+      expt = @experiments[exptOrId]
     else
-      func(expt)
+      expt = exptOrId
+
+    # log.debug('DefaultClient._withExperiment', exptOrId, expt?.id)
+
+    if expt
+      Promise.resolve(expt)
+    else
+      Promise.reject(new Error("Experiment not found: #{exptOrId}"))
+
+  # experiment -> promiseOf(variant)
+  _withStickyView: (expt) =>
+    variant = @sticky.loadView(expt)
+    # console.log('DefaultClient._withStickyView', expt?.id, variant?.id)
+    if variant
+      Promise.resolve(variant)
+    else
+      Promise.reject(new Error("Sticky view not found: #{expt}"))
+
+  # experiment -> promiseOf(variant)
+  _withStickyReward: (expt) =>
+    variant = @sticky.loadReward(expt)
+    # console.log('DefaultClient._withStickyReward', expt?.id, variant?.id)
+    if variant
+      Promise.resolve(variant)
+    else
+      Promise.reject(new Error("Sticky reward not found: #{expt}"))

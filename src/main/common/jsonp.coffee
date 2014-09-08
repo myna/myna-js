@@ -26,7 +26,7 @@ jsonp.request = (url, params = {}, timeout = 0) ->
 
     # Register callback:
     onComplete = (response) ->
-      log.debug("jsonp.request.onComplete", callbackId, response, resolved)
+      log.debug("jsonp.request.onComplete", callbackId, resolved)
       unless resolved
         resolved = true
         window.clearTimeout(timer)
@@ -50,7 +50,9 @@ jsonp._createCallback = (url, params, callback) ->
   log.debug("jsonp._createCallback", url, params, callback)
 
   # Register the callback:
-  callbackId = "__mynaCallback#{new Date().getTime()}"
+  randSuffix = "#{Math.floor(Math.random() * 10000)}"
+  timeSuffix = new Date().getTime()
+  callbackId = "c#{timeSuffix}_#{randSuffix}"
   window.__mynaCallbacks[callbackId] = callback
 
   # Insert the callback ID into the URL:
@@ -69,15 +71,9 @@ jsonp._removeCallback = (callbackId) ->
   log.debug('jsonp._removeCallback', callbackId)
 
   scriptElem = document.getElementById(callbackId)
-  readyState = scriptElem?.readyState
+  scriptElem?.parentNode.removeChild(scriptElem)
 
-  unless readyState && readyState != "complete" && readyState != "loaded"
-    try
-      if scriptElem
-        scriptElem.onload = null
-        scriptElem.parentNode.removeChild(scriptElem)
-    finally
-      delete window.__mynaCallbacks[callbackId]
+  delete window.__mynaCallbacks[callbackId]
 
   return
 
@@ -96,6 +92,7 @@ jsonp._createScriptElem = (url, callbackId) ->
 
   # onreadystatechange is for IE, onload/onerror for everyone else
   scriptElem.onload = scriptElem.onreadystatechange = ->
+    log.debug('jsonp.onload', callbackId)
     jsonp._removeCallback(callbackId)
     return
 

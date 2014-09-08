@@ -21,16 +21,18 @@ module.exports = class StickyCache
   # experiment -> or(variant, null)
   loadView: (expt) =>
     log.debug('StickyCache.loadView', expt)
-    if @_isSticky(expt) then variant.load(expt, 'stickyView') else null
+    ans = if @_isSticky(expt) then variant.load(expt, 'stickyView') else null
+    log.debug('StickyCache.loadView', expt?.id, ans?.id)
+    ans
 
   # Attempt to save a sticky view for `expt`.
   #
   # If the experiment does not use sticky variants, do nothing.
   #
   # experiment variant -> void
-  saveView: (expt, vrnt) =>
-    log.debug('StickyCache.saveView', expt, vrnt)
-    if @_isSticky(expt) then variant.save(expt, 'stickyView', vrnt)
+  saveView: (expt, v) =>
+    log.debug('StickyCache.saveView', expt?.id, v?.id)
+    if @_isSticky(expt) then variant.save(expt, 'stickyView', v)
     return
 
   # Load the last sticky reward variant for `expt`.
@@ -39,17 +41,18 @@ module.exports = class StickyCache
   #
   # experiment -> or(variant, null)
   loadReward: (expt) =>
-    log.debug('StickyCache.loadReward', expt)
-    if @_isSticky(expt) then variant.load(expt, "stickyReward") else null
+    ans = if @_isSticky(expt) then variant.load(expt, "stickyReward") else null
+    log.debug('StickyCache.loadReward', expt?.id, ans?.id)
+    ans
 
   # Attempt to save a sticky reward for `expt`.
   #
   # If the experiment does not use sticky variants, do nothing.
   #
   # experiment variant -> void
-  saveReward: (expt, vrnt) =>
-    log.debug('StickyCache.saveReward', expt, vrnt)
-    if @_isSticky(expt) then variant.save(expt, 'stickyReward', vrnt)
+  saveReward: (expt, v) =>
+    log.debug('StickyCache.saveReward', expt?.id, v?.id)
+    if @_isSticky(expt) then variant.save(expt, 'stickyReward', v)
     return
 
   # Clear any cached sticky variants and variants from previous calls
@@ -65,5 +68,5 @@ module.exports = class StickyCache
   # Does this experiment use sticky variants?
   #
   # experiment -> boolean
-  _isSticky: (expt) ->
+  _isSticky: (expt) =>
     !!settings.get(expt.settings, @stickyKey, false)

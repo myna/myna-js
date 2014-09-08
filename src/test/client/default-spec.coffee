@@ -1,172 +1,126 @@
-settings     = require '../../main/common/settings'
-localStorage = require '../../main/common/storage/local'
-storage      = require '../../main/common/storage'
-Experiment   = require '../../main/client/experiment'
-Variant      = require '../../main/client/variant'
+Promise       = require('es6-promise').Promise
+DefaultClient = require '../../main/client/default'
+base          = require '../spec-base'
 
-initialized = (fn) ->
-  ->
-    expt = new Experiment
-      uuid:     "uuid"
-      id:       "id"
+describe "DefaultClient", ->
+  beforeEach (done) ->
+    @variants = [
+      { typename: "variant", id: "a", settings: { buttons: "red"   }, weight: 0.2 }
+      { typename: "variant", id: "b", settings: { buttons: "green" }, weight: 0.4 }
+      { typename: "variant", id: "c", settings: { buttons: "blue"  }, weight: 0.6 }
+    ]
+    @basicExpt = {
+      uuid:     "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+      id:       "basic"
+      settings: {}
+      variants: @variants
+    }
+    @stickyExpt = {
+      uuid:     "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
+      id:       "sticky"
       settings: myna: web: sticky: true
-      variants: [
-        { id: "a", settings: { buttons: "red"   }, weight: 0.2 }
-        { id: "b", settings: { buttons: "green" }, weight: 0.4 }
-        { id: "c", settings: { buttons: "blue"  }, weight: 0.6 }
-      ]
-    expt.unstick()
-    fn.call(this, expt)
+      variants: @variants
+    }
+    @client = new DefaultClient(
+      [ @basicExpt, @stickyExpt ]
+      base.testClientOptions
+    )
+    @client.clear('basic').then =>
+      @client.clear('sticky').then ->
+        done()
+    return
 
-describe "Experiment.constructor", ->
-  it "should accept custom options", initialized (expt) ->
-    expect(expt.uuid).toEqual("uuid")
-    expect(expt.id).toEqual("id")
-    expect(expt.settings).toEqual(myna: web: sticky: true)
-    expect(for key, value of expt.variants then key).toEqual(["a", "b", "c"])
-    expect(for key, value of expt.variants then value.id).toEqual(["a", "b", "c"])
-    expect(for key, value of expt.variants then value.settings).toEqual([
-      { buttons: "red"   }
-      { buttons: "green" }
-      { buttons: "blue"  }
-    ])
-    expect(for key, value of expt.variants then value.weight).toEqual([ 0.2, 0.4, 0.6 ])
+  describe "suggest", ->
+    it "should return variants", (done) ->
+      @client.suggest('basic').then (variant) ->
+        expect(variant.typename).toEqual("variant")
+        done()
 
-  it "should succeed if no settings or variants are provided", initialized (expt) ->
-    actual = new Experiment(uuid: "uuid", id: "id")
-    expect(actual.settings).toEqual({})
-    expect(actual.variants).toEqual({})
+    it "should return all variants over time for a basic experiment", (done) ->
+      iterate = (times, ids = []) =>
+        if times > 0
+          @client.suggest('basic').then (variant) ->
+            iterate(times - 1, ids.concat [ variant.id ])
+        else
+          Promise.resolve(ids)
 
-  it "should fail if no uuid is provided", initialized (expt) ->
-    expect(-> new Experiment(id: "id")).toThrow()
+      iterate(100).then (ids) =>
+        expect(ids).toContain("a")
+        expect(ids).toContain("b")
+        expect(ids).toContain("c")
+        done()
 
-  it "should fail if no id is provided", initialized (expt) ->
-    expect(-> new Experiment(uuid: "uuid")).toThrow()
+    it "should skew in favour of the most popular variants for a basic experiment", ->
+      @basicExpt.variants[0].weight = 0.0
+      @basicExpt.variants[1].weight = 0.0
 
-describe "Experiment.sticky", ->
-  it "should be derived from the 'myna.web.sticky' setting", initialized (expt) ->
-    expect(new Experiment(uuid: "uuid", id: "id", settings: "myna.web.sticky": true).sticky()).toEqual(true)
-    expect(new Experiment(uuid: "uuid", id: "id", settings: "myna.web.sticky": false).sticky()).toEqual(false)
+      iterate = (times, ids = []) =>
+        if times > 0
+          @client.suggest('basic').then (variant) ->
+            iterate(times - 1, ids.concat [ variant.id ])
+        else
+          Promise.resolve(ids)
 
-  it "should default to true", initialized (expt) ->
-    expect(new Experiment(uuid: "uuid", id: "id").sticky()).toEqual(true)
+      iterate(100).then (ids) ->
+        expect(ids).not.toContain("a")
+        expect(ids).not.toContain("b")
+        expect(ids).toContain("c")
+        done()
 
-describe "Experiment.totalWeight", ->
-  it "should return the sum of the variants' weights, even if they don't total 1.0", initialized (expt) ->
-    expect(expt.totalWeight()).toBeCloseTo(1.2, 0.001)
+    it "should always return a single variant for a sticky experiment", (done) ->
+      @client.suggest('sticky').then (variant0) =>
+        iterate = (times) =>
+          if times > 0
+            @client.suggest('sticky').then (variant) ->
+              expect(variant.id).toEqual(variant0.id)
+              iterate(times - 1)
+          else
+            done()
 
-describe "Experiment.randomVariant", ->
-  it "should return ... er ... random variants", initialized (expt) ->
-    ids = []
-    for i in [1..100]
-      actual = expt.randomVariant()
-      expect(actual).toBeInstanceOf(Variant)
-      ids.push(actual.id)
-    expect(ids).toContain("a")
-    expect(ids).toContain("b")
-    expect(ids).toContain("c")
+        iterate(10)
 
-  it "should skew in favour of the most popular variants", initialized (expt) ->
-    expt.variants.a.weight = 0.0
-    expt.variants.c.weight = 0.0
-    ids = []
-    for i in [1..100]
-      ids.push(expt.randomVariant().id)
-    expect(ids).not.toContain("a")
-    expect(ids).toContain("b")
-    expect(ids).not.toContain("c")
+  describe "view", ->
+    it "should find a variant by id", (done) ->
+      @client.view('basic', "b").then (variant) =>
+        expect(variant.id).toEqual("b")
+        done()
 
-for localStorageEnabled in [false, true] # end up resetting it to true
-  localStorage.enabled = localStorageEnabled
+    it "should find a variant by object", (done) ->
+      @client.view('basic', 'b').then (variant) =>
+        expect(variant.id).toEqual("b")
+        done()
 
-  localStorageStatus = [
-    "localStorage"
-    if localStorage.supported then 'supported' else 'unsupported'
-    if localStorage.enabled   then 'enabled'   else 'disabled'
-  ].join("_")
+    it "should fail gracefully if variantOrId is null", (done) ->
+      @client.view('basic', "e").then(=> @fail()).catch(=> done())
 
-  describe "Experiment.{load,save,clear}LastView (#{localStorageStatus})", ->
-    it "should load nothing if nothing has been saved", initialized (expt) ->
-      expt.clearLastView()
-      expect(expt.loadLastView()).toEqual(null)
+    it 'should always view the specified variant for a non-sticky experiment', (done) ->
+      @client.view('basic', 'a').then (variant0) =>
+        @client.view('basic', 'b').then (variant1) ->
+          expect(variant0.id).toEqual('a')
+          expect(variant1.id).toEqual('b')
+          done()
 
-    it "should load the last saved suggestion", initialized (expt) ->
-      expt.saveLastView(expt.variants.a)
-      expect(expt.loadLastView()).toBe(expt.variants.a)
+    it 'should override with the sticky variant for a sticky experiment', (done) ->
+      @client.view('sticky', 'a').then (variant0) =>
+        @client.view('sticky', 'b').then (variant1) ->
+          expect(variant0.id).toEqual('a')
+          expect(variant1.id).toEqual('a')
+          done()
 
-      expt.saveLastView(expt.variants.b)
-      expect(expt.loadLastView()).toBe(expt.variants.b)
+  describe "reward", ->
+    it "should reward the last-suggested variant", (done) ->
+      @client.suggest('basic').then (viewed) =>
+        @client.reward('basic').then (rewarded) ->
+          expect(viewed.id).toEqual(rewarded.id)
+          done()
 
-    it "should not interfere with other experiments", initialized (expt) ->
-      expt2 = new Experiment(uuid: "uuid2", id: "id2")
-      expt.saveLastView(expt.variants.a)
-      expect(expt2.loadLastView()).toEqual(null)
+    it "should reward the last-viewed variant", (done) ->
+      @client.view('basic', 'b').then (viewed) =>
+        @client.reward('basic').then (rewarded) ->
+          expect(viewed.id).toEqual('b')
+          expect(rewarded.id).toEqual('b')
+          done()
 
-  describe "Experiment.{load,save,clear}StickySuggestion (#{localStorageStatus})", ->
-    it "should load nothing if nothing has been saved", initialized (expt) ->
-      expt.clearStickySuggestion()
-      expect(expt.loadStickySuggestion()).toEqual(null)
-
-    it "should load the last saved suggestion", initialized (expt) ->
-      expt.saveStickySuggestion(expt.variants.a)
-      expect(expt.loadStickySuggestion()).toBe(expt.variants.a)
-
-      expt.saveStickySuggestion(expt.variants.b)
-      expect(expt.loadStickySuggestion()).toBe(expt.variants.b)
-
-    it "should not interfere with other experiments", initialized (expt) ->
-      expt2 = new Experiment(uuid: "uuid2", id: "id2")
-      expt.saveStickySuggestion(expt.variants.a)
-      expect(expt2.loadStickySuggestion()).toEqual(null)
-
-    it "should not interfere with the last suggestion", initialized (expt) ->
-      expt.saveLastView(expt.variants.a)
-      expt.saveStickySuggestion(expt.variants.b)
-      expect(expt.loadLastView()).toBe(expt.variants.a)
-      expect(expt.loadStickySuggestion()).toBe(expt.variants.b)
-
-  describe "Experiment.{load,save,clear}StickyReward (#{localStorageStatus})", ->
-    it "should load nothing if nothing has been saved", initialized (expt) ->
-      expt.clearStickyReward()
-      expect(expt.loadStickyReward()).toEqual(null)
-
-    it "should load the last saved suggestion", initialized (expt) ->
-      expt.saveStickyReward(expt.variants.a)
-      expect(expt.loadStickyReward()).toBe(expt.variants.a)
-
-      expt.saveStickyReward(expt.variants.b)
-      expect(expt.loadStickyReward()).toBe(expt.variants.b)
-
-    it "should not interfere with other experiments", initialized (expt) ->
-      expt2 = new Experiment(uuid: "uuid2", id: "id2")
-      expt.saveStickyReward(expt.variants.a)
-      expect(expt2.loadStickyReward()).toEqual(null)
-
-    it "should not interfere with the last or sticky suggestion", initialized (expt) ->
-      expt.saveLastView(expt.variants.a)
-      expt.saveStickySuggestion(expt.variants.b)
-      expt.saveStickyReward(expt.variants.c)
-      expect(expt.loadLastView()).toBe(expt.variants.a)
-      expect(expt.loadStickySuggestion()).toBe(expt.variants.b)
-      expect(expt.loadStickyReward()).toBe(expt.variants.c)
-
-describe "Experiment.loadVariantsFor{Suggest,Reward}", ->
-  it "should return 'viewed' and 'rewarded' variants when sticky is true", initialized (expt) ->
-    expect(expt.loadVariantsForSuggest().viewed).toEqual(null)
-    expect(expt.loadVariantsForReward().rewarded).toEqual(null)
-    expt.saveStickySuggestion(expt.variants.a)
-    expect(expt.loadVariantsForSuggest().viewed).toEqual(expt.variants.a)
-    expect(expt.loadVariantsForReward().rewarded).toEqual(null)
-    expt.saveStickyReward(expt.variants.b)
-    expect(expt.loadVariantsForSuggest().viewed).toEqual(expt.variants.a)
-    expect(expt.loadVariantsForReward().rewarded).toEqual(expt.variants.b)
-
-  it "should return null 'viewed' and 'rewarded' variants when sticky is false", initialized (expt) ->
-    # If an experiment is non-sticky, we should ignore local storage
-    # even if there are variants in there. This allows the customer
-    # to switch from sticky to non-sticky mid-stream.
-    settings.set(expt.settings, "myna.web.sticky", false)
-    expt.saveStickySuggestion(expt.variants.a)
-    expt.saveStickyReward(expt.variants.b)
-    expect(expt.loadVariantsForSuggest().viewed).toEqual(null)
-    expect(expt.loadVariantsForReward().rewarded).toEqual(null)
+    it "should fail if no variant was suggested", (done) ->
+      @client.reward('basic').catch (error) =>
+        done()

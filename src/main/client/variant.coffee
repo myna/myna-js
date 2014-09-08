@@ -24,7 +24,7 @@ This functionality is used to implement:
 #
 # experiment string variant -> void
 save = (expt, storageKey, variant) ->
-  log.debug('variant.save', expt, storageKey, variant)
+  # log.debug('variant.save', expt, storageKey, variant)
   storage.set("#{expt.uuid}_#{storageKey}", variant.id)
   return
 
@@ -32,8 +32,8 @@ save = (expt, storageKey, variant) ->
 #
 # experiment string -> or(variant, null)
 load = (expt, storageKey) ->
-  log.debug('variant.load', expt, storageKey)
-  id = storage.get("#{expt.uuid}_#{storageKey}", null)
+  # log.debug('variant.load', expt, storageKey)
+  id = storage.get("#{expt.uuid}_#{storageKey}") ? null
   log.debug('variant.load', 'id', id)
   if id then lookup(expt, id) else null
 
@@ -41,13 +41,13 @@ load = (expt, storageKey) ->
 #
 # experiment string -> void
 remove = (expt, storageKey) ->
-  log.debug('variant.remove', expt, storageKey)
+  # log.debug('variant.remove', expt, storageKey)
   storage.remove("#{expt.uuid}_#{storageKey}")
   return
 
 # experiment or(variant, string) -> or(variant, null)
 lookup = (expt, variantOrId) ->
-  log.debug("variant.lookup", expt, variantOrId)
+  # log.debug("variant.lookup", expt, variantOrId)
   id = if variantOrId.id then variantOrId.id else variantOrId
   for variant in expt.variants when variant.id == id
     return variant
@@ -55,20 +55,20 @@ lookup = (expt, variantOrId) ->
 
 # experiment -> or(variant, null)
 random = (expt) ->
-  log.debug("variant.random", expt)
+  # log.debug("variant.random", expt)
   total  = _totalWeight(expt)
   random = Math.random() * total
   for id, variant of expt.variants
     total -= variant.weight
     if total <= random
-      log.debug("variant.random", "result", variant)
+      # log.debug("variant.random", "result", variant)
       return variant
-  log.debug("variant.random", "noresult")
+  # log.debug("variant.random", "noresult")
   return null
 
 # experiment -> number
 _totalWeight = (expt) ->
-  log.debug("variant._totalWeight", expt)
+  # log.debug("variant._totalWeight", expt)
   ans = 0.0
   for variant in expt.variants then ans += variant.weight
   ans

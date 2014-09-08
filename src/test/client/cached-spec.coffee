@@ -1,10 +1,11 @@
+Promise      = require('es6-promise').Promise
 log          = require '../../main/common/log'
 CachedClient = require '../../main/client/cached'
 
 describe "CachedClient", ->
   beforeEach ->
-    @cached = new CachedClient()
-    @expt  = {
+    @client = new CachedClient()
+    @expt = {
       uuid:     "uuid"
       id:       "id"
       settings: myna: web: sticky: true
@@ -14,19 +15,19 @@ describe "CachedClient", ->
         { typename: "variant", id: "c", settings: { buttons: "blue"  }, weight: 0.6 }
       ]
     }
-    @cached.clear(@expt)
+    @client.clear(@expt)
     return
 
   describe "suggest", ->
     it "should return variants", (done) ->
-      @cached.suggest(@expt).then (variant) =>
+      @client.suggest(@expt).then (variant) =>
         expect(variant.typename).toEqual("variant")
         done()
 
-    it "should return all variants over time", ->
+    it "should return all variants over time", (done) ->
       iterate = (times, ids = []) =>
         if times > 0
-          @cached.suggest(@expt).then (variant) =>
+          @client.suggest(@expt).then (variant) =>
             iterate(times - 1, ids.concat [ variant.id ])
         else
           Promise.resolve(ids)
@@ -37,13 +38,13 @@ describe "CachedClient", ->
         expect(ids).toContain("c")
         done()
 
-    it "should skew in favour of the most popular variants", ->
+    it "should skew in favour of the most popular variants", (done) ->
       @expt.variants[0].weight = 0.0
       @expt.variants[1].weight = 0.0
 
       iterate = (times, ids = []) =>
         if times > 0
-          @cached.suggest(@expt).then (variant) =>
+          @client.suggest(@expt).then (variant) =>
             iterate(times - 1, ids.concat [ variant.id ])
         else
           Promise.resolve(ids)
@@ -56,36 +57,36 @@ describe "CachedClient", ->
 
   describe "view", ->
     it "should find a variant by id", (done) ->
-      @cached.view(@expt, "b").then (variant) =>
+      @client.view(@expt, "b").then (variant) =>
         expect(variant.id).toEqual("b")
         done()
 
     it "should find a variant by object", (done) ->
-      @cached.view(@expt, @expt.variants[1]).then (variant) =>
+      @client.view(@expt, @expt.variants[1]).then (variant) =>
         expect(variant.id).toEqual("b")
         done()
 
     it "should fail gracefully if variantOrId is null", (done) ->
-      @cached.view(@expt, "e").then(=> @fail()).catch(=> done())
+      @client.view(@expt, "e").then(=> @fail()).catch(=> done())
 
   describe "reward", ->
     it "should reward the last suggested variant", (done) ->
-      @cached.suggest(@expt).then (viewed) =>
+      @client.suggest(@expt).then (viewed) =>
         console.log("suggest viewed", viewed)
-        @cached.reward(@expt).then (rewarded) =>
+        @client.reward(@expt).then (rewarded) =>
           console.log("suggest rewarded", rewarded)
           expect(viewed).toEqual(rewarded)
           done()
 
     it "should reward the last viewed variant", (done) ->
-      @cached.view(@expt, "b").then (viewed) =>
+      @client.view(@expt, "b").then (viewed) =>
         console.log("view viewed", viewed)
-        @cached.reward(@expt).then (rewarded) =>
+        @client.reward(@expt).then (rewarded) =>
           console.log("view rewarded", rewarded)
           expect(viewed).toEqual(rewarded)
           expect(viewed.id).toEqual("b")
           done()
 
     it "should fail if no variant was suggested", (done) ->
-      @cached.reward(@expt).catch (error) =>
+      @client.reward(@expt).catch (error) =>
         done()
