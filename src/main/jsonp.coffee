@@ -35,7 +35,7 @@ Myna.jsonp =
     urlRoot      = options.url     ? Myna.error("Myna.jsonp.request", "no url in options", options)
     success      = options.success ? (->)
     error        = options.error   ? (->)
-    timeout      = options.timeout ? 0 # 0 means no timeout
+    timeout      = options.timeout ? 10 * 1000 # 0 means no timeout; default is 10s
     params       = options.params  ? {}
     callbackName = "callback#{Myna.jsonp.counter++}"
     returned     = false
@@ -109,4 +109,3 @@ Myna.jsonp =
       finally
         if callbackName then delete Myna.jsonp.callbacks[callbackName]
     return
-
