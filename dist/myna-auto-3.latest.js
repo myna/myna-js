@@ -2,229 +2,233 @@
  * http://mynaweb.com
  * Copyright (c) 2014 Myna Limited; Licensed BSD 2-Clause
  */
-!function(a) {
-    if ("object" == typeof exports && "undefined" != typeof module) module.exports = a(); else if ("function" == typeof define && define.amd) define([], a); else {
-        var b;
-        "undefined" != typeof window ? b = window : "undefined" != typeof global ? b = global : "undefined" != typeof self && (b = self), 
-        b.Myna = a();
+!function(e) {
+    if ("object" == typeof exports && "undefined" != typeof module) module.exports = e(); else if ("function" == typeof define && define.amd) define([], e); else {
+        var f;
+        "undefined" != typeof window ? f = window : "undefined" != typeof global ? f = global : "undefined" != typeof self && (f = self), 
+        f.Myna = e();
     }
 }(function() {
-    var a;
-    return function b(a, c, d) {
-        function e(g, h) {
-            if (!c[g]) {
-                if (!a[g]) {
-                    var i = "function" == typeof require && require;
-                    if (!h && i) return i(g, !0);
-                    if (f) return f(g, !0);
-                    var j = new Error("Cannot find module '" + g + "'");
-                    throw j.code = "MODULE_NOT_FOUND", j;
+    var define;
+    return function e(t, n, r) {
+        function s(o, u) {
+            if (!n[o]) {
+                if (!t[o]) {
+                    var a = "function" == typeof require && require;
+                    if (!u && a) return a(o, !0);
+                    if (i) return i(o, !0);
+                    var f = new Error("Cannot find module '" + o + "'");
+                    throw f.code = "MODULE_NOT_FOUND", f;
                 }
-                var k = c[g] = {
+                var l = n[o] = {
                     exports: {}
                 };
-                a[g][0].call(k.exports, function(b) {
-                    var c = a[g][1][b];
-                    return e(c ? c : b);
-                }, k, k.exports, b, a, c, d);
+                t[o][0].call(l.exports, function(e) {
+                    var n = t[o][1][e];
+                    return s(n ? n : e);
+                }, l, l.exports, e, t, n, r);
             }
-            return c[g].exports;
+            return n[o].exports;
         }
-        for (var f = "function" == typeof require && require, g = 0; g < d.length; g++) e(d[g]);
-        return e;
+        for (var i = "function" == typeof require && require, o = 0; o < r.length; o++) s(r[o]);
+        return s;
     }({
-        "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/main.js": [ function(a, b, c) {
+        "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/main.js": [ function(require, module, exports) {
             "use strict";
-            var d = a("./promise/promise").Promise, e = a("./promise/polyfill").polyfill;
-            c.Promise = d, c.polyfill = e;
+            var Promise = require("./promise/promise").Promise, polyfill = require("./promise/polyfill").polyfill;
+            exports.Promise = Promise, exports.polyfill = polyfill;
         }, {
             "./promise/polyfill": "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/promise/polyfill.js",
             "./promise/promise": "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/promise/promise.js"
         } ],
-        "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/promise/all.js": [ function(a, b, c) {
+        "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/promise/all.js": [ function(require, module, exports) {
             "use strict";
-            function d(a) {
-                var b = this;
-                if (!e(a)) throw new TypeError("You must pass an array to all.");
-                return new b(function(b, c) {
-                    function d(a) {
-                        return function(b) {
-                            e(a, b);
+            function all(promises) {
+                var Promise = this;
+                if (!isArray(promises)) throw new TypeError("You must pass an array to all.");
+                return new Promise(function(resolve, reject) {
+                    function resolver(index) {
+                        return function(value) {
+                            resolveAll(index, value);
                         };
                     }
-                    function e(a, c) {
-                        h[a] = c, 0 === --i && b(h);
+                    function resolveAll(index, value) {
+                        results[index] = value, 0 === --remaining && resolve(results);
                     }
-                    var g, h = [], i = a.length;
-                    0 === i && b([]);
-                    for (var j = 0; j < a.length; j++) g = a[j], g && f(g.then) ? g.then(d(j), c) : e(j, g);
+                    var promise, results = [], remaining = promises.length;
+                    0 === remaining && resolve([]);
+                    for (var i = 0; i < promises.length; i++) promise = promises[i], promise && isFunction(promise.then) ? promise.then(resolver(i), reject) : resolveAll(i, promise);
                 });
             }
-            var e = a("./utils").isArray, f = a("./utils").isFunction;
-            c.all = d;
+            var isArray = require("./utils").isArray, isFunction = require("./utils").isFunction;
+            exports.all = all;
         }, {
             "./utils": "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/promise/utils.js"
         } ],
-        "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/promise/asap.js": [ function(a, b, c) {
-            (function(a, b) {
+        "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/promise/asap.js": [ function(require, module, exports) {
+            (function(process, global) {
                 "use strict";
-                function d() {
+                function useNextTick() {
                     return function() {
-                        a.nextTick(g);
+                        process.nextTick(flush);
                     };
                 }
-                function e() {
-                    var a = 0, b = new k(g), c = document.createTextNode("");
-                    return b.observe(c, {
+                function useMutationObserver() {
+                    var iterations = 0, observer = new BrowserMutationObserver(flush), node = document.createTextNode("");
+                    return observer.observe(node, {
                         characterData: !0
                     }), function() {
-                        c.data = a = ++a % 2;
+                        node.data = iterations = ++iterations % 2;
                     };
                 }
-                function f() {
+                function useSetTimeout() {
                     return function() {
-                        l.setTimeout(g, 1);
+                        local.setTimeout(flush, 1);
                     };
                 }
-                function g() {
-                    for (var a = 0; a < m.length; a++) {
-                        var b = m[a], c = b[0], d = b[1];
-                        c(d);
+                function flush() {
+                    for (var i = 0; i < queue.length; i++) {
+                        var tuple = queue[i], callback = tuple[0], arg = tuple[1];
+                        callback(arg);
                     }
-                    m = [];
+                    queue = [];
                 }
-                function h(a, b) {
-                    var c = m.push([ a, b ]);
-                    1 === c && i();
+                function asap(callback, arg) {
+                    var length = queue.push([ callback, arg ]);
+                    1 === length && scheduleFlush();
                 }
-                var i, j = "undefined" != typeof window ? window : {}, k = j.MutationObserver || j.WebKitMutationObserver, l = "undefined" != typeof b ? b : void 0 === this ? window : this, m = [];
-                i = "undefined" != typeof a && "[object process]" === {}.toString.call(a) ? d() : k ? e() : f(), 
-                c.asap = h;
-            }).call(this, a("_process"), "undefined" != typeof global ? global : "undefined" != typeof self ? self : "undefined" != typeof window ? window : {});
+                var scheduleFlush, browserGlobal = "undefined" != typeof window ? window : {}, BrowserMutationObserver = browserGlobal.MutationObserver || browserGlobal.WebKitMutationObserver, local = "undefined" != typeof global ? global : void 0 === this ? window : this, queue = [];
+                scheduleFlush = "undefined" != typeof process && "[object process]" === {}.toString.call(process) ? useNextTick() : BrowserMutationObserver ? useMutationObserver() : useSetTimeout(), 
+                exports.asap = asap;
+            }).call(this, require("_process"), "undefined" != typeof global ? global : "undefined" != typeof self ? self : "undefined" != typeof window ? window : {});
         }, {
             _process: "/Users/dave/dev/projects/myna-js/node_modules/grunt-browserify/node_modules/browserify/node_modules/process/browser.js"
         } ],
-        "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/promise/config.js": [ function(a, b, c) {
+        "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/promise/config.js": [ function(require, module, exports) {
             "use strict";
-            function d(a, b) {
-                return 2 !== arguments.length ? e[a] : void (e[a] = b);
+            function configure(name, value) {
+                return 2 !== arguments.length ? config[name] : void (config[name] = value);
             }
-            var e = {
+            var config = {
                 instrument: !1
             };
-            c.config = e, c.configure = d;
+            exports.config = config, exports.configure = configure;
         }, {} ],
-        "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/promise/polyfill.js": [ function(a, b, c) {
-            (function(b) {
+        "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/promise/polyfill.js": [ function(require, module, exports) {
+            (function(global) {
                 "use strict";
-                function d() {
-                    var a;
-                    a = "undefined" != typeof b ? b : "undefined" != typeof window && window.document ? window : self;
-                    var c = "Promise" in a && "resolve" in a.Promise && "reject" in a.Promise && "all" in a.Promise && "race" in a.Promise && function() {
-                        var b;
-                        return new a.Promise(function(a) {
-                            b = a;
-                        }), f(b);
+                function polyfill() {
+                    var local;
+                    local = "undefined" != typeof global ? global : "undefined" != typeof window && window.document ? window : self;
+                    var es6PromiseSupport = "Promise" in local && "resolve" in local.Promise && "reject" in local.Promise && "all" in local.Promise && "race" in local.Promise && function() {
+                        var resolve;
+                        return new local.Promise(function(r) {
+                            resolve = r;
+                        }), isFunction(resolve);
                     }();
-                    c || (a.Promise = e);
+                    es6PromiseSupport || (local.Promise = RSVPPromise);
                 }
-                var e = a("./promise").Promise, f = a("./utils").isFunction;
-                c.polyfill = d;
+                var RSVPPromise = require("./promise").Promise, isFunction = require("./utils").isFunction;
+                exports.polyfill = polyfill;
             }).call(this, "undefined" != typeof global ? global : "undefined" != typeof self ? self : "undefined" != typeof window ? window : {});
         }, {
             "./promise": "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/promise/promise.js",
             "./utils": "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/promise/utils.js"
         } ],
-        "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/promise/promise.js": [ function(a, b, c) {
+        "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/promise/promise.js": [ function(require, module, exports) {
             "use strict";
-            function d(a) {
-                if (!q(a)) throw new TypeError("You must pass a resolver function as the first argument to the promise constructor");
-                if (!(this instanceof d)) throw new TypeError("Failed to construct 'Promise': Please use the 'new' operator, this object constructor cannot be called as a function.");
-                this._subscribers = [], e(a, this);
+            function Promise(resolver) {
+                if (!isFunction(resolver)) throw new TypeError("You must pass a resolver function as the first argument to the promise constructor");
+                if (!(this instanceof Promise)) throw new TypeError("Failed to construct 'Promise': Please use the 'new' operator, this object constructor cannot be called as a function.");
+                this._subscribers = [], invokeResolver(resolver, this);
             }
-            function e(a, b) {
-                function c(a) {
-                    j(b, a);
+            function invokeResolver(resolver, promise) {
+                function resolvePromise(value) {
+                    resolve(promise, value);
                 }
-                function d(a) {
-                    l(b, a);
+                function rejectPromise(reason) {
+                    reject(promise, reason);
                 }
                 try {
-                    a(c, d);
+                    resolver(resolvePromise, rejectPromise);
                 } catch (e) {
-                    d(e);
+                    rejectPromise(e);
                 }
             }
-            function f(a, b, c, d) {
-                var e, f, g, h, k = q(c);
-                if (k) try {
-                    e = c(d), g = !0;
-                } catch (m) {
-                    h = !0, f = m;
-                } else e = d, g = !0;
-                i(b, e) || (k && g ? j(b, e) : h ? l(b, f) : a === y ? j(b, e) : a === z && l(b, e));
+            function invokeCallback(settled, promise, callback, detail) {
+                var value, error, succeeded, failed, hasCallback = isFunction(callback);
+                if (hasCallback) try {
+                    value = callback(detail), succeeded = !0;
+                } catch (e) {
+                    failed = !0, error = e;
+                } else value = detail, succeeded = !0;
+                handleThenable(promise, value) || (hasCallback && succeeded ? resolve(promise, value) : failed ? reject(promise, error) : settled === FULFILLED ? resolve(promise, value) : settled === REJECTED && reject(promise, value));
             }
-            function g(a, b, c, d) {
-                var e = a._subscribers, f = e.length;
-                e[f] = b, e[f + y] = c, e[f + z] = d;
+            function subscribe(parent, child, onFulfillment, onRejection) {
+                var subscribers = parent._subscribers, length = subscribers.length;
+                subscribers[length] = child, subscribers[length + FULFILLED] = onFulfillment, subscribers[length + REJECTED] = onRejection;
             }
-            function h(a, b) {
-                for (var c, d, e = a._subscribers, g = a._detail, h = 0; h < e.length; h += 3) c = e[h], 
-                d = e[h + b], f(b, c, d, g);
-                a._subscribers = null;
+            function publish(promise, settled) {
+                for (var child, callback, subscribers = promise._subscribers, detail = promise._detail, i = 0; i < subscribers.length; i += 3) child = subscribers[i], 
+                callback = subscribers[i + settled], invokeCallback(settled, child, callback, detail);
+                promise._subscribers = null;
             }
-            function i(a, b) {
-                var c, d = null;
+            function handleThenable(promise, value) {
+                var resolved, then = null;
                 try {
-                    if (a === b) throw new TypeError("A promises callback cannot return that same promise.");
-                    if (p(b) && (d = b.then, q(d))) return d.call(b, function(d) {
-                        return c ? !0 : (c = !0, void (b !== d ? j(a, d) : k(a, d)));
-                    }, function(b) {
-                        return c ? !0 : (c = !0, void l(a, b));
+                    if (promise === value) throw new TypeError("A promises callback cannot return that same promise.");
+                    if (objectOrFunction(value) && (then = value.then, isFunction(then))) return then.call(value, function(val) {
+                        return resolved ? !0 : (resolved = !0, void (value !== val ? resolve(promise, val) : fulfill(promise, val)));
+                    }, function(val) {
+                        return resolved ? !0 : (resolved = !0, void reject(promise, val));
                     }), !0;
-                } catch (e) {
-                    return c ? !0 : (l(a, e), !0);
+                } catch (error) {
+                    return resolved ? !0 : (reject(promise, error), !0);
                 }
                 return !1;
             }
-            function j(a, b) {
-                a === b ? k(a, b) : i(a, b) || k(a, b);
+            function resolve(promise, value) {
+                promise === value ? fulfill(promise, value) : handleThenable(promise, value) || fulfill(promise, value);
             }
-            function k(a, b) {
-                a._state === w && (a._state = x, a._detail = b, o.async(m, a));
+            function fulfill(promise, value) {
+                promise._state === PENDING && (promise._state = SEALED, promise._detail = value, 
+                config.async(publishFulfillment, promise));
             }
-            function l(a, b) {
-                a._state === w && (a._state = x, a._detail = b, o.async(n, a));
+            function reject(promise, reason) {
+                promise._state === PENDING && (promise._state = SEALED, promise._detail = reason, 
+                config.async(publishRejection, promise));
             }
-            function m(a) {
-                h(a, a._state = y);
+            function publishFulfillment(promise) {
+                publish(promise, promise._state = FULFILLED);
             }
-            function n(a) {
-                h(a, a._state = z);
+            function publishRejection(promise) {
+                publish(promise, promise._state = REJECTED);
             }
-            var o = a("./config").config, p = (a("./config").configure, a("./utils").objectOrFunction), q = a("./utils").isFunction, r = (a("./utils").now, 
-            a("./all").all), s = a("./race").race, t = a("./resolve").resolve, u = a("./reject").reject, v = a("./asap").asap;
-            o.async = v;
-            var w = void 0, x = 0, y = 1, z = 2;
-            d.prototype = {
-                constructor: d,
+            var config = require("./config").config, objectOrFunction = (require("./config").configure, 
+            require("./utils").objectOrFunction), isFunction = require("./utils").isFunction, all = (require("./utils").now, 
+            require("./all").all), race = require("./race").race, staticResolve = require("./resolve").resolve, staticReject = require("./reject").reject, asap = require("./asap").asap;
+            config.async = asap;
+            var PENDING = void 0, SEALED = 0, FULFILLED = 1, REJECTED = 2;
+            Promise.prototype = {
+                constructor: Promise,
                 _state: void 0,
                 _detail: void 0,
                 _subscribers: void 0,
-                then: function(a, b) {
-                    var c = this, d = new this.constructor(function() {});
+                then: function(onFulfillment, onRejection) {
+                    var promise = this, thenPromise = new this.constructor(function() {});
                     if (this._state) {
-                        var e = arguments;
-                        o.async(function() {
-                            f(c._state, d, e[c._state - 1], c._detail);
+                        var callbacks = arguments;
+                        config.async(function() {
+                            invokeCallback(promise._state, thenPromise, callbacks[promise._state - 1], promise._detail);
                         });
-                    } else g(this, d, a, b);
-                    return d;
+                    } else subscribe(this, thenPromise, onFulfillment, onRejection);
+                    return thenPromise;
                 },
-                "catch": function(a) {
-                    return this.then(null, a);
+                "catch": function(onRejection) {
+                    return this.then(null, onRejection);
                 }
-            }, d.all = r, d.race = s, d.resolve = t, d.reject = u, c.Promise = d;
+            }, Promise.all = all, Promise.race = race, Promise.resolve = staticResolve, Promise.reject = staticReject, 
+            exports.Promise = Promise;
         }, {
             "./all": "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/promise/all.js",
             "./asap": "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/promise/asap.js",
@@ -234,502 +238,521 @@
             "./resolve": "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/promise/resolve.js",
             "./utils": "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/promise/utils.js"
         } ],
-        "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/promise/race.js": [ function(a, b, c) {
+        "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/promise/race.js": [ function(require, module, exports) {
             "use strict";
-            function d(a) {
-                var b = this;
-                if (!e(a)) throw new TypeError("You must pass an array to race.");
-                return new b(function(b, c) {
-                    for (var d, e = 0; e < a.length; e++) d = a[e], d && "function" == typeof d.then ? d.then(b, c) : b(d);
+            function race(promises) {
+                var Promise = this;
+                if (!isArray(promises)) throw new TypeError("You must pass an array to race.");
+                return new Promise(function(resolve, reject) {
+                    for (var promise, i = 0; i < promises.length; i++) promise = promises[i], promise && "function" == typeof promise.then ? promise.then(resolve, reject) : resolve(promise);
                 });
             }
-            var e = a("./utils").isArray;
-            c.race = d;
+            var isArray = require("./utils").isArray;
+            exports.race = race;
         }, {
             "./utils": "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/promise/utils.js"
         } ],
-        "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/promise/reject.js": [ function(a, b, c) {
+        "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/promise/reject.js": [ function(require, module, exports) {
             "use strict";
-            function d(a) {
-                var b = this;
-                return new b(function(b, c) {
-                    c(a);
+            function reject(reason) {
+                var Promise = this;
+                return new Promise(function(resolve, reject) {
+                    reject(reason);
                 });
             }
-            c.reject = d;
+            exports.reject = reject;
         }, {} ],
-        "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/promise/resolve.js": [ function(a, b, c) {
+        "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/promise/resolve.js": [ function(require, module, exports) {
             "use strict";
-            function d(a) {
-                if (a && "object" == typeof a && a.constructor === this) return a;
-                var b = this;
-                return new b(function(b) {
-                    b(a);
+            function resolve(value) {
+                if (value && "object" == typeof value && value.constructor === this) return value;
+                var Promise = this;
+                return new Promise(function(resolve) {
+                    resolve(value);
                 });
             }
-            c.resolve = d;
+            exports.resolve = resolve;
         }, {} ],
-        "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/promise/utils.js": [ function(a, b, c) {
+        "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/promise/utils.js": [ function(require, module, exports) {
             "use strict";
-            function d(a) {
-                return e(a) || "object" == typeof a && null !== a;
+            function objectOrFunction(x) {
+                return isFunction(x) || "object" == typeof x && null !== x;
             }
-            function e(a) {
-                return "function" == typeof a;
+            function isFunction(x) {
+                return "function" == typeof x;
             }
-            function f(a) {
-                return "[object Array]" === Object.prototype.toString.call(a);
+            function isArray(x) {
+                return "[object Array]" === Object.prototype.toString.call(x);
             }
-            var g = Date.now || function() {
+            var now = Date.now || function() {
                 return new Date().getTime();
             };
-            c.objectOrFunction = d, c.isFunction = e, c.isArray = f, c.now = g;
+            exports.objectOrFunction = objectOrFunction, exports.isFunction = isFunction, exports.isArray = isArray, 
+            exports.now = now;
         }, {} ],
-        "/Users/dave/dev/projects/myna-js/node_modules/grunt-browserify/node_modules/browserify/node_modules/process/browser.js": [ function(a, b) {
-            function c() {}
-            var d = b.exports = {};
-            d.nextTick = function() {
-                var a = "undefined" != typeof window && window.setImmediate, b = "undefined" != typeof window && window.postMessage && window.addEventListener;
-                if (a) return function(a) {
-                    return window.setImmediate(a);
+        "/Users/dave/dev/projects/myna-js/node_modules/grunt-browserify/node_modules/browserify/node_modules/process/browser.js": [ function(require, module) {
+            function noop() {}
+            var process = module.exports = {};
+            process.nextTick = function() {
+                var canSetImmediate = "undefined" != typeof window && window.setImmediate, canPost = "undefined" != typeof window && window.postMessage && window.addEventListener;
+                if (canSetImmediate) return function(f) {
+                    return window.setImmediate(f);
                 };
-                if (b) {
-                    var c = [];
-                    return window.addEventListener("message", function(a) {
-                        var b = a.source;
-                        if ((b === window || null === b) && "process-tick" === a.data && (a.stopPropagation(), 
-                        c.length > 0)) {
-                            var d = c.shift();
-                            d();
+                if (canPost) {
+                    var queue = [];
+                    return window.addEventListener("message", function(ev) {
+                        var source = ev.source;
+                        if ((source === window || null === source) && "process-tick" === ev.data && (ev.stopPropagation(), 
+                        queue.length > 0)) {
+                            var fn = queue.shift();
+                            fn();
                         }
-                    }, !0), function(a) {
-                        c.push(a), window.postMessage("process-tick", "*");
+                    }, !0), function(fn) {
+                        queue.push(fn), window.postMessage("process-tick", "*");
                     };
                 }
-                return function(a) {
-                    setTimeout(a, 0);
+                return function(fn) {
+                    setTimeout(fn, 0);
                 };
-            }(), d.title = "browser", d.browser = !0, d.env = {}, d.argv = [], d.on = c, d.addListener = c, 
-            d.once = c, d.off = c, d.removeListener = c, d.removeAllListeners = c, d.emit = c, 
-            d.binding = function() {
+            }(), process.title = "browser", process.browser = !0, process.env = {}, process.argv = [], 
+            process.on = noop, process.addListener = noop, process.once = noop, process.off = noop, 
+            process.removeListener = noop, process.removeAllListeners = noop, process.emit = noop, 
+            process.binding = function() {
                 throw new Error("process.binding is not supported");
-            }, d.cwd = function() {
+            }, process.cwd = function() {
                 return "/";
-            }, d.chdir = function() {
+            }, process.chdir = function() {
                 throw new Error("process.chdir is not supported");
             };
         }, {} ],
-        "/Users/dave/dev/projects/myna-js/node_modules/jquery/dist/jquery.js": [ function(b, c) {
-            !function(a, b) {
-                "object" == typeof c && "object" == typeof c.exports ? c.exports = a.document ? b(a, !0) : function(a) {
-                    if (!a.document) throw new Error("jQuery requires a window with a document");
-                    return b(a);
-                } : b(a);
-            }("undefined" != typeof window ? window : this, function(b, c) {
-                function d(a) {
-                    var b = a.length, c = fb.type(a);
-                    return "function" === c || fb.isWindow(a) ? !1 : 1 === a.nodeType && b ? !0 : "array" === c || 0 === b || "number" == typeof b && b > 0 && b - 1 in a;
+        "/Users/dave/dev/projects/myna-js/node_modules/jquery/dist/jquery.js": [ function(require, module) {
+            !function(global, factory) {
+                "object" == typeof module && "object" == typeof module.exports ? module.exports = global.document ? factory(global, !0) : function(w) {
+                    if (!w.document) throw new Error("jQuery requires a window with a document");
+                    return factory(w);
+                } : factory(global);
+            }("undefined" != typeof window ? window : this, function(window, noGlobal) {
+                function isArraylike(obj) {
+                    var length = obj.length, type = jQuery.type(obj);
+                    return "function" === type || jQuery.isWindow(obj) ? !1 : 1 === obj.nodeType && length ? !0 : "array" === type || 0 === length || "number" == typeof length && length > 0 && length - 1 in obj;
                 }
-                function e(a, b, c) {
-                    if (fb.isFunction(b)) return fb.grep(a, function(a, d) {
-                        return !!b.call(a, d, a) !== c;
+                function winnow(elements, qualifier, not) {
+                    if (jQuery.isFunction(qualifier)) return jQuery.grep(elements, function(elem, i) {
+                        return !!qualifier.call(elem, i, elem) !== not;
                     });
-                    if (b.nodeType) return fb.grep(a, function(a) {
-                        return a === b !== c;
+                    if (qualifier.nodeType) return jQuery.grep(elements, function(elem) {
+                        return elem === qualifier !== not;
                     });
-                    if ("string" == typeof b) {
-                        if (nb.test(b)) return fb.filter(b, a, c);
-                        b = fb.filter(b, a);
+                    if ("string" == typeof qualifier) {
+                        if (risSimple.test(qualifier)) return jQuery.filter(qualifier, elements, not);
+                        qualifier = jQuery.filter(qualifier, elements);
                     }
-                    return fb.grep(a, function(a) {
-                        return fb.inArray(a, b) >= 0 !== c;
+                    return jQuery.grep(elements, function(elem) {
+                        return jQuery.inArray(elem, qualifier) >= 0 !== not;
                     });
                 }
-                function f(a, b) {
-                    do a = a[b]; while (a && 1 !== a.nodeType);
-                    return a;
+                function sibling(cur, dir) {
+                    do cur = cur[dir]; while (cur && 1 !== cur.nodeType);
+                    return cur;
                 }
-                function g(a) {
-                    var b = vb[a] = {};
-                    return fb.each(a.match(ub) || [], function(a, c) {
-                        b[c] = !0;
-                    }), b;
+                function createOptions(options) {
+                    var object = optionsCache[options] = {};
+                    return jQuery.each(options.match(rnotwhite) || [], function(_, flag) {
+                        object[flag] = !0;
+                    }), object;
                 }
-                function h() {
-                    pb.addEventListener ? (pb.removeEventListener("DOMContentLoaded", i, !1), b.removeEventListener("load", i, !1)) : (pb.detachEvent("onreadystatechange", i), 
-                    b.detachEvent("onload", i));
+                function detach() {
+                    document.addEventListener ? (document.removeEventListener("DOMContentLoaded", completed, !1), 
+                    window.removeEventListener("load", completed, !1)) : (document.detachEvent("onreadystatechange", completed), 
+                    window.detachEvent("onload", completed));
                 }
-                function i() {
-                    (pb.addEventListener || "load" === event.type || "complete" === pb.readyState) && (h(), 
-                    fb.ready());
+                function completed() {
+                    (document.addEventListener || "load" === event.type || "complete" === document.readyState) && (detach(), 
+                    jQuery.ready());
                 }
-                function j(a, b, c) {
-                    if (void 0 === c && 1 === a.nodeType) {
-                        var d = "data-" + b.replace(Ab, "-$1").toLowerCase();
-                        if (c = a.getAttribute(d), "string" == typeof c) {
+                function dataAttr(elem, key, data) {
+                    if (void 0 === data && 1 === elem.nodeType) {
+                        var name = "data-" + key.replace(rmultiDash, "-$1").toLowerCase();
+                        if (data = elem.getAttribute(name), "string" == typeof data) {
                             try {
-                                c = "true" === c ? !0 : "false" === c ? !1 : "null" === c ? null : +c + "" === c ? +c : zb.test(c) ? fb.parseJSON(c) : c;
+                                data = "true" === data ? !0 : "false" === data ? !1 : "null" === data ? null : +data + "" === data ? +data : rbrace.test(data) ? jQuery.parseJSON(data) : data;
                             } catch (e) {}
-                            fb.data(a, b, c);
-                        } else c = void 0;
+                            jQuery.data(elem, key, data);
+                        } else data = void 0;
                     }
-                    return c;
+                    return data;
                 }
-                function k(a) {
-                    var b;
-                    for (b in a) if (("data" !== b || !fb.isEmptyObject(a[b])) && "toJSON" !== b) return !1;
+                function isEmptyDataObject(obj) {
+                    var name;
+                    for (name in obj) if (("data" !== name || !jQuery.isEmptyObject(obj[name])) && "toJSON" !== name) return !1;
                     return !0;
                 }
-                function l(a, b, c, d) {
-                    if (fb.acceptData(a)) {
-                        var e, f, g = fb.expando, h = a.nodeType, i = h ? fb.cache : a, j = h ? a[g] : a[g] && g;
-                        if (j && i[j] && (d || i[j].data) || void 0 !== c || "string" != typeof b) return j || (j = h ? a[g] = X.pop() || fb.guid++ : g), 
-                        i[j] || (i[j] = h ? {} : {
-                            toJSON: fb.noop
-                        }), ("object" == typeof b || "function" == typeof b) && (d ? i[j] = fb.extend(i[j], b) : i[j].data = fb.extend(i[j].data, b)), 
-                        f = i[j], d || (f.data || (f.data = {}), f = f.data), void 0 !== c && (f[fb.camelCase(b)] = c), 
-                        "string" == typeof b ? (e = f[b], null == e && (e = f[fb.camelCase(b)])) : e = f, 
-                        e;
+                function internalData(elem, name, data, pvt) {
+                    if (jQuery.acceptData(elem)) {
+                        var ret, thisCache, internalKey = jQuery.expando, isNode = elem.nodeType, cache = isNode ? jQuery.cache : elem, id = isNode ? elem[internalKey] : elem[internalKey] && internalKey;
+                        if (id && cache[id] && (pvt || cache[id].data) || void 0 !== data || "string" != typeof name) return id || (id = isNode ? elem[internalKey] = deletedIds.pop() || jQuery.guid++ : internalKey), 
+                        cache[id] || (cache[id] = isNode ? {} : {
+                            toJSON: jQuery.noop
+                        }), ("object" == typeof name || "function" == typeof name) && (pvt ? cache[id] = jQuery.extend(cache[id], name) : cache[id].data = jQuery.extend(cache[id].data, name)), 
+                        thisCache = cache[id], pvt || (thisCache.data || (thisCache.data = {}), thisCache = thisCache.data), 
+                        void 0 !== data && (thisCache[jQuery.camelCase(name)] = data), "string" == typeof name ? (ret = thisCache[name], 
+                        null == ret && (ret = thisCache[jQuery.camelCase(name)])) : ret = thisCache, ret;
                     }
                 }
-                function m(a, b, c) {
-                    if (fb.acceptData(a)) {
-                        var d, e, f = a.nodeType, g = f ? fb.cache : a, h = f ? a[fb.expando] : fb.expando;
-                        if (g[h]) {
-                            if (b && (d = c ? g[h] : g[h].data)) {
-                                fb.isArray(b) ? b = b.concat(fb.map(b, fb.camelCase)) : b in d ? b = [ b ] : (b = fb.camelCase(b), 
-                                b = b in d ? [ b ] : b.split(" ")), e = b.length;
-                                for (;e--; ) delete d[b[e]];
-                                if (c ? !k(d) : !fb.isEmptyObject(d)) return;
+                function internalRemoveData(elem, name, pvt) {
+                    if (jQuery.acceptData(elem)) {
+                        var thisCache, i, isNode = elem.nodeType, cache = isNode ? jQuery.cache : elem, id = isNode ? elem[jQuery.expando] : jQuery.expando;
+                        if (cache[id]) {
+                            if (name && (thisCache = pvt ? cache[id] : cache[id].data)) {
+                                jQuery.isArray(name) ? name = name.concat(jQuery.map(name, jQuery.camelCase)) : name in thisCache ? name = [ name ] : (name = jQuery.camelCase(name), 
+                                name = name in thisCache ? [ name ] : name.split(" ")), i = name.length;
+                                for (;i--; ) delete thisCache[name[i]];
+                                if (pvt ? !isEmptyDataObject(thisCache) : !jQuery.isEmptyObject(thisCache)) return;
                             }
-                            (c || (delete g[h].data, k(g[h]))) && (f ? fb.cleanData([ a ], !0) : db.deleteExpando || g != g.window ? delete g[h] : g[h] = null);
+                            (pvt || (delete cache[id].data, isEmptyDataObject(cache[id]))) && (isNode ? jQuery.cleanData([ elem ], !0) : support.deleteExpando || cache != cache.window ? delete cache[id] : cache[id] = null);
                         }
                     }
                 }
-                function n() {
+                function returnTrue() {
                     return !0;
                 }
-                function o() {
+                function returnFalse() {
                     return !1;
                 }
-                function p() {
+                function safeActiveElement() {
                     try {
-                        return pb.activeElement;
-                    } catch (a) {}
+                        return document.activeElement;
+                    } catch (err) {}
                 }
-                function q(a) {
-                    var b = Lb.split("|"), c = a.createDocumentFragment();
-                    if (c.createElement) for (;b.length; ) c.createElement(b.pop());
-                    return c;
+                function createSafeFragment(document) {
+                    var list = nodeNames.split("|"), safeFrag = document.createDocumentFragment();
+                    if (safeFrag.createElement) for (;list.length; ) safeFrag.createElement(list.pop());
+                    return safeFrag;
                 }
-                function r(a, b) {
-                    var c, d, e = 0, f = typeof a.getElementsByTagName !== yb ? a.getElementsByTagName(b || "*") : typeof a.querySelectorAll !== yb ? a.querySelectorAll(b || "*") : void 0;
-                    if (!f) for (f = [], c = a.childNodes || a; null != (d = c[e]); e++) !b || fb.nodeName(d, b) ? f.push(d) : fb.merge(f, r(d, b));
-                    return void 0 === b || b && fb.nodeName(a, b) ? fb.merge([ a ], f) : f;
+                function getAll(context, tag) {
+                    var elems, elem, i = 0, found = typeof context.getElementsByTagName !== strundefined ? context.getElementsByTagName(tag || "*") : typeof context.querySelectorAll !== strundefined ? context.querySelectorAll(tag || "*") : void 0;
+                    if (!found) for (found = [], elems = context.childNodes || context; null != (elem = elems[i]); i++) !tag || jQuery.nodeName(elem, tag) ? found.push(elem) : jQuery.merge(found, getAll(elem, tag));
+                    return void 0 === tag || tag && jQuery.nodeName(context, tag) ? jQuery.merge([ context ], found) : found;
                 }
-                function s(a) {
-                    Fb.test(a.type) && (a.defaultChecked = a.checked);
+                function fixDefaultChecked(elem) {
+                    rcheckableType.test(elem.type) && (elem.defaultChecked = elem.checked);
                 }
-                function t(a, b) {
-                    return fb.nodeName(a, "table") && fb.nodeName(11 !== b.nodeType ? b : b.firstChild, "tr") ? a.getElementsByTagName("tbody")[0] || a.appendChild(a.ownerDocument.createElement("tbody")) : a;
+                function manipulationTarget(elem, content) {
+                    return jQuery.nodeName(elem, "table") && jQuery.nodeName(11 !== content.nodeType ? content : content.firstChild, "tr") ? elem.getElementsByTagName("tbody")[0] || elem.appendChild(elem.ownerDocument.createElement("tbody")) : elem;
                 }
-                function u(a) {
-                    return a.type = (null !== fb.find.attr(a, "type")) + "/" + a.type, a;
+                function disableScript(elem) {
+                    return elem.type = (null !== jQuery.find.attr(elem, "type")) + "/" + elem.type, 
+                    elem;
                 }
-                function v(a) {
-                    var b = Wb.exec(a.type);
-                    return b ? a.type = b[1] : a.removeAttribute("type"), a;
+                function restoreScript(elem) {
+                    var match = rscriptTypeMasked.exec(elem.type);
+                    return match ? elem.type = match[1] : elem.removeAttribute("type"), elem;
                 }
-                function w(a, b) {
-                    for (var c, d = 0; null != (c = a[d]); d++) fb._data(c, "globalEval", !b || fb._data(b[d], "globalEval"));
+                function setGlobalEval(elems, refElements) {
+                    for (var elem, i = 0; null != (elem = elems[i]); i++) jQuery._data(elem, "globalEval", !refElements || jQuery._data(refElements[i], "globalEval"));
                 }
-                function x(a, b) {
-                    if (1 === b.nodeType && fb.hasData(a)) {
-                        var c, d, e, f = fb._data(a), g = fb._data(b, f), h = f.events;
-                        if (h) {
-                            delete g.handle, g.events = {};
-                            for (c in h) for (d = 0, e = h[c].length; e > d; d++) fb.event.add(b, c, h[c][d]);
+                function cloneCopyEvent(src, dest) {
+                    if (1 === dest.nodeType && jQuery.hasData(src)) {
+                        var type, i, l, oldData = jQuery._data(src), curData = jQuery._data(dest, oldData), events = oldData.events;
+                        if (events) {
+                            delete curData.handle, curData.events = {};
+                            for (type in events) for (i = 0, l = events[type].length; l > i; i++) jQuery.event.add(dest, type, events[type][i]);
                         }
-                        g.data && (g.data = fb.extend({}, g.data));
+                        curData.data && (curData.data = jQuery.extend({}, curData.data));
                     }
                 }
-                function y(a, b) {
-                    var c, d, e;
-                    if (1 === b.nodeType) {
-                        if (c = b.nodeName.toLowerCase(), !db.noCloneEvent && b[fb.expando]) {
-                            e = fb._data(b);
-                            for (d in e.events) fb.removeEvent(b, d, e.handle);
-                            b.removeAttribute(fb.expando);
+                function fixCloneNodeIssues(src, dest) {
+                    var nodeName, e, data;
+                    if (1 === dest.nodeType) {
+                        if (nodeName = dest.nodeName.toLowerCase(), !support.noCloneEvent && dest[jQuery.expando]) {
+                            data = jQuery._data(dest);
+                            for (e in data.events) jQuery.removeEvent(dest, e, data.handle);
+                            dest.removeAttribute(jQuery.expando);
                         }
-                        "script" === c && b.text !== a.text ? (u(b).text = a.text, v(b)) : "object" === c ? (b.parentNode && (b.outerHTML = a.outerHTML), 
-                        db.html5Clone && a.innerHTML && !fb.trim(b.innerHTML) && (b.innerHTML = a.innerHTML)) : "input" === c && Fb.test(a.type) ? (b.defaultChecked = b.checked = a.checked, 
-                        b.value !== a.value && (b.value = a.value)) : "option" === c ? b.defaultSelected = b.selected = a.defaultSelected : ("input" === c || "textarea" === c) && (b.defaultValue = a.defaultValue);
+                        "script" === nodeName && dest.text !== src.text ? (disableScript(dest).text = src.text, 
+                        restoreScript(dest)) : "object" === nodeName ? (dest.parentNode && (dest.outerHTML = src.outerHTML), 
+                        support.html5Clone && src.innerHTML && !jQuery.trim(dest.innerHTML) && (dest.innerHTML = src.innerHTML)) : "input" === nodeName && rcheckableType.test(src.type) ? (dest.defaultChecked = dest.checked = src.checked, 
+                        dest.value !== src.value && (dest.value = src.value)) : "option" === nodeName ? dest.defaultSelected = dest.selected = src.defaultSelected : ("input" === nodeName || "textarea" === nodeName) && (dest.defaultValue = src.defaultValue);
                     }
                 }
-                function z(a, c) {
-                    var d, e = fb(c.createElement(a)).appendTo(c.body), f = b.getDefaultComputedStyle && (d = b.getDefaultComputedStyle(e[0])) ? d.display : fb.css(e[0], "display");
-                    return e.detach(), f;
+                function actualDisplay(name, doc) {
+                    var style, elem = jQuery(doc.createElement(name)).appendTo(doc.body), display = window.getDefaultComputedStyle && (style = window.getDefaultComputedStyle(elem[0])) ? style.display : jQuery.css(elem[0], "display");
+                    return elem.detach(), display;
                 }
-                function A(a) {
-                    var b = pb, c = ac[a];
-                    return c || (c = z(a, b), "none" !== c && c || (_b = (_b || fb("<iframe frameborder='0' width='0' height='0'/>")).appendTo(b.documentElement), 
-                    b = (_b[0].contentWindow || _b[0].contentDocument).document, b.write(), b.close(), 
-                    c = z(a, b), _b.detach()), ac[a] = c), c;
+                function defaultDisplay(nodeName) {
+                    var doc = document, display = elemdisplay[nodeName];
+                    return display || (display = actualDisplay(nodeName, doc), "none" !== display && display || (iframe = (iframe || jQuery("<iframe frameborder='0' width='0' height='0'/>")).appendTo(doc.documentElement), 
+                    doc = (iframe[0].contentWindow || iframe[0].contentDocument).document, doc.write(), 
+                    doc.close(), display = actualDisplay(nodeName, doc), iframe.detach()), elemdisplay[nodeName] = display), 
+                    display;
                 }
-                function B(a, b) {
+                function addGetHookIf(conditionFn, hookFn) {
                     return {
                         get: function() {
-                            var c = a();
-                            if (null != c) return c ? void delete this.get : (this.get = b).apply(this, arguments);
+                            var condition = conditionFn();
+                            if (null != condition) return condition ? void delete this.get : (this.get = hookFn).apply(this, arguments);
                         }
                     };
                 }
-                function C(a, b) {
-                    if (b in a) return b;
-                    for (var c = b.charAt(0).toUpperCase() + b.slice(1), d = b, e = nc.length; e--; ) if (b = nc[e] + c, 
-                    b in a) return b;
-                    return d;
+                function vendorPropName(style, name) {
+                    if (name in style) return name;
+                    for (var capName = name.charAt(0).toUpperCase() + name.slice(1), origName = name, i = cssPrefixes.length; i--; ) if (name = cssPrefixes[i] + capName, 
+                    name in style) return name;
+                    return origName;
                 }
-                function D(a, b) {
-                    for (var c, d, e, f = [], g = 0, h = a.length; h > g; g++) d = a[g], d.style && (f[g] = fb._data(d, "olddisplay"), 
-                    c = d.style.display, b ? (f[g] || "none" !== c || (d.style.display = ""), "" === d.style.display && Db(d) && (f[g] = fb._data(d, "olddisplay", A(d.nodeName)))) : (e = Db(d), 
-                    (c && "none" !== c || !e) && fb._data(d, "olddisplay", e ? c : fb.css(d, "display"))));
-                    for (g = 0; h > g; g++) d = a[g], d.style && (b && "none" !== d.style.display && "" !== d.style.display || (d.style.display = b ? f[g] || "" : "none"));
-                    return a;
+                function showHide(elements, show) {
+                    for (var display, elem, hidden, values = [], index = 0, length = elements.length; length > index; index++) elem = elements[index], 
+                    elem.style && (values[index] = jQuery._data(elem, "olddisplay"), display = elem.style.display, 
+                    show ? (values[index] || "none" !== display || (elem.style.display = ""), "" === elem.style.display && isHidden(elem) && (values[index] = jQuery._data(elem, "olddisplay", defaultDisplay(elem.nodeName)))) : (hidden = isHidden(elem), 
+                    (display && "none" !== display || !hidden) && jQuery._data(elem, "olddisplay", hidden ? display : jQuery.css(elem, "display"))));
+                    for (index = 0; length > index; index++) elem = elements[index], elem.style && (show && "none" !== elem.style.display && "" !== elem.style.display || (elem.style.display = show ? values[index] || "" : "none"));
+                    return elements;
                 }
-                function E(a, b, c) {
-                    var d = jc.exec(b);
-                    return d ? Math.max(0, d[1] - (c || 0)) + (d[2] || "px") : b;
+                function setPositiveNumber(elem, value, subtract) {
+                    var matches = rnumsplit.exec(value);
+                    return matches ? Math.max(0, matches[1] - (subtract || 0)) + (matches[2] || "px") : value;
                 }
-                function F(a, b, c, d, e) {
-                    for (var f = c === (d ? "border" : "content") ? 4 : "width" === b ? 1 : 0, g = 0; 4 > f; f += 2) "margin" === c && (g += fb.css(a, c + Cb[f], !0, e)), 
-                    d ? ("content" === c && (g -= fb.css(a, "padding" + Cb[f], !0, e)), "margin" !== c && (g -= fb.css(a, "border" + Cb[f] + "Width", !0, e))) : (g += fb.css(a, "padding" + Cb[f], !0, e), 
-                    "padding" !== c && (g += fb.css(a, "border" + Cb[f] + "Width", !0, e)));
-                    return g;
+                function augmentWidthOrHeight(elem, name, extra, isBorderBox, styles) {
+                    for (var i = extra === (isBorderBox ? "border" : "content") ? 4 : "width" === name ? 1 : 0, val = 0; 4 > i; i += 2) "margin" === extra && (val += jQuery.css(elem, extra + cssExpand[i], !0, styles)), 
+                    isBorderBox ? ("content" === extra && (val -= jQuery.css(elem, "padding" + cssExpand[i], !0, styles)), 
+                    "margin" !== extra && (val -= jQuery.css(elem, "border" + cssExpand[i] + "Width", !0, styles))) : (val += jQuery.css(elem, "padding" + cssExpand[i], !0, styles), 
+                    "padding" !== extra && (val += jQuery.css(elem, "border" + cssExpand[i] + "Width", !0, styles)));
+                    return val;
                 }
-                function G(a, b, c) {
-                    var d = !0, e = "width" === b ? a.offsetWidth : a.offsetHeight, f = bc(a), g = db.boxSizing && "border-box" === fb.css(a, "boxSizing", !1, f);
-                    if (0 >= e || null == e) {
-                        if (e = cc(a, b, f), (0 > e || null == e) && (e = a.style[b]), ec.test(e)) return e;
-                        d = g && (db.boxSizingReliable() || e === a.style[b]), e = parseFloat(e) || 0;
+                function getWidthOrHeight(elem, name, extra) {
+                    var valueIsBorderBox = !0, val = "width" === name ? elem.offsetWidth : elem.offsetHeight, styles = getStyles(elem), isBorderBox = support.boxSizing && "border-box" === jQuery.css(elem, "boxSizing", !1, styles);
+                    if (0 >= val || null == val) {
+                        if (val = curCSS(elem, name, styles), (0 > val || null == val) && (val = elem.style[name]), 
+                        rnumnonpx.test(val)) return val;
+                        valueIsBorderBox = isBorderBox && (support.boxSizingReliable() || val === elem.style[name]), 
+                        val = parseFloat(val) || 0;
                     }
-                    return e + F(a, b, c || (g ? "border" : "content"), d, f) + "px";
+                    return val + augmentWidthOrHeight(elem, name, extra || (isBorderBox ? "border" : "content"), valueIsBorderBox, styles) + "px";
                 }
-                function H(a, b, c, d, e) {
-                    return new H.prototype.init(a, b, c, d, e);
+                function Tween(elem, options, prop, end, easing) {
+                    return new Tween.prototype.init(elem, options, prop, end, easing);
                 }
-                function I() {
+                function createFxNow() {
                     return setTimeout(function() {
-                        oc = void 0;
-                    }), oc = fb.now();
+                        fxNow = void 0;
+                    }), fxNow = jQuery.now();
                 }
-                function J(a, b) {
-                    var c, d = {
-                        height: a
-                    }, e = 0;
-                    for (b = b ? 1 : 0; 4 > e; e += 2 - b) c = Cb[e], d["margin" + c] = d["padding" + c] = a;
-                    return b && (d.opacity = d.width = a), d;
+                function genFx(type, includeWidth) {
+                    var which, attrs = {
+                        height: type
+                    }, i = 0;
+                    for (includeWidth = includeWidth ? 1 : 0; 4 > i; i += 2 - includeWidth) which = cssExpand[i], 
+                    attrs["margin" + which] = attrs["padding" + which] = type;
+                    return includeWidth && (attrs.opacity = attrs.width = type), attrs;
                 }
-                function K(a, b, c) {
-                    for (var d, e = (uc[b] || []).concat(uc["*"]), f = 0, g = e.length; g > f; f++) if (d = e[f].call(c, b, a)) return d;
+                function createTween(value, prop, animation) {
+                    for (var tween, collection = (tweeners[prop] || []).concat(tweeners["*"]), index = 0, length = collection.length; length > index; index++) if (tween = collection[index].call(animation, prop, value)) return tween;
                 }
-                function L(a, b, c) {
-                    var d, e, f, g, h, i, j, k, l = this, m = {}, n = a.style, o = a.nodeType && Db(a), p = fb._data(a, "fxshow");
-                    c.queue || (h = fb._queueHooks(a, "fx"), null == h.unqueued && (h.unqueued = 0, 
-                    i = h.empty.fire, h.empty.fire = function() {
-                        h.unqueued || i();
-                    }), h.unqueued++, l.always(function() {
-                        l.always(function() {
-                            h.unqueued--, fb.queue(a, "fx").length || h.empty.fire();
+                function defaultPrefilter(elem, props, opts) {
+                    var prop, value, toggle, tween, hooks, oldfire, display, checkDisplay, anim = this, orig = {}, style = elem.style, hidden = elem.nodeType && isHidden(elem), dataShow = jQuery._data(elem, "fxshow");
+                    opts.queue || (hooks = jQuery._queueHooks(elem, "fx"), null == hooks.unqueued && (hooks.unqueued = 0, 
+                    oldfire = hooks.empty.fire, hooks.empty.fire = function() {
+                        hooks.unqueued || oldfire();
+                    }), hooks.unqueued++, anim.always(function() {
+                        anim.always(function() {
+                            hooks.unqueued--, jQuery.queue(elem, "fx").length || hooks.empty.fire();
                         });
-                    })), 1 === a.nodeType && ("height" in b || "width" in b) && (c.overflow = [ n.overflow, n.overflowX, n.overflowY ], 
-                    j = fb.css(a, "display"), k = "none" === j ? fb._data(a, "olddisplay") || A(a.nodeName) : j, 
-                    "inline" === k && "none" === fb.css(a, "float") && (db.inlineBlockNeedsLayout && "inline" !== A(a.nodeName) ? n.zoom = 1 : n.display = "inline-block")), 
-                    c.overflow && (n.overflow = "hidden", db.shrinkWrapBlocks() || l.always(function() {
-                        n.overflow = c.overflow[0], n.overflowX = c.overflow[1], n.overflowY = c.overflow[2];
+                    })), 1 === elem.nodeType && ("height" in props || "width" in props) && (opts.overflow = [ style.overflow, style.overflowX, style.overflowY ], 
+                    display = jQuery.css(elem, "display"), checkDisplay = "none" === display ? jQuery._data(elem, "olddisplay") || defaultDisplay(elem.nodeName) : display, 
+                    "inline" === checkDisplay && "none" === jQuery.css(elem, "float") && (support.inlineBlockNeedsLayout && "inline" !== defaultDisplay(elem.nodeName) ? style.zoom = 1 : style.display = "inline-block")), 
+                    opts.overflow && (style.overflow = "hidden", support.shrinkWrapBlocks() || anim.always(function() {
+                        style.overflow = opts.overflow[0], style.overflowX = opts.overflow[1], style.overflowY = opts.overflow[2];
                     }));
-                    for (d in b) if (e = b[d], qc.exec(e)) {
-                        if (delete b[d], f = f || "toggle" === e, e === (o ? "hide" : "show")) {
-                            if ("show" !== e || !p || void 0 === p[d]) continue;
-                            o = !0;
+                    for (prop in props) if (value = props[prop], rfxtypes.exec(value)) {
+                        if (delete props[prop], toggle = toggle || "toggle" === value, value === (hidden ? "hide" : "show")) {
+                            if ("show" !== value || !dataShow || void 0 === dataShow[prop]) continue;
+                            hidden = !0;
                         }
-                        m[d] = p && p[d] || fb.style(a, d);
-                    } else j = void 0;
-                    if (fb.isEmptyObject(m)) "inline" === ("none" === j ? A(a.nodeName) : j) && (n.display = j); else {
-                        p ? "hidden" in p && (o = p.hidden) : p = fb._data(a, "fxshow", {}), f && (p.hidden = !o), 
-                        o ? fb(a).show() : l.done(function() {
-                            fb(a).hide();
-                        }), l.done(function() {
-                            var b;
-                            fb._removeData(a, "fxshow");
-                            for (b in m) fb.style(a, b, m[b]);
+                        orig[prop] = dataShow && dataShow[prop] || jQuery.style(elem, prop);
+                    } else display = void 0;
+                    if (jQuery.isEmptyObject(orig)) "inline" === ("none" === display ? defaultDisplay(elem.nodeName) : display) && (style.display = display); else {
+                        dataShow ? "hidden" in dataShow && (hidden = dataShow.hidden) : dataShow = jQuery._data(elem, "fxshow", {}), 
+                        toggle && (dataShow.hidden = !hidden), hidden ? jQuery(elem).show() : anim.done(function() {
+                            jQuery(elem).hide();
+                        }), anim.done(function() {
+                            var prop;
+                            jQuery._removeData(elem, "fxshow");
+                            for (prop in orig) jQuery.style(elem, prop, orig[prop]);
                         });
-                        for (d in m) g = K(o ? p[d] : 0, d, l), d in p || (p[d] = g.start, o && (g.end = g.start, 
-                        g.start = "width" === d || "height" === d ? 1 : 0));
+                        for (prop in orig) tween = createTween(hidden ? dataShow[prop] : 0, prop, anim), 
+                        prop in dataShow || (dataShow[prop] = tween.start, hidden && (tween.end = tween.start, 
+                        tween.start = "width" === prop || "height" === prop ? 1 : 0));
                     }
                 }
-                function M(a, b) {
-                    var c, d, e, f, g;
-                    for (c in a) if (d = fb.camelCase(c), e = b[d], f = a[c], fb.isArray(f) && (e = f[1], 
-                    f = a[c] = f[0]), c !== d && (a[d] = f, delete a[c]), g = fb.cssHooks[d], g && "expand" in g) {
-                        f = g.expand(f), delete a[d];
-                        for (c in f) c in a || (a[c] = f[c], b[c] = e);
-                    } else b[d] = e;
+                function propFilter(props, specialEasing) {
+                    var index, name, easing, value, hooks;
+                    for (index in props) if (name = jQuery.camelCase(index), easing = specialEasing[name], 
+                    value = props[index], jQuery.isArray(value) && (easing = value[1], value = props[index] = value[0]), 
+                    index !== name && (props[name] = value, delete props[index]), hooks = jQuery.cssHooks[name], 
+                    hooks && "expand" in hooks) {
+                        value = hooks.expand(value), delete props[name];
+                        for (index in value) index in props || (props[index] = value[index], specialEasing[index] = easing);
+                    } else specialEasing[name] = easing;
                 }
-                function N(a, b, c) {
-                    var d, e, f = 0, g = tc.length, h = fb.Deferred().always(function() {
-                        delete i.elem;
-                    }), i = function() {
-                        if (e) return !1;
-                        for (var b = oc || I(), c = Math.max(0, j.startTime + j.duration - b), d = c / j.duration || 0, f = 1 - d, g = 0, i = j.tweens.length; i > g; g++) j.tweens[g].run(f);
-                        return h.notifyWith(a, [ j, f, c ]), 1 > f && i ? c : (h.resolveWith(a, [ j ]), 
+                function Animation(elem, properties, options) {
+                    var result, stopped, index = 0, length = animationPrefilters.length, deferred = jQuery.Deferred().always(function() {
+                        delete tick.elem;
+                    }), tick = function() {
+                        if (stopped) return !1;
+                        for (var currentTime = fxNow || createFxNow(), remaining = Math.max(0, animation.startTime + animation.duration - currentTime), temp = remaining / animation.duration || 0, percent = 1 - temp, index = 0, length = animation.tweens.length; length > index; index++) animation.tweens[index].run(percent);
+                        return deferred.notifyWith(elem, [ animation, percent, remaining ]), 1 > percent && length ? remaining : (deferred.resolveWith(elem, [ animation ]), 
                         !1);
-                    }, j = h.promise({
-                        elem: a,
-                        props: fb.extend({}, b),
-                        opts: fb.extend(!0, {
+                    }, animation = deferred.promise({
+                        elem: elem,
+                        props: jQuery.extend({}, properties),
+                        opts: jQuery.extend(!0, {
                             specialEasing: {}
-                        }, c),
-                        originalProperties: b,
-                        originalOptions: c,
-                        startTime: oc || I(),
-                        duration: c.duration,
+                        }, options),
+                        originalProperties: properties,
+                        originalOptions: options,
+                        startTime: fxNow || createFxNow(),
+                        duration: options.duration,
                         tweens: [],
-                        createTween: function(b, c) {
-                            var d = fb.Tween(a, j.opts, b, c, j.opts.specialEasing[b] || j.opts.easing);
-                            return j.tweens.push(d), d;
+                        createTween: function(prop, end) {
+                            var tween = jQuery.Tween(elem, animation.opts, prop, end, animation.opts.specialEasing[prop] || animation.opts.easing);
+                            return animation.tweens.push(tween), tween;
                         },
-                        stop: function(b) {
-                            var c = 0, d = b ? j.tweens.length : 0;
-                            if (e) return this;
-                            for (e = !0; d > c; c++) j.tweens[c].run(1);
-                            return b ? h.resolveWith(a, [ j, b ]) : h.rejectWith(a, [ j, b ]), this;
+                        stop: function(gotoEnd) {
+                            var index = 0, length = gotoEnd ? animation.tweens.length : 0;
+                            if (stopped) return this;
+                            for (stopped = !0; length > index; index++) animation.tweens[index].run(1);
+                            return gotoEnd ? deferred.resolveWith(elem, [ animation, gotoEnd ]) : deferred.rejectWith(elem, [ animation, gotoEnd ]), 
+                            this;
                         }
-                    }), k = j.props;
-                    for (M(k, j.opts.specialEasing); g > f; f++) if (d = tc[f].call(j, a, k, j.opts)) return d;
-                    return fb.map(k, K, j), fb.isFunction(j.opts.start) && j.opts.start.call(a, j), 
-                    fb.fx.timer(fb.extend(i, {
-                        elem: a,
-                        anim: j,
-                        queue: j.opts.queue
-                    })), j.progress(j.opts.progress).done(j.opts.done, j.opts.complete).fail(j.opts.fail).always(j.opts.always);
+                    }), props = animation.props;
+                    for (propFilter(props, animation.opts.specialEasing); length > index; index++) if (result = animationPrefilters[index].call(animation, elem, props, animation.opts)) return result;
+                    return jQuery.map(props, createTween, animation), jQuery.isFunction(animation.opts.start) && animation.opts.start.call(elem, animation), 
+                    jQuery.fx.timer(jQuery.extend(tick, {
+                        elem: elem,
+                        anim: animation,
+                        queue: animation.opts.queue
+                    })), animation.progress(animation.opts.progress).done(animation.opts.done, animation.opts.complete).fail(animation.opts.fail).always(animation.opts.always);
                 }
-                function O(a) {
-                    return function(b, c) {
-                        "string" != typeof b && (c = b, b = "*");
-                        var d, e = 0, f = b.toLowerCase().match(ub) || [];
-                        if (fb.isFunction(c)) for (;d = f[e++]; ) "+" === d.charAt(0) ? (d = d.slice(1) || "*", 
-                        (a[d] = a[d] || []).unshift(c)) : (a[d] = a[d] || []).push(c);
+                function addToPrefiltersOrTransports(structure) {
+                    return function(dataTypeExpression, func) {
+                        "string" != typeof dataTypeExpression && (func = dataTypeExpression, dataTypeExpression = "*");
+                        var dataType, i = 0, dataTypes = dataTypeExpression.toLowerCase().match(rnotwhite) || [];
+                        if (jQuery.isFunction(func)) for (;dataType = dataTypes[i++]; ) "+" === dataType.charAt(0) ? (dataType = dataType.slice(1) || "*", 
+                        (structure[dataType] = structure[dataType] || []).unshift(func)) : (structure[dataType] = structure[dataType] || []).push(func);
                     };
                 }
-                function P(a, b, c, d) {
-                    function e(h) {
-                        var i;
-                        return f[h] = !0, fb.each(a[h] || [], function(a, h) {
-                            var j = h(b, c, d);
-                            return "string" != typeof j || g || f[j] ? g ? !(i = j) : void 0 : (b.dataTypes.unshift(j), 
-                            e(j), !1);
-                        }), i;
+                function inspectPrefiltersOrTransports(structure, options, originalOptions, jqXHR) {
+                    function inspect(dataType) {
+                        var selected;
+                        return inspected[dataType] = !0, jQuery.each(structure[dataType] || [], function(_, prefilterOrFactory) {
+                            var dataTypeOrTransport = prefilterOrFactory(options, originalOptions, jqXHR);
+                            return "string" != typeof dataTypeOrTransport || seekingTransport || inspected[dataTypeOrTransport] ? seekingTransport ? !(selected = dataTypeOrTransport) : void 0 : (options.dataTypes.unshift(dataTypeOrTransport), 
+                            inspect(dataTypeOrTransport), !1);
+                        }), selected;
                     }
-                    var f = {}, g = a === Sc;
-                    return e(b.dataTypes[0]) || !f["*"] && e("*");
+                    var inspected = {}, seekingTransport = structure === transports;
+                    return inspect(options.dataTypes[0]) || !inspected["*"] && inspect("*");
                 }
-                function Q(a, b) {
-                    var c, d, e = fb.ajaxSettings.flatOptions || {};
-                    for (d in b) void 0 !== b[d] && ((e[d] ? a : c || (c = {}))[d] = b[d]);
-                    return c && fb.extend(!0, a, c), a;
+                function ajaxExtend(target, src) {
+                    var deep, key, flatOptions = jQuery.ajaxSettings.flatOptions || {};
+                    for (key in src) void 0 !== src[key] && ((flatOptions[key] ? target : deep || (deep = {}))[key] = src[key]);
+                    return deep && jQuery.extend(!0, target, deep), target;
                 }
-                function R(a, b, c) {
-                    for (var d, e, f, g, h = a.contents, i = a.dataTypes; "*" === i[0]; ) i.shift(), 
-                    void 0 === e && (e = a.mimeType || b.getResponseHeader("Content-Type"));
-                    if (e) for (g in h) if (h[g] && h[g].test(e)) {
-                        i.unshift(g);
+                function ajaxHandleResponses(s, jqXHR, responses) {
+                    for (var firstDataType, ct, finalDataType, type, contents = s.contents, dataTypes = s.dataTypes; "*" === dataTypes[0]; ) dataTypes.shift(), 
+                    void 0 === ct && (ct = s.mimeType || jqXHR.getResponseHeader("Content-Type"));
+                    if (ct) for (type in contents) if (contents[type] && contents[type].test(ct)) {
+                        dataTypes.unshift(type);
                         break;
                     }
-                    if (i[0] in c) f = i[0]; else {
-                        for (g in c) {
-                            if (!i[0] || a.converters[g + " " + i[0]]) {
-                                f = g;
+                    if (dataTypes[0] in responses) finalDataType = dataTypes[0]; else {
+                        for (type in responses) {
+                            if (!dataTypes[0] || s.converters[type + " " + dataTypes[0]]) {
+                                finalDataType = type;
                                 break;
                             }
-                            d || (d = g);
+                            firstDataType || (firstDataType = type);
                         }
-                        f = f || d;
+                        finalDataType = finalDataType || firstDataType;
                     }
-                    return f ? (f !== i[0] && i.unshift(f), c[f]) : void 0;
+                    return finalDataType ? (finalDataType !== dataTypes[0] && dataTypes.unshift(finalDataType), 
+                    responses[finalDataType]) : void 0;
                 }
-                function S(a, b, c, d) {
-                    var e, f, g, h, i, j = {}, k = a.dataTypes.slice();
-                    if (k[1]) for (g in a.converters) j[g.toLowerCase()] = a.converters[g];
-                    for (f = k.shift(); f; ) if (a.responseFields[f] && (c[a.responseFields[f]] = b), 
-                    !i && d && a.dataFilter && (b = a.dataFilter(b, a.dataType)), i = f, f = k.shift()) if ("*" === f) f = i; else if ("*" !== i && i !== f) {
-                        if (g = j[i + " " + f] || j["* " + f], !g) for (e in j) if (h = e.split(" "), h[1] === f && (g = j[i + " " + h[0]] || j["* " + h[0]])) {
-                            g === !0 ? g = j[e] : j[e] !== !0 && (f = h[0], k.unshift(h[1]));
+                function ajaxConvert(s, response, jqXHR, isSuccess) {
+                    var conv2, current, conv, tmp, prev, converters = {}, dataTypes = s.dataTypes.slice();
+                    if (dataTypes[1]) for (conv in s.converters) converters[conv.toLowerCase()] = s.converters[conv];
+                    for (current = dataTypes.shift(); current; ) if (s.responseFields[current] && (jqXHR[s.responseFields[current]] = response), 
+                    !prev && isSuccess && s.dataFilter && (response = s.dataFilter(response, s.dataType)), 
+                    prev = current, current = dataTypes.shift()) if ("*" === current) current = prev; else if ("*" !== prev && prev !== current) {
+                        if (conv = converters[prev + " " + current] || converters["* " + current], !conv) for (conv2 in converters) if (tmp = conv2.split(" "), 
+                        tmp[1] === current && (conv = converters[prev + " " + tmp[0]] || converters["* " + tmp[0]])) {
+                            conv === !0 ? conv = converters[conv2] : converters[conv2] !== !0 && (current = tmp[0], 
+                            dataTypes.unshift(tmp[1]));
                             break;
                         }
-                        if (g !== !0) if (g && a["throws"]) b = g(b); else try {
-                            b = g(b);
-                        } catch (l) {
+                        if (conv !== !0) if (conv && s["throws"]) response = conv(response); else try {
+                            response = conv(response);
+                        } catch (e) {
                             return {
                                 state: "parsererror",
-                                error: g ? l : "No conversion from " + i + " to " + f
+                                error: conv ? e : "No conversion from " + prev + " to " + current
                             };
                         }
                     }
                     return {
                         state: "success",
-                        data: b
+                        data: response
                     };
                 }
-                function T(a, b, c, d) {
-                    var e;
-                    if (fb.isArray(b)) fb.each(b, function(b, e) {
-                        c || Wc.test(a) ? d(a, e) : T(a + "[" + ("object" == typeof e ? b : "") + "]", e, c, d);
-                    }); else if (c || "object" !== fb.type(b)) d(a, b); else for (e in b) T(a + "[" + e + "]", b[e], c, d);
+                function buildParams(prefix, obj, traditional, add) {
+                    var name;
+                    if (jQuery.isArray(obj)) jQuery.each(obj, function(i, v) {
+                        traditional || rbracket.test(prefix) ? add(prefix, v) : buildParams(prefix + "[" + ("object" == typeof v ? i : "") + "]", v, traditional, add);
+                    }); else if (traditional || "object" !== jQuery.type(obj)) add(prefix, obj); else for (name in obj) buildParams(prefix + "[" + name + "]", obj[name], traditional, add);
                 }
-                function U() {
+                function createStandardXHR() {
                     try {
-                        return new b.XMLHttpRequest();
-                    } catch (a) {}
+                        return new window.XMLHttpRequest();
+                    } catch (e) {}
                 }
-                function V() {
+                function createActiveXHR() {
                     try {
-                        return new b.ActiveXObject("Microsoft.XMLHTTP");
-                    } catch (a) {}
+                        return new window.ActiveXObject("Microsoft.XMLHTTP");
+                    } catch (e) {}
                 }
-                function W(a) {
-                    return fb.isWindow(a) ? a : 9 === a.nodeType ? a.defaultView || a.parentWindow : !1;
+                function getWindow(elem) {
+                    return jQuery.isWindow(elem) ? elem : 9 === elem.nodeType ? elem.defaultView || elem.parentWindow : !1;
                 }
-                var X = [], Y = X.slice, Z = X.concat, $ = X.push, _ = X.indexOf, ab = {}, bb = ab.toString, cb = ab.hasOwnProperty, db = {}, eb = "1.11.1", fb = function(a, b) {
-                    return new fb.fn.init(a, b);
-                }, gb = /^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, hb = /^-ms-/, ib = /-([\da-z])/gi, jb = function(a, b) {
-                    return b.toUpperCase();
+                var deletedIds = [], slice = deletedIds.slice, concat = deletedIds.concat, push = deletedIds.push, indexOf = deletedIds.indexOf, class2type = {}, toString = class2type.toString, hasOwn = class2type.hasOwnProperty, support = {}, version = "1.11.1", jQuery = function(selector, context) {
+                    return new jQuery.fn.init(selector, context);
+                }, rtrim = /^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, rmsPrefix = /^-ms-/, rdashAlpha = /-([\da-z])/gi, fcamelCase = function(all, letter) {
+                    return letter.toUpperCase();
                 };
-                fb.fn = fb.prototype = {
-                    jquery: eb,
-                    constructor: fb,
+                jQuery.fn = jQuery.prototype = {
+                    jquery: version,
+                    constructor: jQuery,
                     selector: "",
                     length: 0,
                     toArray: function() {
-                        return Y.call(this);
+                        return slice.call(this);
                     },
-                    get: function(a) {
-                        return null != a ? 0 > a ? this[a + this.length] : this[a] : Y.call(this);
+                    get: function(num) {
+                        return null != num ? 0 > num ? this[num + this.length] : this[num] : slice.call(this);
                     },
-                    pushStack: function(a) {
-                        var b = fb.merge(this.constructor(), a);
-                        return b.prevObject = this, b.context = this.context, b;
+                    pushStack: function(elems) {
+                        var ret = jQuery.merge(this.constructor(), elems);
+                        return ret.prevObject = this, ret.context = this.context, ret;
                     },
-                    each: function(a, b) {
-                        return fb.each(this, a, b);
+                    each: function(callback, args) {
+                        return jQuery.each(this, callback, args);
                     },
-                    map: function(a) {
-                        return this.pushStack(fb.map(this, function(b, c) {
-                            return a.call(b, c, b);
+                    map: function(callback) {
+                        return this.pushStack(jQuery.map(this, function(elem, i) {
+                            return callback.call(elem, i, elem);
                         }));
                     },
                     slice: function() {
-                        return this.pushStack(Y.apply(this, arguments));
+                        return this.pushStack(slice.apply(this, arguments));
                     },
                     first: function() {
                         return this.eq(0);
@@ -737,448 +760,468 @@
                     last: function() {
                         return this.eq(-1);
                     },
-                    eq: function(a) {
-                        var b = this.length, c = +a + (0 > a ? b : 0);
-                        return this.pushStack(c >= 0 && b > c ? [ this[c] ] : []);
+                    eq: function(i) {
+                        var len = this.length, j = +i + (0 > i ? len : 0);
+                        return this.pushStack(j >= 0 && len > j ? [ this[j] ] : []);
                     },
                     end: function() {
                         return this.prevObject || this.constructor(null);
                     },
-                    push: $,
-                    sort: X.sort,
-                    splice: X.splice
-                }, fb.extend = fb.fn.extend = function() {
-                    var a, b, c, d, e, f, g = arguments[0] || {}, h = 1, i = arguments.length, j = !1;
-                    for ("boolean" == typeof g && (j = g, g = arguments[h] || {}, h++), "object" == typeof g || fb.isFunction(g) || (g = {}), 
-                    h === i && (g = this, h--); i > h; h++) if (null != (e = arguments[h])) for (d in e) a = g[d], 
-                    c = e[d], g !== c && (j && c && (fb.isPlainObject(c) || (b = fb.isArray(c))) ? (b ? (b = !1, 
-                    f = a && fb.isArray(a) ? a : []) : f = a && fb.isPlainObject(a) ? a : {}, g[d] = fb.extend(j, f, c)) : void 0 !== c && (g[d] = c));
-                    return g;
-                }, fb.extend({
-                    expando: "jQuery" + (eb + Math.random()).replace(/\D/g, ""),
+                    push: push,
+                    sort: deletedIds.sort,
+                    splice: deletedIds.splice
+                }, jQuery.extend = jQuery.fn.extend = function() {
+                    var src, copyIsArray, copy, name, options, clone, target = arguments[0] || {}, i = 1, length = arguments.length, deep = !1;
+                    for ("boolean" == typeof target && (deep = target, target = arguments[i] || {}, 
+                    i++), "object" == typeof target || jQuery.isFunction(target) || (target = {}), i === length && (target = this, 
+                    i--); length > i; i++) if (null != (options = arguments[i])) for (name in options) src = target[name], 
+                    copy = options[name], target !== copy && (deep && copy && (jQuery.isPlainObject(copy) || (copyIsArray = jQuery.isArray(copy))) ? (copyIsArray ? (copyIsArray = !1, 
+                    clone = src && jQuery.isArray(src) ? src : []) : clone = src && jQuery.isPlainObject(src) ? src : {}, 
+                    target[name] = jQuery.extend(deep, clone, copy)) : void 0 !== copy && (target[name] = copy));
+                    return target;
+                }, jQuery.extend({
+                    expando: "jQuery" + (version + Math.random()).replace(/\D/g, ""),
                     isReady: !0,
-                    error: function(a) {
-                        throw new Error(a);
+                    error: function(msg) {
+                        throw new Error(msg);
                     },
                     noop: function() {},
-                    isFunction: function(a) {
-                        return "function" === fb.type(a);
+                    isFunction: function(obj) {
+                        return "function" === jQuery.type(obj);
                     },
-                    isArray: Array.isArray || function(a) {
-                        return "array" === fb.type(a);
+                    isArray: Array.isArray || function(obj) {
+                        return "array" === jQuery.type(obj);
                     },
-                    isWindow: function(a) {
-                        return null != a && a == a.window;
+                    isWindow: function(obj) {
+                        return null != obj && obj == obj.window;
                     },
-                    isNumeric: function(a) {
-                        return !fb.isArray(a) && a - parseFloat(a) >= 0;
+                    isNumeric: function(obj) {
+                        return !jQuery.isArray(obj) && obj - parseFloat(obj) >= 0;
                     },
-                    isEmptyObject: function(a) {
-                        var b;
-                        for (b in a) return !1;
+                    isEmptyObject: function(obj) {
+                        var name;
+                        for (name in obj) return !1;
                         return !0;
                     },
-                    isPlainObject: function(a) {
-                        var b;
-                        if (!a || "object" !== fb.type(a) || a.nodeType || fb.isWindow(a)) return !1;
+                    isPlainObject: function(obj) {
+                        var key;
+                        if (!obj || "object" !== jQuery.type(obj) || obj.nodeType || jQuery.isWindow(obj)) return !1;
                         try {
-                            if (a.constructor && !cb.call(a, "constructor") && !cb.call(a.constructor.prototype, "isPrototypeOf")) return !1;
-                        } catch (c) {
+                            if (obj.constructor && !hasOwn.call(obj, "constructor") && !hasOwn.call(obj.constructor.prototype, "isPrototypeOf")) return !1;
+                        } catch (e) {
                             return !1;
                         }
-                        if (db.ownLast) for (b in a) return cb.call(a, b);
-                        for (b in a) ;
-                        return void 0 === b || cb.call(a, b);
+                        if (support.ownLast) for (key in obj) return hasOwn.call(obj, key);
+                        for (key in obj) ;
+                        return void 0 === key || hasOwn.call(obj, key);
                     },
-                    type: function(a) {
-                        return null == a ? a + "" : "object" == typeof a || "function" == typeof a ? ab[bb.call(a)] || "object" : typeof a;
+                    type: function(obj) {
+                        return null == obj ? obj + "" : "object" == typeof obj || "function" == typeof obj ? class2type[toString.call(obj)] || "object" : typeof obj;
                     },
-                    globalEval: function(a) {
-                        a && fb.trim(a) && (b.execScript || function(a) {
-                            b.eval.call(b, a);
-                        })(a);
+                    globalEval: function(data) {
+                        data && jQuery.trim(data) && (window.execScript || function(data) {
+                            window.eval.call(window, data);
+                        })(data);
                     },
-                    camelCase: function(a) {
-                        return a.replace(hb, "ms-").replace(ib, jb);
+                    camelCase: function(string) {
+                        return string.replace(rmsPrefix, "ms-").replace(rdashAlpha, fcamelCase);
                     },
-                    nodeName: function(a, b) {
-                        return a.nodeName && a.nodeName.toLowerCase() === b.toLowerCase();
+                    nodeName: function(elem, name) {
+                        return elem.nodeName && elem.nodeName.toLowerCase() === name.toLowerCase();
                     },
-                    each: function(a, b, c) {
-                        var e, f = 0, g = a.length, h = d(a);
-                        if (c) {
-                            if (h) for (;g > f && (e = b.apply(a[f], c), e !== !1); f++) ; else for (f in a) if (e = b.apply(a[f], c), 
-                            e === !1) break;
-                        } else if (h) for (;g > f && (e = b.call(a[f], f, a[f]), e !== !1); f++) ; else for (f in a) if (e = b.call(a[f], f, a[f]), 
-                        e === !1) break;
-                        return a;
+                    each: function(obj, callback, args) {
+                        var value, i = 0, length = obj.length, isArray = isArraylike(obj);
+                        if (args) {
+                            if (isArray) for (;length > i && (value = callback.apply(obj[i], args), value !== !1); i++) ; else for (i in obj) if (value = callback.apply(obj[i], args), 
+                            value === !1) break;
+                        } else if (isArray) for (;length > i && (value = callback.call(obj[i], i, obj[i]), 
+                        value !== !1); i++) ; else for (i in obj) if (value = callback.call(obj[i], i, obj[i]), 
+                        value === !1) break;
+                        return obj;
                     },
-                    trim: function(a) {
-                        return null == a ? "" : (a + "").replace(gb, "");
+                    trim: function(text) {
+                        return null == text ? "" : (text + "").replace(rtrim, "");
                     },
-                    makeArray: function(a, b) {
-                        var c = b || [];
-                        return null != a && (d(Object(a)) ? fb.merge(c, "string" == typeof a ? [ a ] : a) : $.call(c, a)), 
-                        c;
+                    makeArray: function(arr, results) {
+                        var ret = results || [];
+                        return null != arr && (isArraylike(Object(arr)) ? jQuery.merge(ret, "string" == typeof arr ? [ arr ] : arr) : push.call(ret, arr)), 
+                        ret;
                     },
-                    inArray: function(a, b, c) {
-                        var d;
-                        if (b) {
-                            if (_) return _.call(b, a, c);
-                            for (d = b.length, c = c ? 0 > c ? Math.max(0, d + c) : c : 0; d > c; c++) if (c in b && b[c] === a) return c;
+                    inArray: function(elem, arr, i) {
+                        var len;
+                        if (arr) {
+                            if (indexOf) return indexOf.call(arr, elem, i);
+                            for (len = arr.length, i = i ? 0 > i ? Math.max(0, len + i) : i : 0; len > i; i++) if (i in arr && arr[i] === elem) return i;
                         }
                         return -1;
                     },
-                    merge: function(a, b) {
-                        for (var c = +b.length, d = 0, e = a.length; c > d; ) a[e++] = b[d++];
-                        if (c !== c) for (;void 0 !== b[d]; ) a[e++] = b[d++];
-                        return a.length = e, a;
+                    merge: function(first, second) {
+                        for (var len = +second.length, j = 0, i = first.length; len > j; ) first[i++] = second[j++];
+                        if (len !== len) for (;void 0 !== second[j]; ) first[i++] = second[j++];
+                        return first.length = i, first;
                     },
-                    grep: function(a, b, c) {
-                        for (var d, e = [], f = 0, g = a.length, h = !c; g > f; f++) d = !b(a[f], f), d !== h && e.push(a[f]);
-                        return e;
+                    grep: function(elems, callback, invert) {
+                        for (var callbackInverse, matches = [], i = 0, length = elems.length, callbackExpect = !invert; length > i; i++) callbackInverse = !callback(elems[i], i), 
+                        callbackInverse !== callbackExpect && matches.push(elems[i]);
+                        return matches;
                     },
-                    map: function(a, b, c) {
-                        var e, f = 0, g = a.length, h = d(a), i = [];
-                        if (h) for (;g > f; f++) e = b(a[f], f, c), null != e && i.push(e); else for (f in a) e = b(a[f], f, c), 
-                        null != e && i.push(e);
-                        return Z.apply([], i);
+                    map: function(elems, callback, arg) {
+                        var value, i = 0, length = elems.length, isArray = isArraylike(elems), ret = [];
+                        if (isArray) for (;length > i; i++) value = callback(elems[i], i, arg), null != value && ret.push(value); else for (i in elems) value = callback(elems[i], i, arg), 
+                        null != value && ret.push(value);
+                        return concat.apply([], ret);
                     },
                     guid: 1,
-                    proxy: function(a, b) {
-                        var c, d, e;
-                        return "string" == typeof b && (e = a[b], b = a, a = e), fb.isFunction(a) ? (c = Y.call(arguments, 2), 
-                        d = function() {
-                            return a.apply(b || this, c.concat(Y.call(arguments)));
-                        }, d.guid = a.guid = a.guid || fb.guid++, d) : void 0;
+                    proxy: function(fn, context) {
+                        var args, proxy, tmp;
+                        return "string" == typeof context && (tmp = fn[context], context = fn, fn = tmp), 
+                        jQuery.isFunction(fn) ? (args = slice.call(arguments, 2), proxy = function() {
+                            return fn.apply(context || this, args.concat(slice.call(arguments)));
+                        }, proxy.guid = fn.guid = fn.guid || jQuery.guid++, proxy) : void 0;
                     },
                     now: function() {
                         return +new Date();
                     },
-                    support: db
-                }), fb.each("Boolean Number String Function Array Date RegExp Object Error".split(" "), function(a, b) {
-                    ab["[object " + b + "]"] = b.toLowerCase();
+                    support: support
+                }), jQuery.each("Boolean Number String Function Array Date RegExp Object Error".split(" "), function(i, name) {
+                    class2type["[object " + name + "]"] = name.toLowerCase();
                 });
-                var kb = function(a) {
-                    function b(a, b, c, d) {
-                        var e, f, g, h, i, j, l, n, o, p;
-                        if ((b ? b.ownerDocument || b : O) !== G && F(b), b = b || G, c = c || [], !a || "string" != typeof a) return c;
-                        if (1 !== (h = b.nodeType) && 9 !== h) return [];
-                        if (I && !d) {
-                            if (e = sb.exec(a)) if (g = e[1]) {
-                                if (9 === h) {
-                                    if (f = b.getElementById(g), !f || !f.parentNode) return c;
-                                    if (f.id === g) return c.push(f), c;
-                                } else if (b.ownerDocument && (f = b.ownerDocument.getElementById(g)) && M(b, f) && f.id === g) return c.push(f), 
-                                c;
+                var Sizzle = function(window) {
+                    function Sizzle(selector, context, results, seed) {
+                        var match, elem, m, nodeType, i, groups, old, nid, newContext, newSelector;
+                        if ((context ? context.ownerDocument || context : preferredDoc) !== document && setDocument(context), 
+                        context = context || document, results = results || [], !selector || "string" != typeof selector) return results;
+                        if (1 !== (nodeType = context.nodeType) && 9 !== nodeType) return [];
+                        if (documentIsHTML && !seed) {
+                            if (match = rquickExpr.exec(selector)) if (m = match[1]) {
+                                if (9 === nodeType) {
+                                    if (elem = context.getElementById(m), !elem || !elem.parentNode) return results;
+                                    if (elem.id === m) return results.push(elem), results;
+                                } else if (context.ownerDocument && (elem = context.ownerDocument.getElementById(m)) && contains(context, elem) && elem.id === m) return results.push(elem), 
+                                results;
                             } else {
-                                if (e[2]) return _.apply(c, b.getElementsByTagName(a)), c;
-                                if ((g = e[3]) && v.getElementsByClassName && b.getElementsByClassName) return _.apply(c, b.getElementsByClassName(g)), 
-                                c;
+                                if (match[2]) return push.apply(results, context.getElementsByTagName(selector)), 
+                                results;
+                                if ((m = match[3]) && support.getElementsByClassName && context.getElementsByClassName) return push.apply(results, context.getElementsByClassName(m)), 
+                                results;
                             }
-                            if (v.qsa && (!J || !J.test(a))) {
-                                if (n = l = N, o = b, p = 9 === h && a, 1 === h && "object" !== b.nodeName.toLowerCase()) {
-                                    for (j = z(a), (l = b.getAttribute("id")) ? n = l.replace(ub, "\\$&") : b.setAttribute("id", n), 
-                                    n = "[id='" + n + "'] ", i = j.length; i--; ) j[i] = n + m(j[i]);
-                                    o = tb.test(a) && k(b.parentNode) || b, p = j.join(",");
+                            if (support.qsa && (!rbuggyQSA || !rbuggyQSA.test(selector))) {
+                                if (nid = old = expando, newContext = context, newSelector = 9 === nodeType && selector, 
+                                1 === nodeType && "object" !== context.nodeName.toLowerCase()) {
+                                    for (groups = tokenize(selector), (old = context.getAttribute("id")) ? nid = old.replace(rescape, "\\$&") : context.setAttribute("id", nid), 
+                                    nid = "[id='" + nid + "'] ", i = groups.length; i--; ) groups[i] = nid + toSelector(groups[i]);
+                                    newContext = rsibling.test(selector) && testContext(context.parentNode) || context, 
+                                    newSelector = groups.join(",");
                                 }
-                                if (p) try {
-                                    return _.apply(c, o.querySelectorAll(p)), c;
-                                } catch (q) {} finally {
-                                    l || b.removeAttribute("id");
+                                if (newSelector) try {
+                                    return push.apply(results, newContext.querySelectorAll(newSelector)), results;
+                                } catch (qsaError) {} finally {
+                                    old || context.removeAttribute("id");
                                 }
                             }
                         }
-                        return B(a.replace(ib, "$1"), b, c, d);
+                        return select(selector.replace(rtrim, "$1"), context, results, seed);
                     }
-                    function c() {
-                        function a(c, d) {
-                            return b.push(c + " ") > w.cacheLength && delete a[b.shift()], a[c + " "] = d;
+                    function createCache() {
+                        function cache(key, value) {
+                            return keys.push(key + " ") > Expr.cacheLength && delete cache[keys.shift()], cache[key + " "] = value;
                         }
-                        var b = [];
-                        return a;
+                        var keys = [];
+                        return cache;
                     }
-                    function d(a) {
-                        return a[N] = !0, a;
+                    function markFunction(fn) {
+                        return fn[expando] = !0, fn;
                     }
-                    function e(a) {
-                        var b = G.createElement("div");
+                    function assert(fn) {
+                        var div = document.createElement("div");
                         try {
-                            return !!a(b);
-                        } catch (c) {
+                            return !!fn(div);
+                        } catch (e) {
                             return !1;
                         } finally {
-                            b.parentNode && b.parentNode.removeChild(b), b = null;
+                            div.parentNode && div.parentNode.removeChild(div), div = null;
                         }
                     }
-                    function f(a, b) {
-                        for (var c = a.split("|"), d = a.length; d--; ) w.attrHandle[c[d]] = b;
+                    function addHandle(attrs, handler) {
+                        for (var arr = attrs.split("|"), i = attrs.length; i--; ) Expr.attrHandle[arr[i]] = handler;
                     }
-                    function g(a, b) {
-                        var c = b && a, d = c && 1 === a.nodeType && 1 === b.nodeType && (~b.sourceIndex || W) - (~a.sourceIndex || W);
-                        if (d) return d;
-                        if (c) for (;c = c.nextSibling; ) if (c === b) return -1;
+                    function siblingCheck(a, b) {
+                        var cur = b && a, diff = cur && 1 === a.nodeType && 1 === b.nodeType && (~b.sourceIndex || MAX_NEGATIVE) - (~a.sourceIndex || MAX_NEGATIVE);
+                        if (diff) return diff;
+                        if (cur) for (;cur = cur.nextSibling; ) if (cur === b) return -1;
                         return a ? 1 : -1;
                     }
-                    function h(a) {
-                        return function(b) {
-                            var c = b.nodeName.toLowerCase();
-                            return "input" === c && b.type === a;
+                    function createInputPseudo(type) {
+                        return function(elem) {
+                            var name = elem.nodeName.toLowerCase();
+                            return "input" === name && elem.type === type;
                         };
                     }
-                    function i(a) {
-                        return function(b) {
-                            var c = b.nodeName.toLowerCase();
-                            return ("input" === c || "button" === c) && b.type === a;
+                    function createButtonPseudo(type) {
+                        return function(elem) {
+                            var name = elem.nodeName.toLowerCase();
+                            return ("input" === name || "button" === name) && elem.type === type;
                         };
                     }
-                    function j(a) {
-                        return d(function(b) {
-                            return b = +b, d(function(c, d) {
-                                for (var e, f = a([], c.length, b), g = f.length; g--; ) c[e = f[g]] && (c[e] = !(d[e] = c[e]));
+                    function createPositionalPseudo(fn) {
+                        return markFunction(function(argument) {
+                            return argument = +argument, markFunction(function(seed, matches) {
+                                for (var j, matchIndexes = fn([], seed.length, argument), i = matchIndexes.length; i--; ) seed[j = matchIndexes[i]] && (seed[j] = !(matches[j] = seed[j]));
                             });
                         });
                     }
-                    function k(a) {
-                        return a && typeof a.getElementsByTagName !== V && a;
+                    function testContext(context) {
+                        return context && typeof context.getElementsByTagName !== strundefined && context;
                     }
-                    function l() {}
-                    function m(a) {
-                        for (var b = 0, c = a.length, d = ""; c > b; b++) d += a[b].value;
-                        return d;
+                    function setFilters() {}
+                    function toSelector(tokens) {
+                        for (var i = 0, len = tokens.length, selector = ""; len > i; i++) selector += tokens[i].value;
+                        return selector;
                     }
-                    function n(a, b, c) {
-                        var d = b.dir, e = c && "parentNode" === d, f = Q++;
-                        return b.first ? function(b, c, f) {
-                            for (;b = b[d]; ) if (1 === b.nodeType || e) return a(b, c, f);
-                        } : function(b, c, g) {
-                            var h, i, j = [ P, f ];
-                            if (g) {
-                                for (;b = b[d]; ) if ((1 === b.nodeType || e) && a(b, c, g)) return !0;
-                            } else for (;b = b[d]; ) if (1 === b.nodeType || e) {
-                                if (i = b[N] || (b[N] = {}), (h = i[d]) && h[0] === P && h[1] === f) return j[2] = h[2];
-                                if (i[d] = j, j[2] = a(b, c, g)) return !0;
+                    function addCombinator(matcher, combinator, base) {
+                        var dir = combinator.dir, checkNonElements = base && "parentNode" === dir, doneName = done++;
+                        return combinator.first ? function(elem, context, xml) {
+                            for (;elem = elem[dir]; ) if (1 === elem.nodeType || checkNonElements) return matcher(elem, context, xml);
+                        } : function(elem, context, xml) {
+                            var oldCache, outerCache, newCache = [ dirruns, doneName ];
+                            if (xml) {
+                                for (;elem = elem[dir]; ) if ((1 === elem.nodeType || checkNonElements) && matcher(elem, context, xml)) return !0;
+                            } else for (;elem = elem[dir]; ) if (1 === elem.nodeType || checkNonElements) {
+                                if (outerCache = elem[expando] || (elem[expando] = {}), (oldCache = outerCache[dir]) && oldCache[0] === dirruns && oldCache[1] === doneName) return newCache[2] = oldCache[2];
+                                if (outerCache[dir] = newCache, newCache[2] = matcher(elem, context, xml)) return !0;
                             }
                         };
                     }
-                    function o(a) {
-                        return a.length > 1 ? function(b, c, d) {
-                            for (var e = a.length; e--; ) if (!a[e](b, c, d)) return !1;
+                    function elementMatcher(matchers) {
+                        return matchers.length > 1 ? function(elem, context, xml) {
+                            for (var i = matchers.length; i--; ) if (!matchers[i](elem, context, xml)) return !1;
                             return !0;
-                        } : a[0];
+                        } : matchers[0];
                     }
-                    function p(a, c, d) {
-                        for (var e = 0, f = c.length; f > e; e++) b(a, c[e], d);
-                        return d;
+                    function multipleContexts(selector, contexts, results) {
+                        for (var i = 0, len = contexts.length; len > i; i++) Sizzle(selector, contexts[i], results);
+                        return results;
                     }
-                    function q(a, b, c, d, e) {
-                        for (var f, g = [], h = 0, i = a.length, j = null != b; i > h; h++) (f = a[h]) && (!c || c(f, d, e)) && (g.push(f), 
-                        j && b.push(h));
-                        return g;
+                    function condense(unmatched, map, filter, context, xml) {
+                        for (var elem, newUnmatched = [], i = 0, len = unmatched.length, mapped = null != map; len > i; i++) (elem = unmatched[i]) && (!filter || filter(elem, context, xml)) && (newUnmatched.push(elem), 
+                        mapped && map.push(i));
+                        return newUnmatched;
                     }
-                    function r(a, b, c, e, f, g) {
-                        return e && !e[N] && (e = r(e)), f && !f[N] && (f = r(f, g)), d(function(d, g, h, i) {
-                            var j, k, l, m = [], n = [], o = g.length, r = d || p(b || "*", h.nodeType ? [ h ] : h, []), s = !a || !d && b ? r : q(r, m, a, h, i), t = c ? f || (d ? a : o || e) ? [] : g : s;
-                            if (c && c(s, t, h, i), e) for (j = q(t, n), e(j, [], h, i), k = j.length; k--; ) (l = j[k]) && (t[n[k]] = !(s[n[k]] = l));
-                            if (d) {
-                                if (f || a) {
-                                    if (f) {
-                                        for (j = [], k = t.length; k--; ) (l = t[k]) && j.push(s[k] = l);
-                                        f(null, t = [], j, i);
+                    function setMatcher(preFilter, selector, matcher, postFilter, postFinder, postSelector) {
+                        return postFilter && !postFilter[expando] && (postFilter = setMatcher(postFilter)), 
+                        postFinder && !postFinder[expando] && (postFinder = setMatcher(postFinder, postSelector)), 
+                        markFunction(function(seed, results, context, xml) {
+                            var temp, i, elem, preMap = [], postMap = [], preexisting = results.length, elems = seed || multipleContexts(selector || "*", context.nodeType ? [ context ] : context, []), matcherIn = !preFilter || !seed && selector ? elems : condense(elems, preMap, preFilter, context, xml), matcherOut = matcher ? postFinder || (seed ? preFilter : preexisting || postFilter) ? [] : results : matcherIn;
+                            if (matcher && matcher(matcherIn, matcherOut, context, xml), postFilter) for (temp = condense(matcherOut, postMap), 
+                            postFilter(temp, [], context, xml), i = temp.length; i--; ) (elem = temp[i]) && (matcherOut[postMap[i]] = !(matcherIn[postMap[i]] = elem));
+                            if (seed) {
+                                if (postFinder || preFilter) {
+                                    if (postFinder) {
+                                        for (temp = [], i = matcherOut.length; i--; ) (elem = matcherOut[i]) && temp.push(matcherIn[i] = elem);
+                                        postFinder(null, matcherOut = [], temp, xml);
                                     }
-                                    for (k = t.length; k--; ) (l = t[k]) && (j = f ? bb.call(d, l) : m[k]) > -1 && (d[j] = !(g[j] = l));
+                                    for (i = matcherOut.length; i--; ) (elem = matcherOut[i]) && (temp = postFinder ? indexOf.call(seed, elem) : preMap[i]) > -1 && (seed[temp] = !(results[temp] = elem));
                                 }
-                            } else t = q(t === g ? t.splice(o, t.length) : t), f ? f(null, g, t, i) : _.apply(g, t);
+                            } else matcherOut = condense(matcherOut === results ? matcherOut.splice(preexisting, matcherOut.length) : matcherOut), 
+                            postFinder ? postFinder(null, results, matcherOut, xml) : push.apply(results, matcherOut);
                         });
                     }
-                    function s(a) {
-                        for (var b, c, d, e = a.length, f = w.relative[a[0].type], g = f || w.relative[" "], h = f ? 1 : 0, i = n(function(a) {
-                            return a === b;
-                        }, g, !0), j = n(function(a) {
-                            return bb.call(b, a) > -1;
-                        }, g, !0), k = [ function(a, c, d) {
-                            return !f && (d || c !== C) || ((b = c).nodeType ? i(a, c, d) : j(a, c, d));
-                        } ]; e > h; h++) if (c = w.relative[a[h].type]) k = [ n(o(k), c) ]; else {
-                            if (c = w.filter[a[h].type].apply(null, a[h].matches), c[N]) {
-                                for (d = ++h; e > d && !w.relative[a[d].type]; d++) ;
-                                return r(h > 1 && o(k), h > 1 && m(a.slice(0, h - 1).concat({
-                                    value: " " === a[h - 2].type ? "*" : ""
-                                })).replace(ib, "$1"), c, d > h && s(a.slice(h, d)), e > d && s(a = a.slice(d)), e > d && m(a));
+                    function matcherFromTokens(tokens) {
+                        for (var checkContext, matcher, j, len = tokens.length, leadingRelative = Expr.relative[tokens[0].type], implicitRelative = leadingRelative || Expr.relative[" "], i = leadingRelative ? 1 : 0, matchContext = addCombinator(function(elem) {
+                            return elem === checkContext;
+                        }, implicitRelative, !0), matchAnyContext = addCombinator(function(elem) {
+                            return indexOf.call(checkContext, elem) > -1;
+                        }, implicitRelative, !0), matchers = [ function(elem, context, xml) {
+                            return !leadingRelative && (xml || context !== outermostContext) || ((checkContext = context).nodeType ? matchContext(elem, context, xml) : matchAnyContext(elem, context, xml));
+                        } ]; len > i; i++) if (matcher = Expr.relative[tokens[i].type]) matchers = [ addCombinator(elementMatcher(matchers), matcher) ]; else {
+                            if (matcher = Expr.filter[tokens[i].type].apply(null, tokens[i].matches), matcher[expando]) {
+                                for (j = ++i; len > j && !Expr.relative[tokens[j].type]; j++) ;
+                                return setMatcher(i > 1 && elementMatcher(matchers), i > 1 && toSelector(tokens.slice(0, i - 1).concat({
+                                    value: " " === tokens[i - 2].type ? "*" : ""
+                                })).replace(rtrim, "$1"), matcher, j > i && matcherFromTokens(tokens.slice(i, j)), len > j && matcherFromTokens(tokens = tokens.slice(j)), len > j && toSelector(tokens));
                             }
-                            k.push(c);
+                            matchers.push(matcher);
                         }
-                        return o(k);
+                        return elementMatcher(matchers);
                     }
-                    function t(a, c) {
-                        var e = c.length > 0, f = a.length > 0, g = function(d, g, h, i, j) {
-                            var k, l, m, n = 0, o = "0", p = d && [], r = [], s = C, t = d || f && w.find.TAG("*", j), u = P += null == s ? 1 : Math.random() || .1, v = t.length;
-                            for (j && (C = g !== G && g); o !== v && null != (k = t[o]); o++) {
-                                if (f && k) {
-                                    for (l = 0; m = a[l++]; ) if (m(k, g, h)) {
-                                        i.push(k);
+                    function matcherFromGroupMatchers(elementMatchers, setMatchers) {
+                        var bySet = setMatchers.length > 0, byElement = elementMatchers.length > 0, superMatcher = function(seed, context, xml, results, outermost) {
+                            var elem, j, matcher, matchedCount = 0, i = "0", unmatched = seed && [], setMatched = [], contextBackup = outermostContext, elems = seed || byElement && Expr.find.TAG("*", outermost), dirrunsUnique = dirruns += null == contextBackup ? 1 : Math.random() || .1, len = elems.length;
+                            for (outermost && (outermostContext = context !== document && context); i !== len && null != (elem = elems[i]); i++) {
+                                if (byElement && elem) {
+                                    for (j = 0; matcher = elementMatchers[j++]; ) if (matcher(elem, context, xml)) {
+                                        results.push(elem);
                                         break;
                                     }
-                                    j && (P = u);
+                                    outermost && (dirruns = dirrunsUnique);
                                 }
-                                e && ((k = !m && k) && n--, d && p.push(k));
+                                bySet && ((elem = !matcher && elem) && matchedCount--, seed && unmatched.push(elem));
                             }
-                            if (n += o, e && o !== n) {
-                                for (l = 0; m = c[l++]; ) m(p, r, g, h);
-                                if (d) {
-                                    if (n > 0) for (;o--; ) p[o] || r[o] || (r[o] = Z.call(i));
-                                    r = q(r);
+                            if (matchedCount += i, bySet && i !== matchedCount) {
+                                for (j = 0; matcher = setMatchers[j++]; ) matcher(unmatched, setMatched, context, xml);
+                                if (seed) {
+                                    if (matchedCount > 0) for (;i--; ) unmatched[i] || setMatched[i] || (setMatched[i] = pop.call(results));
+                                    setMatched = condense(setMatched);
                                 }
-                                _.apply(i, r), j && !d && r.length > 0 && n + c.length > 1 && b.uniqueSort(i);
+                                push.apply(results, setMatched), outermost && !seed && setMatched.length > 0 && matchedCount + setMatchers.length > 1 && Sizzle.uniqueSort(results);
                             }
-                            return j && (P = u, C = s), p;
+                            return outermost && (dirruns = dirrunsUnique, outermostContext = contextBackup), 
+                            unmatched;
                         };
-                        return e ? d(g) : g;
+                        return bySet ? markFunction(superMatcher) : superMatcher;
                     }
-                    var u, v, w, x, y, z, A, B, C, D, E, F, G, H, I, J, K, L, M, N = "sizzle" + -new Date(), O = a.document, P = 0, Q = 0, R = c(), S = c(), T = c(), U = function(a, b) {
-                        return a === b && (E = !0), 0;
-                    }, V = "undefined", W = 1 << 31, X = {}.hasOwnProperty, Y = [], Z = Y.pop, $ = Y.push, _ = Y.push, ab = Y.slice, bb = Y.indexOf || function(a) {
-                        for (var b = 0, c = this.length; c > b; b++) if (this[b] === a) return b;
+                    var i, support, Expr, getText, isXML, tokenize, compile, select, outermostContext, sortInput, hasDuplicate, setDocument, document, docElem, documentIsHTML, rbuggyQSA, rbuggyMatches, matches, contains, expando = "sizzle" + -new Date(), preferredDoc = window.document, dirruns = 0, done = 0, classCache = createCache(), tokenCache = createCache(), compilerCache = createCache(), sortOrder = function(a, b) {
+                        return a === b && (hasDuplicate = !0), 0;
+                    }, strundefined = "undefined", MAX_NEGATIVE = 1 << 31, hasOwn = {}.hasOwnProperty, arr = [], pop = arr.pop, push_native = arr.push, push = arr.push, slice = arr.slice, indexOf = arr.indexOf || function(elem) {
+                        for (var i = 0, len = this.length; len > i; i++) if (this[i] === elem) return i;
                         return -1;
-                    }, cb = "checked|selected|async|autofocus|autoplay|controls|defer|disabled|hidden|ismap|loop|multiple|open|readonly|required|scoped", db = "[\\x20\\t\\r\\n\\f]", eb = "(?:\\\\.|[\\w-]|[^\\x00-\\xa0])+", fb = eb.replace("w", "w#"), gb = "\\[" + db + "*(" + eb + ")(?:" + db + "*([*^$|!~]?=)" + db + "*(?:'((?:\\\\.|[^\\\\'])*)'|\"((?:\\\\.|[^\\\\\"])*)\"|(" + fb + "))|)" + db + "*\\]", hb = ":(" + eb + ")(?:\\((('((?:\\\\.|[^\\\\'])*)'|\"((?:\\\\.|[^\\\\\"])*)\")|((?:\\\\.|[^\\\\()[\\]]|" + gb + ")*)|.*)\\)|)", ib = new RegExp("^" + db + "+|((?:^|[^\\\\])(?:\\\\.)*)" + db + "+$", "g"), jb = new RegExp("^" + db + "*," + db + "*"), kb = new RegExp("^" + db + "*([>+~]|" + db + ")" + db + "*"), lb = new RegExp("=" + db + "*([^\\]'\"]*?)" + db + "*\\]", "g"), mb = new RegExp(hb), nb = new RegExp("^" + fb + "$"), ob = {
-                        ID: new RegExp("^#(" + eb + ")"),
-                        CLASS: new RegExp("^\\.(" + eb + ")"),
-                        TAG: new RegExp("^(" + eb.replace("w", "w*") + ")"),
-                        ATTR: new RegExp("^" + gb),
-                        PSEUDO: new RegExp("^" + hb),
-                        CHILD: new RegExp("^:(only|first|last|nth|nth-last)-(child|of-type)(?:\\(" + db + "*(even|odd|(([+-]|)(\\d*)n|)" + db + "*(?:([+-]|)" + db + "*(\\d+)|))" + db + "*\\)|)", "i"),
-                        bool: new RegExp("^(?:" + cb + ")$", "i"),
-                        needsContext: new RegExp("^" + db + "*[>+~]|:(even|odd|eq|gt|lt|nth|first|last)(?:\\(" + db + "*((?:-\\d)?\\d*)" + db + "*\\)|)(?=[^-]|$)", "i")
-                    }, pb = /^(?:input|select|textarea|button)$/i, qb = /^h\d$/i, rb = /^[^{]+\{\s*\[native \w/, sb = /^(?:#([\w-]+)|(\w+)|\.([\w-]+))$/, tb = /[+~]/, ub = /'|\\/g, vb = new RegExp("\\\\([\\da-f]{1,6}" + db + "?|(" + db + ")|.)", "ig"), wb = function(a, b, c) {
-                        var d = "0x" + b - 65536;
-                        return d !== d || c ? b : 0 > d ? String.fromCharCode(d + 65536) : String.fromCharCode(d >> 10 | 55296, 1023 & d | 56320);
+                    }, booleans = "checked|selected|async|autofocus|autoplay|controls|defer|disabled|hidden|ismap|loop|multiple|open|readonly|required|scoped", whitespace = "[\\x20\\t\\r\\n\\f]", characterEncoding = "(?:\\\\.|[\\w-]|[^\\x00-\\xa0])+", identifier = characterEncoding.replace("w", "w#"), attributes = "\\[" + whitespace + "*(" + characterEncoding + ")(?:" + whitespace + "*([*^$|!~]?=)" + whitespace + "*(?:'((?:\\\\.|[^\\\\'])*)'|\"((?:\\\\.|[^\\\\\"])*)\"|(" + identifier + "))|)" + whitespace + "*\\]", pseudos = ":(" + characterEncoding + ")(?:\\((('((?:\\\\.|[^\\\\'])*)'|\"((?:\\\\.|[^\\\\\"])*)\")|((?:\\\\.|[^\\\\()[\\]]|" + attributes + ")*)|.*)\\)|)", rtrim = new RegExp("^" + whitespace + "+|((?:^|[^\\\\])(?:\\\\.)*)" + whitespace + "+$", "g"), rcomma = new RegExp("^" + whitespace + "*," + whitespace + "*"), rcombinators = new RegExp("^" + whitespace + "*([>+~]|" + whitespace + ")" + whitespace + "*"), rattributeQuotes = new RegExp("=" + whitespace + "*([^\\]'\"]*?)" + whitespace + "*\\]", "g"), rpseudo = new RegExp(pseudos), ridentifier = new RegExp("^" + identifier + "$"), matchExpr = {
+                        ID: new RegExp("^#(" + characterEncoding + ")"),
+                        CLASS: new RegExp("^\\.(" + characterEncoding + ")"),
+                        TAG: new RegExp("^(" + characterEncoding.replace("w", "w*") + ")"),
+                        ATTR: new RegExp("^" + attributes),
+                        PSEUDO: new RegExp("^" + pseudos),
+                        CHILD: new RegExp("^:(only|first|last|nth|nth-last)-(child|of-type)(?:\\(" + whitespace + "*(even|odd|(([+-]|)(\\d*)n|)" + whitespace + "*(?:([+-]|)" + whitespace + "*(\\d+)|))" + whitespace + "*\\)|)", "i"),
+                        bool: new RegExp("^(?:" + booleans + ")$", "i"),
+                        needsContext: new RegExp("^" + whitespace + "*[>+~]|:(even|odd|eq|gt|lt|nth|first|last)(?:\\(" + whitespace + "*((?:-\\d)?\\d*)" + whitespace + "*\\)|)(?=[^-]|$)", "i")
+                    }, rinputs = /^(?:input|select|textarea|button)$/i, rheader = /^h\d$/i, rnative = /^[^{]+\{\s*\[native \w/, rquickExpr = /^(?:#([\w-]+)|(\w+)|\.([\w-]+))$/, rsibling = /[+~]/, rescape = /'|\\/g, runescape = new RegExp("\\\\([\\da-f]{1,6}" + whitespace + "?|(" + whitespace + ")|.)", "ig"), funescape = function(_, escaped, escapedWhitespace) {
+                        var high = "0x" + escaped - 65536;
+                        return high !== high || escapedWhitespace ? escaped : 0 > high ? String.fromCharCode(high + 65536) : String.fromCharCode(high >> 10 | 55296, 1023 & high | 56320);
                     };
                     try {
-                        _.apply(Y = ab.call(O.childNodes), O.childNodes), Y[O.childNodes.length].nodeType;
-                    } catch (xb) {
-                        _ = {
-                            apply: Y.length ? function(a, b) {
-                                $.apply(a, ab.call(b));
-                            } : function(a, b) {
-                                for (var c = a.length, d = 0; a[c++] = b[d++]; ) ;
-                                a.length = c - 1;
+                        push.apply(arr = slice.call(preferredDoc.childNodes), preferredDoc.childNodes), 
+                        arr[preferredDoc.childNodes.length].nodeType;
+                    } catch (e) {
+                        push = {
+                            apply: arr.length ? function(target, els) {
+                                push_native.apply(target, slice.call(els));
+                            } : function(target, els) {
+                                for (var j = target.length, i = 0; target[j++] = els[i++]; ) ;
+                                target.length = j - 1;
                             }
                         };
                     }
-                    v = b.support = {}, y = b.isXML = function(a) {
-                        var b = a && (a.ownerDocument || a).documentElement;
-                        return b ? "HTML" !== b.nodeName : !1;
-                    }, F = b.setDocument = function(a) {
-                        var b, c = a ? a.ownerDocument || a : O, d = c.defaultView;
-                        return c !== G && 9 === c.nodeType && c.documentElement ? (G = c, H = c.documentElement, 
-                        I = !y(c), d && d !== d.top && (d.addEventListener ? d.addEventListener("unload", function() {
-                            F();
-                        }, !1) : d.attachEvent && d.attachEvent("onunload", function() {
-                            F();
-                        })), v.attributes = e(function(a) {
-                            return a.className = "i", !a.getAttribute("className");
-                        }), v.getElementsByTagName = e(function(a) {
-                            return a.appendChild(c.createComment("")), !a.getElementsByTagName("*").length;
-                        }), v.getElementsByClassName = rb.test(c.getElementsByClassName) && e(function(a) {
-                            return a.innerHTML = "<div class='a'></div><div class='a i'></div>", a.firstChild.className = "i", 
-                            2 === a.getElementsByClassName("i").length;
-                        }), v.getById = e(function(a) {
-                            return H.appendChild(a).id = N, !c.getElementsByName || !c.getElementsByName(N).length;
-                        }), v.getById ? (w.find.ID = function(a, b) {
-                            if (typeof b.getElementById !== V && I) {
-                                var c = b.getElementById(a);
-                                return c && c.parentNode ? [ c ] : [];
+                    support = Sizzle.support = {}, isXML = Sizzle.isXML = function(elem) {
+                        var documentElement = elem && (elem.ownerDocument || elem).documentElement;
+                        return documentElement ? "HTML" !== documentElement.nodeName : !1;
+                    }, setDocument = Sizzle.setDocument = function(node) {
+                        var hasCompare, doc = node ? node.ownerDocument || node : preferredDoc, parent = doc.defaultView;
+                        return doc !== document && 9 === doc.nodeType && doc.documentElement ? (document = doc, 
+                        docElem = doc.documentElement, documentIsHTML = !isXML(doc), parent && parent !== parent.top && (parent.addEventListener ? parent.addEventListener("unload", function() {
+                            setDocument();
+                        }, !1) : parent.attachEvent && parent.attachEvent("onunload", function() {
+                            setDocument();
+                        })), support.attributes = assert(function(div) {
+                            return div.className = "i", !div.getAttribute("className");
+                        }), support.getElementsByTagName = assert(function(div) {
+                            return div.appendChild(doc.createComment("")), !div.getElementsByTagName("*").length;
+                        }), support.getElementsByClassName = rnative.test(doc.getElementsByClassName) && assert(function(div) {
+                            return div.innerHTML = "<div class='a'></div><div class='a i'></div>", div.firstChild.className = "i", 
+                            2 === div.getElementsByClassName("i").length;
+                        }), support.getById = assert(function(div) {
+                            return docElem.appendChild(div).id = expando, !doc.getElementsByName || !doc.getElementsByName(expando).length;
+                        }), support.getById ? (Expr.find.ID = function(id, context) {
+                            if (typeof context.getElementById !== strundefined && documentIsHTML) {
+                                var m = context.getElementById(id);
+                                return m && m.parentNode ? [ m ] : [];
                             }
-                        }, w.filter.ID = function(a) {
-                            var b = a.replace(vb, wb);
-                            return function(a) {
-                                return a.getAttribute("id") === b;
+                        }, Expr.filter.ID = function(id) {
+                            var attrId = id.replace(runescape, funescape);
+                            return function(elem) {
+                                return elem.getAttribute("id") === attrId;
                             };
-                        }) : (delete w.find.ID, w.filter.ID = function(a) {
-                            var b = a.replace(vb, wb);
-                            return function(a) {
-                                var c = typeof a.getAttributeNode !== V && a.getAttributeNode("id");
-                                return c && c.value === b;
+                        }) : (delete Expr.find.ID, Expr.filter.ID = function(id) {
+                            var attrId = id.replace(runescape, funescape);
+                            return function(elem) {
+                                var node = typeof elem.getAttributeNode !== strundefined && elem.getAttributeNode("id");
+                                return node && node.value === attrId;
                             };
-                        }), w.find.TAG = v.getElementsByTagName ? function(a, b) {
-                            return typeof b.getElementsByTagName !== V ? b.getElementsByTagName(a) : void 0;
-                        } : function(a, b) {
-                            var c, d = [], e = 0, f = b.getElementsByTagName(a);
-                            if ("*" === a) {
-                                for (;c = f[e++]; ) 1 === c.nodeType && d.push(c);
-                                return d;
+                        }), Expr.find.TAG = support.getElementsByTagName ? function(tag, context) {
+                            return typeof context.getElementsByTagName !== strundefined ? context.getElementsByTagName(tag) : void 0;
+                        } : function(tag, context) {
+                            var elem, tmp = [], i = 0, results = context.getElementsByTagName(tag);
+                            if ("*" === tag) {
+                                for (;elem = results[i++]; ) 1 === elem.nodeType && tmp.push(elem);
+                                return tmp;
                             }
-                            return f;
-                        }, w.find.CLASS = v.getElementsByClassName && function(a, b) {
-                            return typeof b.getElementsByClassName !== V && I ? b.getElementsByClassName(a) : void 0;
-                        }, K = [], J = [], (v.qsa = rb.test(c.querySelectorAll)) && (e(function(a) {
-                            a.innerHTML = "<select msallowclip=''><option selected=''></option></select>", a.querySelectorAll("[msallowclip^='']").length && J.push("[*^$]=" + db + "*(?:''|\"\")"), 
-                            a.querySelectorAll("[selected]").length || J.push("\\[" + db + "*(?:value|" + cb + ")"), 
-                            a.querySelectorAll(":checked").length || J.push(":checked");
-                        }), e(function(a) {
-                            var b = c.createElement("input");
-                            b.setAttribute("type", "hidden"), a.appendChild(b).setAttribute("name", "D"), a.querySelectorAll("[name=d]").length && J.push("name" + db + "*[*^$|!~]?="), 
-                            a.querySelectorAll(":enabled").length || J.push(":enabled", ":disabled"), a.querySelectorAll("*,:x"), 
-                            J.push(",.*:");
-                        })), (v.matchesSelector = rb.test(L = H.matches || H.webkitMatchesSelector || H.mozMatchesSelector || H.oMatchesSelector || H.msMatchesSelector)) && e(function(a) {
-                            v.disconnectedMatch = L.call(a, "div"), L.call(a, "[s!='']:x"), K.push("!=", hb);
-                        }), J = J.length && new RegExp(J.join("|")), K = K.length && new RegExp(K.join("|")), 
-                        b = rb.test(H.compareDocumentPosition), M = b || rb.test(H.contains) ? function(a, b) {
-                            var c = 9 === a.nodeType ? a.documentElement : a, d = b && b.parentNode;
-                            return a === d || !(!d || 1 !== d.nodeType || !(c.contains ? c.contains(d) : a.compareDocumentPosition && 16 & a.compareDocumentPosition(d)));
+                            return results;
+                        }, Expr.find.CLASS = support.getElementsByClassName && function(className, context) {
+                            return typeof context.getElementsByClassName !== strundefined && documentIsHTML ? context.getElementsByClassName(className) : void 0;
+                        }, rbuggyMatches = [], rbuggyQSA = [], (support.qsa = rnative.test(doc.querySelectorAll)) && (assert(function(div) {
+                            div.innerHTML = "<select msallowclip=''><option selected=''></option></select>", 
+                            div.querySelectorAll("[msallowclip^='']").length && rbuggyQSA.push("[*^$]=" + whitespace + "*(?:''|\"\")"), 
+                            div.querySelectorAll("[selected]").length || rbuggyQSA.push("\\[" + whitespace + "*(?:value|" + booleans + ")"), 
+                            div.querySelectorAll(":checked").length || rbuggyQSA.push(":checked");
+                        }), assert(function(div) {
+                            var input = doc.createElement("input");
+                            input.setAttribute("type", "hidden"), div.appendChild(input).setAttribute("name", "D"), 
+                            div.querySelectorAll("[name=d]").length && rbuggyQSA.push("name" + whitespace + "*[*^$|!~]?="), 
+                            div.querySelectorAll(":enabled").length || rbuggyQSA.push(":enabled", ":disabled"), 
+                            div.querySelectorAll("*,:x"), rbuggyQSA.push(",.*:");
+                        })), (support.matchesSelector = rnative.test(matches = docElem.matches || docElem.webkitMatchesSelector || docElem.mozMatchesSelector || docElem.oMatchesSelector || docElem.msMatchesSelector)) && assert(function(div) {
+                            support.disconnectedMatch = matches.call(div, "div"), matches.call(div, "[s!='']:x"), 
+                            rbuggyMatches.push("!=", pseudos);
+                        }), rbuggyQSA = rbuggyQSA.length && new RegExp(rbuggyQSA.join("|")), rbuggyMatches = rbuggyMatches.length && new RegExp(rbuggyMatches.join("|")), 
+                        hasCompare = rnative.test(docElem.compareDocumentPosition), contains = hasCompare || rnative.test(docElem.contains) ? function(a, b) {
+                            var adown = 9 === a.nodeType ? a.documentElement : a, bup = b && b.parentNode;
+                            return a === bup || !(!bup || 1 !== bup.nodeType || !(adown.contains ? adown.contains(bup) : a.compareDocumentPosition && 16 & a.compareDocumentPosition(bup)));
                         } : function(a, b) {
                             if (b) for (;b = b.parentNode; ) if (b === a) return !0;
                             return !1;
-                        }, U = b ? function(a, b) {
-                            if (a === b) return E = !0, 0;
-                            var d = !a.compareDocumentPosition - !b.compareDocumentPosition;
-                            return d ? d : (d = (a.ownerDocument || a) === (b.ownerDocument || b) ? a.compareDocumentPosition(b) : 1, 
-                            1 & d || !v.sortDetached && b.compareDocumentPosition(a) === d ? a === c || a.ownerDocument === O && M(O, a) ? -1 : b === c || b.ownerDocument === O && M(O, b) ? 1 : D ? bb.call(D, a) - bb.call(D, b) : 0 : 4 & d ? -1 : 1);
+                        }, sortOrder = hasCompare ? function(a, b) {
+                            if (a === b) return hasDuplicate = !0, 0;
+                            var compare = !a.compareDocumentPosition - !b.compareDocumentPosition;
+                            return compare ? compare : (compare = (a.ownerDocument || a) === (b.ownerDocument || b) ? a.compareDocumentPosition(b) : 1, 
+                            1 & compare || !support.sortDetached && b.compareDocumentPosition(a) === compare ? a === doc || a.ownerDocument === preferredDoc && contains(preferredDoc, a) ? -1 : b === doc || b.ownerDocument === preferredDoc && contains(preferredDoc, b) ? 1 : sortInput ? indexOf.call(sortInput, a) - indexOf.call(sortInput, b) : 0 : 4 & compare ? -1 : 1);
                         } : function(a, b) {
-                            if (a === b) return E = !0, 0;
-                            var d, e = 0, f = a.parentNode, h = b.parentNode, i = [ a ], j = [ b ];
-                            if (!f || !h) return a === c ? -1 : b === c ? 1 : f ? -1 : h ? 1 : D ? bb.call(D, a) - bb.call(D, b) : 0;
-                            if (f === h) return g(a, b);
-                            for (d = a; d = d.parentNode; ) i.unshift(d);
-                            for (d = b; d = d.parentNode; ) j.unshift(d);
-                            for (;i[e] === j[e]; ) e++;
-                            return e ? g(i[e], j[e]) : i[e] === O ? -1 : j[e] === O ? 1 : 0;
-                        }, c) : G;
-                    }, b.matches = function(a, c) {
-                        return b(a, null, null, c);
-                    }, b.matchesSelector = function(a, c) {
-                        if ((a.ownerDocument || a) !== G && F(a), c = c.replace(lb, "='$1']"), !(!v.matchesSelector || !I || K && K.test(c) || J && J.test(c))) try {
-                            var d = L.call(a, c);
-                            if (d || v.disconnectedMatch || a.document && 11 !== a.document.nodeType) return d;
+                            if (a === b) return hasDuplicate = !0, 0;
+                            var cur, i = 0, aup = a.parentNode, bup = b.parentNode, ap = [ a ], bp = [ b ];
+                            if (!aup || !bup) return a === doc ? -1 : b === doc ? 1 : aup ? -1 : bup ? 1 : sortInput ? indexOf.call(sortInput, a) - indexOf.call(sortInput, b) : 0;
+                            if (aup === bup) return siblingCheck(a, b);
+                            for (cur = a; cur = cur.parentNode; ) ap.unshift(cur);
+                            for (cur = b; cur = cur.parentNode; ) bp.unshift(cur);
+                            for (;ap[i] === bp[i]; ) i++;
+                            return i ? siblingCheck(ap[i], bp[i]) : ap[i] === preferredDoc ? -1 : bp[i] === preferredDoc ? 1 : 0;
+                        }, doc) : document;
+                    }, Sizzle.matches = function(expr, elements) {
+                        return Sizzle(expr, null, null, elements);
+                    }, Sizzle.matchesSelector = function(elem, expr) {
+                        if ((elem.ownerDocument || elem) !== document && setDocument(elem), expr = expr.replace(rattributeQuotes, "='$1']"), 
+                        !(!support.matchesSelector || !documentIsHTML || rbuggyMatches && rbuggyMatches.test(expr) || rbuggyQSA && rbuggyQSA.test(expr))) try {
+                            var ret = matches.call(elem, expr);
+                            if (ret || support.disconnectedMatch || elem.document && 11 !== elem.document.nodeType) return ret;
                         } catch (e) {}
-                        return b(c, G, null, [ a ]).length > 0;
-                    }, b.contains = function(a, b) {
-                        return (a.ownerDocument || a) !== G && F(a), M(a, b);
-                    }, b.attr = function(a, b) {
-                        (a.ownerDocument || a) !== G && F(a);
-                        var c = w.attrHandle[b.toLowerCase()], d = c && X.call(w.attrHandle, b.toLowerCase()) ? c(a, b, !I) : void 0;
-                        return void 0 !== d ? d : v.attributes || !I ? a.getAttribute(b) : (d = a.getAttributeNode(b)) && d.specified ? d.value : null;
-                    }, b.error = function(a) {
-                        throw new Error("Syntax error, unrecognized expression: " + a);
-                    }, b.uniqueSort = function(a) {
-                        var b, c = [], d = 0, e = 0;
-                        if (E = !v.detectDuplicates, D = !v.sortStable && a.slice(0), a.sort(U), E) {
-                            for (;b = a[e++]; ) b === a[e] && (d = c.push(e));
-                            for (;d--; ) a.splice(c[d], 1);
+                        return Sizzle(expr, document, null, [ elem ]).length > 0;
+                    }, Sizzle.contains = function(context, elem) {
+                        return (context.ownerDocument || context) !== document && setDocument(context), 
+                        contains(context, elem);
+                    }, Sizzle.attr = function(elem, name) {
+                        (elem.ownerDocument || elem) !== document && setDocument(elem);
+                        var fn = Expr.attrHandle[name.toLowerCase()], val = fn && hasOwn.call(Expr.attrHandle, name.toLowerCase()) ? fn(elem, name, !documentIsHTML) : void 0;
+                        return void 0 !== val ? val : support.attributes || !documentIsHTML ? elem.getAttribute(name) : (val = elem.getAttributeNode(name)) && val.specified ? val.value : null;
+                    }, Sizzle.error = function(msg) {
+                        throw new Error("Syntax error, unrecognized expression: " + msg);
+                    }, Sizzle.uniqueSort = function(results) {
+                        var elem, duplicates = [], j = 0, i = 0;
+                        if (hasDuplicate = !support.detectDuplicates, sortInput = !support.sortStable && results.slice(0), 
+                        results.sort(sortOrder), hasDuplicate) {
+                            for (;elem = results[i++]; ) elem === results[i] && (j = duplicates.push(i));
+                            for (;j--; ) results.splice(duplicates[j], 1);
                         }
-                        return D = null, a;
-                    }, x = b.getText = function(a) {
-                        var b, c = "", d = 0, e = a.nodeType;
-                        if (e) {
-                            if (1 === e || 9 === e || 11 === e) {
-                                if ("string" == typeof a.textContent) return a.textContent;
-                                for (a = a.firstChild; a; a = a.nextSibling) c += x(a);
-                            } else if (3 === e || 4 === e) return a.nodeValue;
-                        } else for (;b = a[d++]; ) c += x(b);
-                        return c;
-                    }, w = b.selectors = {
+                        return sortInput = null, results;
+                    }, getText = Sizzle.getText = function(elem) {
+                        var node, ret = "", i = 0, nodeType = elem.nodeType;
+                        if (nodeType) {
+                            if (1 === nodeType || 9 === nodeType || 11 === nodeType) {
+                                if ("string" == typeof elem.textContent) return elem.textContent;
+                                for (elem = elem.firstChild; elem; elem = elem.nextSibling) ret += getText(elem);
+                            } else if (3 === nodeType || 4 === nodeType) return elem.nodeValue;
+                        } else for (;node = elem[i++]; ) ret += getText(node);
+                        return ret;
+                    }, Expr = Sizzle.selectors = {
                         cacheLength: 50,
-                        createPseudo: d,
-                        match: ob,
+                        createPseudo: markFunction,
+                        match: matchExpr,
                         attrHandle: {},
                         find: {},
                         relative: {
@@ -1198,791 +1241,823 @@
                             }
                         },
                         preFilter: {
-                            ATTR: function(a) {
-                                return a[1] = a[1].replace(vb, wb), a[3] = (a[3] || a[4] || a[5] || "").replace(vb, wb), 
-                                "~=" === a[2] && (a[3] = " " + a[3] + " "), a.slice(0, 4);
+                            ATTR: function(match) {
+                                return match[1] = match[1].replace(runescape, funescape), match[3] = (match[3] || match[4] || match[5] || "").replace(runescape, funescape), 
+                                "~=" === match[2] && (match[3] = " " + match[3] + " "), match.slice(0, 4);
                             },
-                            CHILD: function(a) {
-                                return a[1] = a[1].toLowerCase(), "nth" === a[1].slice(0, 3) ? (a[3] || b.error(a[0]), 
-                                a[4] = +(a[4] ? a[5] + (a[6] || 1) : 2 * ("even" === a[3] || "odd" === a[3])), a[5] = +(a[7] + a[8] || "odd" === a[3])) : a[3] && b.error(a[0]), 
-                                a;
+                            CHILD: function(match) {
+                                return match[1] = match[1].toLowerCase(), "nth" === match[1].slice(0, 3) ? (match[3] || Sizzle.error(match[0]), 
+                                match[4] = +(match[4] ? match[5] + (match[6] || 1) : 2 * ("even" === match[3] || "odd" === match[3])), 
+                                match[5] = +(match[7] + match[8] || "odd" === match[3])) : match[3] && Sizzle.error(match[0]), 
+                                match;
                             },
-                            PSEUDO: function(a) {
-                                var b, c = !a[6] && a[2];
-                                return ob.CHILD.test(a[0]) ? null : (a[3] ? a[2] = a[4] || a[5] || "" : c && mb.test(c) && (b = z(c, !0)) && (b = c.indexOf(")", c.length - b) - c.length) && (a[0] = a[0].slice(0, b), 
-                                a[2] = c.slice(0, b)), a.slice(0, 3));
+                            PSEUDO: function(match) {
+                                var excess, unquoted = !match[6] && match[2];
+                                return matchExpr.CHILD.test(match[0]) ? null : (match[3] ? match[2] = match[4] || match[5] || "" : unquoted && rpseudo.test(unquoted) && (excess = tokenize(unquoted, !0)) && (excess = unquoted.indexOf(")", unquoted.length - excess) - unquoted.length) && (match[0] = match[0].slice(0, excess), 
+                                match[2] = unquoted.slice(0, excess)), match.slice(0, 3));
                             }
                         },
                         filter: {
-                            TAG: function(a) {
-                                var b = a.replace(vb, wb).toLowerCase();
-                                return "*" === a ? function() {
+                            TAG: function(nodeNameSelector) {
+                                var nodeName = nodeNameSelector.replace(runescape, funescape).toLowerCase();
+                                return "*" === nodeNameSelector ? function() {
                                     return !0;
-                                } : function(a) {
-                                    return a.nodeName && a.nodeName.toLowerCase() === b;
+                                } : function(elem) {
+                                    return elem.nodeName && elem.nodeName.toLowerCase() === nodeName;
                                 };
                             },
-                            CLASS: function(a) {
-                                var b = R[a + " "];
-                                return b || (b = new RegExp("(^|" + db + ")" + a + "(" + db + "|$)")) && R(a, function(a) {
-                                    return b.test("string" == typeof a.className && a.className || typeof a.getAttribute !== V && a.getAttribute("class") || "");
+                            CLASS: function(className) {
+                                var pattern = classCache[className + " "];
+                                return pattern || (pattern = new RegExp("(^|" + whitespace + ")" + className + "(" + whitespace + "|$)")) && classCache(className, function(elem) {
+                                    return pattern.test("string" == typeof elem.className && elem.className || typeof elem.getAttribute !== strundefined && elem.getAttribute("class") || "");
                                 });
                             },
-                            ATTR: function(a, c, d) {
-                                return function(e) {
-                                    var f = b.attr(e, a);
-                                    return null == f ? "!=" === c : c ? (f += "", "=" === c ? f === d : "!=" === c ? f !== d : "^=" === c ? d && 0 === f.indexOf(d) : "*=" === c ? d && f.indexOf(d) > -1 : "$=" === c ? d && f.slice(-d.length) === d : "~=" === c ? (" " + f + " ").indexOf(d) > -1 : "|=" === c ? f === d || f.slice(0, d.length + 1) === d + "-" : !1) : !0;
+                            ATTR: function(name, operator, check) {
+                                return function(elem) {
+                                    var result = Sizzle.attr(elem, name);
+                                    return null == result ? "!=" === operator : operator ? (result += "", "=" === operator ? result === check : "!=" === operator ? result !== check : "^=" === operator ? check && 0 === result.indexOf(check) : "*=" === operator ? check && result.indexOf(check) > -1 : "$=" === operator ? check && result.slice(-check.length) === check : "~=" === operator ? (" " + result + " ").indexOf(check) > -1 : "|=" === operator ? result === check || result.slice(0, check.length + 1) === check + "-" : !1) : !0;
                                 };
                             },
-                            CHILD: function(a, b, c, d, e) {
-                                var f = "nth" !== a.slice(0, 3), g = "last" !== a.slice(-4), h = "of-type" === b;
-                                return 1 === d && 0 === e ? function(a) {
-                                    return !!a.parentNode;
-                                } : function(b, c, i) {
-                                    var j, k, l, m, n, o, p = f !== g ? "nextSibling" : "previousSibling", q = b.parentNode, r = h && b.nodeName.toLowerCase(), s = !i && !h;
-                                    if (q) {
-                                        if (f) {
-                                            for (;p; ) {
-                                                for (l = b; l = l[p]; ) if (h ? l.nodeName.toLowerCase() === r : 1 === l.nodeType) return !1;
-                                                o = p = "only" === a && !o && "nextSibling";
+                            CHILD: function(type, what, argument, first, last) {
+                                var simple = "nth" !== type.slice(0, 3), forward = "last" !== type.slice(-4), ofType = "of-type" === what;
+                                return 1 === first && 0 === last ? function(elem) {
+                                    return !!elem.parentNode;
+                                } : function(elem, context, xml) {
+                                    var cache, outerCache, node, diff, nodeIndex, start, dir = simple !== forward ? "nextSibling" : "previousSibling", parent = elem.parentNode, name = ofType && elem.nodeName.toLowerCase(), useCache = !xml && !ofType;
+                                    if (parent) {
+                                        if (simple) {
+                                            for (;dir; ) {
+                                                for (node = elem; node = node[dir]; ) if (ofType ? node.nodeName.toLowerCase() === name : 1 === node.nodeType) return !1;
+                                                start = dir = "only" === type && !start && "nextSibling";
                                             }
                                             return !0;
                                         }
-                                        if (o = [ g ? q.firstChild : q.lastChild ], g && s) {
-                                            for (k = q[N] || (q[N] = {}), j = k[a] || [], n = j[0] === P && j[1], m = j[0] === P && j[2], 
-                                            l = n && q.childNodes[n]; l = ++n && l && l[p] || (m = n = 0) || o.pop(); ) if (1 === l.nodeType && ++m && l === b) {
-                                                k[a] = [ P, n, m ];
+                                        if (start = [ forward ? parent.firstChild : parent.lastChild ], forward && useCache) {
+                                            for (outerCache = parent[expando] || (parent[expando] = {}), cache = outerCache[type] || [], 
+                                            nodeIndex = cache[0] === dirruns && cache[1], diff = cache[0] === dirruns && cache[2], 
+                                            node = nodeIndex && parent.childNodes[nodeIndex]; node = ++nodeIndex && node && node[dir] || (diff = nodeIndex = 0) || start.pop(); ) if (1 === node.nodeType && ++diff && node === elem) {
+                                                outerCache[type] = [ dirruns, nodeIndex, diff ];
                                                 break;
                                             }
-                                        } else if (s && (j = (b[N] || (b[N] = {}))[a]) && j[0] === P) m = j[1]; else for (;(l = ++n && l && l[p] || (m = n = 0) || o.pop()) && ((h ? l.nodeName.toLowerCase() !== r : 1 !== l.nodeType) || !++m || (s && ((l[N] || (l[N] = {}))[a] = [ P, m ]), 
-                                        l !== b)); ) ;
-                                        return m -= e, m === d || m % d === 0 && m / d >= 0;
+                                        } else if (useCache && (cache = (elem[expando] || (elem[expando] = {}))[type]) && cache[0] === dirruns) diff = cache[1]; else for (;(node = ++nodeIndex && node && node[dir] || (diff = nodeIndex = 0) || start.pop()) && ((ofType ? node.nodeName.toLowerCase() !== name : 1 !== node.nodeType) || !++diff || (useCache && ((node[expando] || (node[expando] = {}))[type] = [ dirruns, diff ]), 
+                                        node !== elem)); ) ;
+                                        return diff -= last, diff === first || diff % first === 0 && diff / first >= 0;
                                     }
                                 };
                             },
-                            PSEUDO: function(a, c) {
-                                var e, f = w.pseudos[a] || w.setFilters[a.toLowerCase()] || b.error("unsupported pseudo: " + a);
-                                return f[N] ? f(c) : f.length > 1 ? (e = [ a, a, "", c ], w.setFilters.hasOwnProperty(a.toLowerCase()) ? d(function(a, b) {
-                                    for (var d, e = f(a, c), g = e.length; g--; ) d = bb.call(a, e[g]), a[d] = !(b[d] = e[g]);
-                                }) : function(a) {
-                                    return f(a, 0, e);
-                                }) : f;
+                            PSEUDO: function(pseudo, argument) {
+                                var args, fn = Expr.pseudos[pseudo] || Expr.setFilters[pseudo.toLowerCase()] || Sizzle.error("unsupported pseudo: " + pseudo);
+                                return fn[expando] ? fn(argument) : fn.length > 1 ? (args = [ pseudo, pseudo, "", argument ], 
+                                Expr.setFilters.hasOwnProperty(pseudo.toLowerCase()) ? markFunction(function(seed, matches) {
+                                    for (var idx, matched = fn(seed, argument), i = matched.length; i--; ) idx = indexOf.call(seed, matched[i]), 
+                                    seed[idx] = !(matches[idx] = matched[i]);
+                                }) : function(elem) {
+                                    return fn(elem, 0, args);
+                                }) : fn;
                             }
                         },
                         pseudos: {
-                            not: d(function(a) {
-                                var b = [], c = [], e = A(a.replace(ib, "$1"));
-                                return e[N] ? d(function(a, b, c, d) {
-                                    for (var f, g = e(a, null, d, []), h = a.length; h--; ) (f = g[h]) && (a[h] = !(b[h] = f));
-                                }) : function(a, d, f) {
-                                    return b[0] = a, e(b, null, f, c), !c.pop();
+                            not: markFunction(function(selector) {
+                                var input = [], results = [], matcher = compile(selector.replace(rtrim, "$1"));
+                                return matcher[expando] ? markFunction(function(seed, matches, context, xml) {
+                                    for (var elem, unmatched = matcher(seed, null, xml, []), i = seed.length; i--; ) (elem = unmatched[i]) && (seed[i] = !(matches[i] = elem));
+                                }) : function(elem, context, xml) {
+                                    return input[0] = elem, matcher(input, null, xml, results), !results.pop();
                                 };
                             }),
-                            has: d(function(a) {
-                                return function(c) {
-                                    return b(a, c).length > 0;
+                            has: markFunction(function(selector) {
+                                return function(elem) {
+                                    return Sizzle(selector, elem).length > 0;
                                 };
                             }),
-                            contains: d(function(a) {
-                                return function(b) {
-                                    return (b.textContent || b.innerText || x(b)).indexOf(a) > -1;
+                            contains: markFunction(function(text) {
+                                return function(elem) {
+                                    return (elem.textContent || elem.innerText || getText(elem)).indexOf(text) > -1;
                                 };
                             }),
-                            lang: d(function(a) {
-                                return nb.test(a || "") || b.error("unsupported lang: " + a), a = a.replace(vb, wb).toLowerCase(), 
-                                function(b) {
-                                    var c;
-                                    do if (c = I ? b.lang : b.getAttribute("xml:lang") || b.getAttribute("lang")) return c = c.toLowerCase(), 
-                                    c === a || 0 === c.indexOf(a + "-"); while ((b = b.parentNode) && 1 === b.nodeType);
+                            lang: markFunction(function(lang) {
+                                return ridentifier.test(lang || "") || Sizzle.error("unsupported lang: " + lang), 
+                                lang = lang.replace(runescape, funescape).toLowerCase(), function(elem) {
+                                    var elemLang;
+                                    do if (elemLang = documentIsHTML ? elem.lang : elem.getAttribute("xml:lang") || elem.getAttribute("lang")) return elemLang = elemLang.toLowerCase(), 
+                                    elemLang === lang || 0 === elemLang.indexOf(lang + "-"); while ((elem = elem.parentNode) && 1 === elem.nodeType);
                                     return !1;
                                 };
                             }),
-                            target: function(b) {
-                                var c = a.location && a.location.hash;
-                                return c && c.slice(1) === b.id;
+                            target: function(elem) {
+                                var hash = window.location && window.location.hash;
+                                return hash && hash.slice(1) === elem.id;
                             },
-                            root: function(a) {
-                                return a === H;
+                            root: function(elem) {
+                                return elem === docElem;
                             },
-                            focus: function(a) {
-                                return a === G.activeElement && (!G.hasFocus || G.hasFocus()) && !!(a.type || a.href || ~a.tabIndex);
+                            focus: function(elem) {
+                                return elem === document.activeElement && (!document.hasFocus || document.hasFocus()) && !!(elem.type || elem.href || ~elem.tabIndex);
                             },
-                            enabled: function(a) {
-                                return a.disabled === !1;
+                            enabled: function(elem) {
+                                return elem.disabled === !1;
                             },
-                            disabled: function(a) {
-                                return a.disabled === !0;
+                            disabled: function(elem) {
+                                return elem.disabled === !0;
                             },
-                            checked: function(a) {
-                                var b = a.nodeName.toLowerCase();
-                                return "input" === b && !!a.checked || "option" === b && !!a.selected;
+                            checked: function(elem) {
+                                var nodeName = elem.nodeName.toLowerCase();
+                                return "input" === nodeName && !!elem.checked || "option" === nodeName && !!elem.selected;
                             },
-                            selected: function(a) {
-                                return a.parentNode && a.parentNode.selectedIndex, a.selected === !0;
+                            selected: function(elem) {
+                                return elem.parentNode && elem.parentNode.selectedIndex, elem.selected === !0;
                             },
-                            empty: function(a) {
-                                for (a = a.firstChild; a; a = a.nextSibling) if (a.nodeType < 6) return !1;
+                            empty: function(elem) {
+                                for (elem = elem.firstChild; elem; elem = elem.nextSibling) if (elem.nodeType < 6) return !1;
                                 return !0;
                             },
-                            parent: function(a) {
-                                return !w.pseudos.empty(a);
+                            parent: function(elem) {
+                                return !Expr.pseudos.empty(elem);
                             },
-                            header: function(a) {
-                                return qb.test(a.nodeName);
+                            header: function(elem) {
+                                return rheader.test(elem.nodeName);
                             },
-                            input: function(a) {
-                                return pb.test(a.nodeName);
+                            input: function(elem) {
+                                return rinputs.test(elem.nodeName);
                             },
-                            button: function(a) {
-                                var b = a.nodeName.toLowerCase();
-                                return "input" === b && "button" === a.type || "button" === b;
+                            button: function(elem) {
+                                var name = elem.nodeName.toLowerCase();
+                                return "input" === name && "button" === elem.type || "button" === name;
                             },
-                            text: function(a) {
-                                var b;
-                                return "input" === a.nodeName.toLowerCase() && "text" === a.type && (null == (b = a.getAttribute("type")) || "text" === b.toLowerCase());
+                            text: function(elem) {
+                                var attr;
+                                return "input" === elem.nodeName.toLowerCase() && "text" === elem.type && (null == (attr = elem.getAttribute("type")) || "text" === attr.toLowerCase());
                             },
-                            first: j(function() {
+                            first: createPositionalPseudo(function() {
                                 return [ 0 ];
                             }),
-                            last: j(function(a, b) {
-                                return [ b - 1 ];
+                            last: createPositionalPseudo(function(matchIndexes, length) {
+                                return [ length - 1 ];
                             }),
-                            eq: j(function(a, b, c) {
-                                return [ 0 > c ? c + b : c ];
+                            eq: createPositionalPseudo(function(matchIndexes, length, argument) {
+                                return [ 0 > argument ? argument + length : argument ];
                             }),
-                            even: j(function(a, b) {
-                                for (var c = 0; b > c; c += 2) a.push(c);
-                                return a;
+                            even: createPositionalPseudo(function(matchIndexes, length) {
+                                for (var i = 0; length > i; i += 2) matchIndexes.push(i);
+                                return matchIndexes;
                             }),
-                            odd: j(function(a, b) {
-                                for (var c = 1; b > c; c += 2) a.push(c);
-                                return a;
+                            odd: createPositionalPseudo(function(matchIndexes, length) {
+                                for (var i = 1; length > i; i += 2) matchIndexes.push(i);
+                                return matchIndexes;
                             }),
-                            lt: j(function(a, b, c) {
-                                for (var d = 0 > c ? c + b : c; --d >= 0; ) a.push(d);
-                                return a;
+                            lt: createPositionalPseudo(function(matchIndexes, length, argument) {
+                                for (var i = 0 > argument ? argument + length : argument; --i >= 0; ) matchIndexes.push(i);
+                                return matchIndexes;
                             }),
-                            gt: j(function(a, b, c) {
-                                for (var d = 0 > c ? c + b : c; ++d < b; ) a.push(d);
-                                return a;
+                            gt: createPositionalPseudo(function(matchIndexes, length, argument) {
+                                for (var i = 0 > argument ? argument + length : argument; ++i < length; ) matchIndexes.push(i);
+                                return matchIndexes;
                             })
                         }
-                    }, w.pseudos.nth = w.pseudos.eq;
-                    for (u in {
+                    }, Expr.pseudos.nth = Expr.pseudos.eq;
+                    for (i in {
                         radio: !0,
                         checkbox: !0,
                         file: !0,
                         password: !0,
                         image: !0
-                    }) w.pseudos[u] = h(u);
-                    for (u in {
+                    }) Expr.pseudos[i] = createInputPseudo(i);
+                    for (i in {
                         submit: !0,
                         reset: !0
-                    }) w.pseudos[u] = i(u);
-                    return l.prototype = w.filters = w.pseudos, w.setFilters = new l(), z = b.tokenize = function(a, c) {
-                        var d, e, f, g, h, i, j, k = S[a + " "];
-                        if (k) return c ? 0 : k.slice(0);
-                        for (h = a, i = [], j = w.preFilter; h; ) {
-                            (!d || (e = jb.exec(h))) && (e && (h = h.slice(e[0].length) || h), i.push(f = [])), 
-                            d = !1, (e = kb.exec(h)) && (d = e.shift(), f.push({
-                                value: d,
-                                type: e[0].replace(ib, " ")
-                            }), h = h.slice(d.length));
-                            for (g in w.filter) !(e = ob[g].exec(h)) || j[g] && !(e = j[g](e)) || (d = e.shift(), 
-                            f.push({
-                                value: d,
-                                type: g,
-                                matches: e
-                            }), h = h.slice(d.length));
-                            if (!d) break;
+                    }) Expr.pseudos[i] = createButtonPseudo(i);
+                    return setFilters.prototype = Expr.filters = Expr.pseudos, Expr.setFilters = new setFilters(), 
+                    tokenize = Sizzle.tokenize = function(selector, parseOnly) {
+                        var matched, match, tokens, type, soFar, groups, preFilters, cached = tokenCache[selector + " "];
+                        if (cached) return parseOnly ? 0 : cached.slice(0);
+                        for (soFar = selector, groups = [], preFilters = Expr.preFilter; soFar; ) {
+                            (!matched || (match = rcomma.exec(soFar))) && (match && (soFar = soFar.slice(match[0].length) || soFar), 
+                            groups.push(tokens = [])), matched = !1, (match = rcombinators.exec(soFar)) && (matched = match.shift(), 
+                            tokens.push({
+                                value: matched,
+                                type: match[0].replace(rtrim, " ")
+                            }), soFar = soFar.slice(matched.length));
+                            for (type in Expr.filter) !(match = matchExpr[type].exec(soFar)) || preFilters[type] && !(match = preFilters[type](match)) || (matched = match.shift(), 
+                            tokens.push({
+                                value: matched,
+                                type: type,
+                                matches: match
+                            }), soFar = soFar.slice(matched.length));
+                            if (!matched) break;
                         }
-                        return c ? h.length : h ? b.error(a) : S(a, i).slice(0);
-                    }, A = b.compile = function(a, b) {
-                        var c, d = [], e = [], f = T[a + " "];
-                        if (!f) {
-                            for (b || (b = z(a)), c = b.length; c--; ) f = s(b[c]), f[N] ? d.push(f) : e.push(f);
-                            f = T(a, t(e, d)), f.selector = a;
+                        return parseOnly ? soFar.length : soFar ? Sizzle.error(selector) : tokenCache(selector, groups).slice(0);
+                    }, compile = Sizzle.compile = function(selector, match) {
+                        var i, setMatchers = [], elementMatchers = [], cached = compilerCache[selector + " "];
+                        if (!cached) {
+                            for (match || (match = tokenize(selector)), i = match.length; i--; ) cached = matcherFromTokens(match[i]), 
+                            cached[expando] ? setMatchers.push(cached) : elementMatchers.push(cached);
+                            cached = compilerCache(selector, matcherFromGroupMatchers(elementMatchers, setMatchers)), 
+                            cached.selector = selector;
                         }
-                        return f;
-                    }, B = b.select = function(a, b, c, d) {
-                        var e, f, g, h, i, j = "function" == typeof a && a, l = !d && z(a = j.selector || a);
-                        if (c = c || [], 1 === l.length) {
-                            if (f = l[0] = l[0].slice(0), f.length > 2 && "ID" === (g = f[0]).type && v.getById && 9 === b.nodeType && I && w.relative[f[1].type]) {
-                                if (b = (w.find.ID(g.matches[0].replace(vb, wb), b) || [])[0], !b) return c;
-                                j && (b = b.parentNode), a = a.slice(f.shift().value.length);
+                        return cached;
+                    }, select = Sizzle.select = function(selector, context, results, seed) {
+                        var i, tokens, token, type, find, compiled = "function" == typeof selector && selector, match = !seed && tokenize(selector = compiled.selector || selector);
+                        if (results = results || [], 1 === match.length) {
+                            if (tokens = match[0] = match[0].slice(0), tokens.length > 2 && "ID" === (token = tokens[0]).type && support.getById && 9 === context.nodeType && documentIsHTML && Expr.relative[tokens[1].type]) {
+                                if (context = (Expr.find.ID(token.matches[0].replace(runescape, funescape), context) || [])[0], 
+                                !context) return results;
+                                compiled && (context = context.parentNode), selector = selector.slice(tokens.shift().value.length);
                             }
-                            for (e = ob.needsContext.test(a) ? 0 : f.length; e-- && (g = f[e], !w.relative[h = g.type]); ) if ((i = w.find[h]) && (d = i(g.matches[0].replace(vb, wb), tb.test(f[0].type) && k(b.parentNode) || b))) {
-                                if (f.splice(e, 1), a = d.length && m(f), !a) return _.apply(c, d), c;
+                            for (i = matchExpr.needsContext.test(selector) ? 0 : tokens.length; i-- && (token = tokens[i], 
+                            !Expr.relative[type = token.type]); ) if ((find = Expr.find[type]) && (seed = find(token.matches[0].replace(runescape, funescape), rsibling.test(tokens[0].type) && testContext(context.parentNode) || context))) {
+                                if (tokens.splice(i, 1), selector = seed.length && toSelector(tokens), !selector) return push.apply(results, seed), 
+                                results;
                                 break;
                             }
                         }
-                        return (j || A(a, l))(d, b, !I, c, tb.test(a) && k(b.parentNode) || b), c;
-                    }, v.sortStable = N.split("").sort(U).join("") === N, v.detectDuplicates = !!E, 
-                    F(), v.sortDetached = e(function(a) {
-                        return 1 & a.compareDocumentPosition(G.createElement("div"));
-                    }), e(function(a) {
-                        return a.innerHTML = "<a href='#'></a>", "#" === a.firstChild.getAttribute("href");
-                    }) || f("type|href|height|width", function(a, b, c) {
-                        return c ? void 0 : a.getAttribute(b, "type" === b.toLowerCase() ? 1 : 2);
-                    }), v.attributes && e(function(a) {
-                        return a.innerHTML = "<input/>", a.firstChild.setAttribute("value", ""), "" === a.firstChild.getAttribute("value");
-                    }) || f("value", function(a, b, c) {
-                        return c || "input" !== a.nodeName.toLowerCase() ? void 0 : a.defaultValue;
-                    }), e(function(a) {
-                        return null == a.getAttribute("disabled");
-                    }) || f(cb, function(a, b, c) {
-                        var d;
-                        return c ? void 0 : a[b] === !0 ? b.toLowerCase() : (d = a.getAttributeNode(b)) && d.specified ? d.value : null;
-                    }), b;
-                }(b);
-                fb.find = kb, fb.expr = kb.selectors, fb.expr[":"] = fb.expr.pseudos, fb.unique = kb.uniqueSort, 
-                fb.text = kb.getText, fb.isXMLDoc = kb.isXML, fb.contains = kb.contains;
-                var lb = fb.expr.match.needsContext, mb = /^<(\w+)\s*\/?>(?:<\/\1>|)$/, nb = /^.[^:#\[\.,]*$/;
-                fb.filter = function(a, b, c) {
-                    var d = b[0];
-                    return c && (a = ":not(" + a + ")"), 1 === b.length && 1 === d.nodeType ? fb.find.matchesSelector(d, a) ? [ d ] : [] : fb.find.matches(a, fb.grep(b, function(a) {
-                        return 1 === a.nodeType;
+                        return (compiled || compile(selector, match))(seed, context, !documentIsHTML, results, rsibling.test(selector) && testContext(context.parentNode) || context), 
+                        results;
+                    }, support.sortStable = expando.split("").sort(sortOrder).join("") === expando, 
+                    support.detectDuplicates = !!hasDuplicate, setDocument(), support.sortDetached = assert(function(div1) {
+                        return 1 & div1.compareDocumentPosition(document.createElement("div"));
+                    }), assert(function(div) {
+                        return div.innerHTML = "<a href='#'></a>", "#" === div.firstChild.getAttribute("href");
+                    }) || addHandle("type|href|height|width", function(elem, name, isXML) {
+                        return isXML ? void 0 : elem.getAttribute(name, "type" === name.toLowerCase() ? 1 : 2);
+                    }), support.attributes && assert(function(div) {
+                        return div.innerHTML = "<input/>", div.firstChild.setAttribute("value", ""), "" === div.firstChild.getAttribute("value");
+                    }) || addHandle("value", function(elem, name, isXML) {
+                        return isXML || "input" !== elem.nodeName.toLowerCase() ? void 0 : elem.defaultValue;
+                    }), assert(function(div) {
+                        return null == div.getAttribute("disabled");
+                    }) || addHandle(booleans, function(elem, name, isXML) {
+                        var val;
+                        return isXML ? void 0 : elem[name] === !0 ? name.toLowerCase() : (val = elem.getAttributeNode(name)) && val.specified ? val.value : null;
+                    }), Sizzle;
+                }(window);
+                jQuery.find = Sizzle, jQuery.expr = Sizzle.selectors, jQuery.expr[":"] = jQuery.expr.pseudos, 
+                jQuery.unique = Sizzle.uniqueSort, jQuery.text = Sizzle.getText, jQuery.isXMLDoc = Sizzle.isXML, 
+                jQuery.contains = Sizzle.contains;
+                var rneedsContext = jQuery.expr.match.needsContext, rsingleTag = /^<(\w+)\s*\/?>(?:<\/\1>|)$/, risSimple = /^.[^:#\[\.,]*$/;
+                jQuery.filter = function(expr, elems, not) {
+                    var elem = elems[0];
+                    return not && (expr = ":not(" + expr + ")"), 1 === elems.length && 1 === elem.nodeType ? jQuery.find.matchesSelector(elem, expr) ? [ elem ] : [] : jQuery.find.matches(expr, jQuery.grep(elems, function(elem) {
+                        return 1 === elem.nodeType;
                     }));
-                }, fb.fn.extend({
-                    find: function(a) {
-                        var b, c = [], d = this, e = d.length;
-                        if ("string" != typeof a) return this.pushStack(fb(a).filter(function() {
-                            for (b = 0; e > b; b++) if (fb.contains(d[b], this)) return !0;
+                }, jQuery.fn.extend({
+                    find: function(selector) {
+                        var i, ret = [], self = this, len = self.length;
+                        if ("string" != typeof selector) return this.pushStack(jQuery(selector).filter(function() {
+                            for (i = 0; len > i; i++) if (jQuery.contains(self[i], this)) return !0;
                         }));
-                        for (b = 0; e > b; b++) fb.find(a, d[b], c);
-                        return c = this.pushStack(e > 1 ? fb.unique(c) : c), c.selector = this.selector ? this.selector + " " + a : a, 
-                        c;
+                        for (i = 0; len > i; i++) jQuery.find(selector, self[i], ret);
+                        return ret = this.pushStack(len > 1 ? jQuery.unique(ret) : ret), ret.selector = this.selector ? this.selector + " " + selector : selector, 
+                        ret;
                     },
-                    filter: function(a) {
-                        return this.pushStack(e(this, a || [], !1));
+                    filter: function(selector) {
+                        return this.pushStack(winnow(this, selector || [], !1));
                     },
-                    not: function(a) {
-                        return this.pushStack(e(this, a || [], !0));
+                    not: function(selector) {
+                        return this.pushStack(winnow(this, selector || [], !0));
                     },
-                    is: function(a) {
-                        return !!e(this, "string" == typeof a && lb.test(a) ? fb(a) : a || [], !1).length;
+                    is: function(selector) {
+                        return !!winnow(this, "string" == typeof selector && rneedsContext.test(selector) ? jQuery(selector) : selector || [], !1).length;
                     }
                 });
-                var ob, pb = b.document, qb = /^(?:\s*(<[\w\W]+>)[^>]*|#([\w-]*))$/, rb = fb.fn.init = function(a, b) {
-                    var c, d;
-                    if (!a) return this;
-                    if ("string" == typeof a) {
-                        if (c = "<" === a.charAt(0) && ">" === a.charAt(a.length - 1) && a.length >= 3 ? [ null, a, null ] : qb.exec(a), 
-                        !c || !c[1] && b) return !b || b.jquery ? (b || ob).find(a) : this.constructor(b).find(a);
-                        if (c[1]) {
-                            if (b = b instanceof fb ? b[0] : b, fb.merge(this, fb.parseHTML(c[1], b && b.nodeType ? b.ownerDocument || b : pb, !0)), 
-                            mb.test(c[1]) && fb.isPlainObject(b)) for (c in b) fb.isFunction(this[c]) ? this[c](b[c]) : this.attr(c, b[c]);
+                var rootjQuery, document = window.document, rquickExpr = /^(?:\s*(<[\w\W]+>)[^>]*|#([\w-]*))$/, init = jQuery.fn.init = function(selector, context) {
+                    var match, elem;
+                    if (!selector) return this;
+                    if ("string" == typeof selector) {
+                        if (match = "<" === selector.charAt(0) && ">" === selector.charAt(selector.length - 1) && selector.length >= 3 ? [ null, selector, null ] : rquickExpr.exec(selector), 
+                        !match || !match[1] && context) return !context || context.jquery ? (context || rootjQuery).find(selector) : this.constructor(context).find(selector);
+                        if (match[1]) {
+                            if (context = context instanceof jQuery ? context[0] : context, jQuery.merge(this, jQuery.parseHTML(match[1], context && context.nodeType ? context.ownerDocument || context : document, !0)), 
+                            rsingleTag.test(match[1]) && jQuery.isPlainObject(context)) for (match in context) jQuery.isFunction(this[match]) ? this[match](context[match]) : this.attr(match, context[match]);
                             return this;
                         }
-                        if (d = pb.getElementById(c[2]), d && d.parentNode) {
-                            if (d.id !== c[2]) return ob.find(a);
-                            this.length = 1, this[0] = d;
+                        if (elem = document.getElementById(match[2]), elem && elem.parentNode) {
+                            if (elem.id !== match[2]) return rootjQuery.find(selector);
+                            this.length = 1, this[0] = elem;
                         }
-                        return this.context = pb, this.selector = a, this;
+                        return this.context = document, this.selector = selector, this;
                     }
-                    return a.nodeType ? (this.context = this[0] = a, this.length = 1, this) : fb.isFunction(a) ? "undefined" != typeof ob.ready ? ob.ready(a) : a(fb) : (void 0 !== a.selector && (this.selector = a.selector, 
-                    this.context = a.context), fb.makeArray(a, this));
+                    return selector.nodeType ? (this.context = this[0] = selector, this.length = 1, 
+                    this) : jQuery.isFunction(selector) ? "undefined" != typeof rootjQuery.ready ? rootjQuery.ready(selector) : selector(jQuery) : (void 0 !== selector.selector && (this.selector = selector.selector, 
+                    this.context = selector.context), jQuery.makeArray(selector, this));
                 };
-                rb.prototype = fb.fn, ob = fb(pb);
-                var sb = /^(?:parents|prev(?:Until|All))/, tb = {
+                init.prototype = jQuery.fn, rootjQuery = jQuery(document);
+                var rparentsprev = /^(?:parents|prev(?:Until|All))/, guaranteedUnique = {
                     children: !0,
                     contents: !0,
                     next: !0,
                     prev: !0
                 };
-                fb.extend({
-                    dir: function(a, b, c) {
-                        for (var d = [], e = a[b]; e && 9 !== e.nodeType && (void 0 === c || 1 !== e.nodeType || !fb(e).is(c)); ) 1 === e.nodeType && d.push(e), 
-                        e = e[b];
-                        return d;
+                jQuery.extend({
+                    dir: function(elem, dir, until) {
+                        for (var matched = [], cur = elem[dir]; cur && 9 !== cur.nodeType && (void 0 === until || 1 !== cur.nodeType || !jQuery(cur).is(until)); ) 1 === cur.nodeType && matched.push(cur), 
+                        cur = cur[dir];
+                        return matched;
                     },
-                    sibling: function(a, b) {
-                        for (var c = []; a; a = a.nextSibling) 1 === a.nodeType && a !== b && c.push(a);
-                        return c;
+                    sibling: function(n, elem) {
+                        for (var r = []; n; n = n.nextSibling) 1 === n.nodeType && n !== elem && r.push(n);
+                        return r;
                     }
-                }), fb.fn.extend({
-                    has: function(a) {
-                        var b, c = fb(a, this), d = c.length;
+                }), jQuery.fn.extend({
+                    has: function(target) {
+                        var i, targets = jQuery(target, this), len = targets.length;
                         return this.filter(function() {
-                            for (b = 0; d > b; b++) if (fb.contains(this, c[b])) return !0;
+                            for (i = 0; len > i; i++) if (jQuery.contains(this, targets[i])) return !0;
                         });
                     },
-                    closest: function(a, b) {
-                        for (var c, d = 0, e = this.length, f = [], g = lb.test(a) || "string" != typeof a ? fb(a, b || this.context) : 0; e > d; d++) for (c = this[d]; c && c !== b; c = c.parentNode) if (c.nodeType < 11 && (g ? g.index(c) > -1 : 1 === c.nodeType && fb.find.matchesSelector(c, a))) {
-                            f.push(c);
+                    closest: function(selectors, context) {
+                        for (var cur, i = 0, l = this.length, matched = [], pos = rneedsContext.test(selectors) || "string" != typeof selectors ? jQuery(selectors, context || this.context) : 0; l > i; i++) for (cur = this[i]; cur && cur !== context; cur = cur.parentNode) if (cur.nodeType < 11 && (pos ? pos.index(cur) > -1 : 1 === cur.nodeType && jQuery.find.matchesSelector(cur, selectors))) {
+                            matched.push(cur);
                             break;
                         }
-                        return this.pushStack(f.length > 1 ? fb.unique(f) : f);
+                        return this.pushStack(matched.length > 1 ? jQuery.unique(matched) : matched);
                     },
-                    index: function(a) {
-                        return a ? "string" == typeof a ? fb.inArray(this[0], fb(a)) : fb.inArray(a.jquery ? a[0] : a, this) : this[0] && this[0].parentNode ? this.first().prevAll().length : -1;
+                    index: function(elem) {
+                        return elem ? "string" == typeof elem ? jQuery.inArray(this[0], jQuery(elem)) : jQuery.inArray(elem.jquery ? elem[0] : elem, this) : this[0] && this[0].parentNode ? this.first().prevAll().length : -1;
                     },
-                    add: function(a, b) {
-                        return this.pushStack(fb.unique(fb.merge(this.get(), fb(a, b))));
+                    add: function(selector, context) {
+                        return this.pushStack(jQuery.unique(jQuery.merge(this.get(), jQuery(selector, context))));
                     },
-                    addBack: function(a) {
-                        return this.add(null == a ? this.prevObject : this.prevObject.filter(a));
+                    addBack: function(selector) {
+                        return this.add(null == selector ? this.prevObject : this.prevObject.filter(selector));
                     }
-                }), fb.each({
-                    parent: function(a) {
-                        var b = a.parentNode;
-                        return b && 11 !== b.nodeType ? b : null;
+                }), jQuery.each({
+                    parent: function(elem) {
+                        var parent = elem.parentNode;
+                        return parent && 11 !== parent.nodeType ? parent : null;
                     },
-                    parents: function(a) {
-                        return fb.dir(a, "parentNode");
+                    parents: function(elem) {
+                        return jQuery.dir(elem, "parentNode");
                     },
-                    parentsUntil: function(a, b, c) {
-                        return fb.dir(a, "parentNode", c);
+                    parentsUntil: function(elem, i, until) {
+                        return jQuery.dir(elem, "parentNode", until);
                     },
-                    next: function(a) {
-                        return f(a, "nextSibling");
+                    next: function(elem) {
+                        return sibling(elem, "nextSibling");
                     },
-                    prev: function(a) {
-                        return f(a, "previousSibling");
+                    prev: function(elem) {
+                        return sibling(elem, "previousSibling");
                     },
-                    nextAll: function(a) {
-                        return fb.dir(a, "nextSibling");
+                    nextAll: function(elem) {
+                        return jQuery.dir(elem, "nextSibling");
                     },
-                    prevAll: function(a) {
-                        return fb.dir(a, "previousSibling");
+                    prevAll: function(elem) {
+                        return jQuery.dir(elem, "previousSibling");
                     },
-                    nextUntil: function(a, b, c) {
-                        return fb.dir(a, "nextSibling", c);
+                    nextUntil: function(elem, i, until) {
+                        return jQuery.dir(elem, "nextSibling", until);
                     },
-                    prevUntil: function(a, b, c) {
-                        return fb.dir(a, "previousSibling", c);
+                    prevUntil: function(elem, i, until) {
+                        return jQuery.dir(elem, "previousSibling", until);
                     },
-                    siblings: function(a) {
-                        return fb.sibling((a.parentNode || {}).firstChild, a);
+                    siblings: function(elem) {
+                        return jQuery.sibling((elem.parentNode || {}).firstChild, elem);
                     },
-                    children: function(a) {
-                        return fb.sibling(a.firstChild);
+                    children: function(elem) {
+                        return jQuery.sibling(elem.firstChild);
                     },
-                    contents: function(a) {
-                        return fb.nodeName(a, "iframe") ? a.contentDocument || a.contentWindow.document : fb.merge([], a.childNodes);
+                    contents: function(elem) {
+                        return jQuery.nodeName(elem, "iframe") ? elem.contentDocument || elem.contentWindow.document : jQuery.merge([], elem.childNodes);
                     }
-                }, function(a, b) {
-                    fb.fn[a] = function(c, d) {
-                        var e = fb.map(this, b, c);
-                        return "Until" !== a.slice(-5) && (d = c), d && "string" == typeof d && (e = fb.filter(d, e)), 
-                        this.length > 1 && (tb[a] || (e = fb.unique(e)), sb.test(a) && (e = e.reverse())), 
-                        this.pushStack(e);
+                }, function(name, fn) {
+                    jQuery.fn[name] = function(until, selector) {
+                        var ret = jQuery.map(this, fn, until);
+                        return "Until" !== name.slice(-5) && (selector = until), selector && "string" == typeof selector && (ret = jQuery.filter(selector, ret)), 
+                        this.length > 1 && (guaranteedUnique[name] || (ret = jQuery.unique(ret)), rparentsprev.test(name) && (ret = ret.reverse())), 
+                        this.pushStack(ret);
                     };
                 });
-                var ub = /\S+/g, vb = {};
-                fb.Callbacks = function(a) {
-                    a = "string" == typeof a ? vb[a] || g(a) : fb.extend({}, a);
-                    var b, c, d, e, f, h, i = [], j = !a.once && [], k = function(g) {
-                        for (c = a.memory && g, d = !0, f = h || 0, h = 0, e = i.length, b = !0; i && e > f; f++) if (i[f].apply(g[0], g[1]) === !1 && a.stopOnFalse) {
-                            c = !1;
+                var rnotwhite = /\S+/g, optionsCache = {};
+                jQuery.Callbacks = function(options) {
+                    options = "string" == typeof options ? optionsCache[options] || createOptions(options) : jQuery.extend({}, options);
+                    var firing, memory, fired, firingLength, firingIndex, firingStart, list = [], stack = !options.once && [], fire = function(data) {
+                        for (memory = options.memory && data, fired = !0, firingIndex = firingStart || 0, 
+                        firingStart = 0, firingLength = list.length, firing = !0; list && firingLength > firingIndex; firingIndex++) if (list[firingIndex].apply(data[0], data[1]) === !1 && options.stopOnFalse) {
+                            memory = !1;
                             break;
                         }
-                        b = !1, i && (j ? j.length && k(j.shift()) : c ? i = [] : l.disable());
-                    }, l = {
+                        firing = !1, list && (stack ? stack.length && fire(stack.shift()) : memory ? list = [] : self.disable());
+                    }, self = {
                         add: function() {
-                            if (i) {
-                                var d = i.length;
-                                !function f(b) {
-                                    fb.each(b, function(b, c) {
-                                        var d = fb.type(c);
-                                        "function" === d ? a.unique && l.has(c) || i.push(c) : c && c.length && "string" !== d && f(c);
+                            if (list) {
+                                var start = list.length;
+                                !function add(args) {
+                                    jQuery.each(args, function(_, arg) {
+                                        var type = jQuery.type(arg);
+                                        "function" === type ? options.unique && self.has(arg) || list.push(arg) : arg && arg.length && "string" !== type && add(arg);
                                     });
-                                }(arguments), b ? e = i.length : c && (h = d, k(c));
+                                }(arguments), firing ? firingLength = list.length : memory && (firingStart = start, 
+                                fire(memory));
                             }
                             return this;
                         },
                         remove: function() {
-                            return i && fb.each(arguments, function(a, c) {
-                                for (var d; (d = fb.inArray(c, i, d)) > -1; ) i.splice(d, 1), b && (e >= d && e--, 
-                                f >= d && f--);
+                            return list && jQuery.each(arguments, function(_, arg) {
+                                for (var index; (index = jQuery.inArray(arg, list, index)) > -1; ) list.splice(index, 1), 
+                                firing && (firingLength >= index && firingLength--, firingIndex >= index && firingIndex--);
                             }), this;
                         },
-                        has: function(a) {
-                            return a ? fb.inArray(a, i) > -1 : !(!i || !i.length);
+                        has: function(fn) {
+                            return fn ? jQuery.inArray(fn, list) > -1 : !(!list || !list.length);
                         },
                         empty: function() {
-                            return i = [], e = 0, this;
+                            return list = [], firingLength = 0, this;
                         },
                         disable: function() {
-                            return i = j = c = void 0, this;
+                            return list = stack = memory = void 0, this;
                         },
                         disabled: function() {
-                            return !i;
+                            return !list;
                         },
                         lock: function() {
-                            return j = void 0, c || l.disable(), this;
+                            return stack = void 0, memory || self.disable(), this;
                         },
                         locked: function() {
-                            return !j;
+                            return !stack;
                         },
-                        fireWith: function(a, c) {
-                            return !i || d && !j || (c = c || [], c = [ a, c.slice ? c.slice() : c ], b ? j.push(c) : k(c)), 
-                            this;
+                        fireWith: function(context, args) {
+                            return !list || fired && !stack || (args = args || [], args = [ context, args.slice ? args.slice() : args ], 
+                            firing ? stack.push(args) : fire(args)), this;
                         },
                         fire: function() {
-                            return l.fireWith(this, arguments), this;
+                            return self.fireWith(this, arguments), this;
                         },
                         fired: function() {
-                            return !!d;
+                            return !!fired;
                         }
                     };
-                    return l;
-                }, fb.extend({
-                    Deferred: function(a) {
-                        var b = [ [ "resolve", "done", fb.Callbacks("once memory"), "resolved" ], [ "reject", "fail", fb.Callbacks("once memory"), "rejected" ], [ "notify", "progress", fb.Callbacks("memory") ] ], c = "pending", d = {
+                    return self;
+                }, jQuery.extend({
+                    Deferred: function(func) {
+                        var tuples = [ [ "resolve", "done", jQuery.Callbacks("once memory"), "resolved" ], [ "reject", "fail", jQuery.Callbacks("once memory"), "rejected" ], [ "notify", "progress", jQuery.Callbacks("memory") ] ], state = "pending", promise = {
                             state: function() {
-                                return c;
+                                return state;
                             },
                             always: function() {
-                                return e.done(arguments).fail(arguments), this;
+                                return deferred.done(arguments).fail(arguments), this;
                             },
                             then: function() {
-                                var a = arguments;
-                                return fb.Deferred(function(c) {
-                                    fb.each(b, function(b, f) {
-                                        var g = fb.isFunction(a[b]) && a[b];
-                                        e[f[1]](function() {
-                                            var a = g && g.apply(this, arguments);
-                                            a && fb.isFunction(a.promise) ? a.promise().done(c.resolve).fail(c.reject).progress(c.notify) : c[f[0] + "With"](this === d ? c.promise() : this, g ? [ a ] : arguments);
+                                var fns = arguments;
+                                return jQuery.Deferred(function(newDefer) {
+                                    jQuery.each(tuples, function(i, tuple) {
+                                        var fn = jQuery.isFunction(fns[i]) && fns[i];
+                                        deferred[tuple[1]](function() {
+                                            var returned = fn && fn.apply(this, arguments);
+                                            returned && jQuery.isFunction(returned.promise) ? returned.promise().done(newDefer.resolve).fail(newDefer.reject).progress(newDefer.notify) : newDefer[tuple[0] + "With"](this === promise ? newDefer.promise() : this, fn ? [ returned ] : arguments);
                                         });
-                                    }), a = null;
+                                    }), fns = null;
                                 }).promise();
                             },
-                            promise: function(a) {
-                                return null != a ? fb.extend(a, d) : d;
+                            promise: function(obj) {
+                                return null != obj ? jQuery.extend(obj, promise) : promise;
                             }
-                        }, e = {};
-                        return d.pipe = d.then, fb.each(b, function(a, f) {
-                            var g = f[2], h = f[3];
-                            d[f[1]] = g.add, h && g.add(function() {
-                                c = h;
-                            }, b[1 ^ a][2].disable, b[2][2].lock), e[f[0]] = function() {
-                                return e[f[0] + "With"](this === e ? d : this, arguments), this;
-                            }, e[f[0] + "With"] = g.fireWith;
-                        }), d.promise(e), a && a.call(e, e), e;
+                        }, deferred = {};
+                        return promise.pipe = promise.then, jQuery.each(tuples, function(i, tuple) {
+                            var list = tuple[2], stateString = tuple[3];
+                            promise[tuple[1]] = list.add, stateString && list.add(function() {
+                                state = stateString;
+                            }, tuples[1 ^ i][2].disable, tuples[2][2].lock), deferred[tuple[0]] = function() {
+                                return deferred[tuple[0] + "With"](this === deferred ? promise : this, arguments), 
+                                this;
+                            }, deferred[tuple[0] + "With"] = list.fireWith;
+                        }), promise.promise(deferred), func && func.call(deferred, deferred), deferred;
                     },
-                    when: function(a) {
-                        var b, c, d, e = 0, f = Y.call(arguments), g = f.length, h = 1 !== g || a && fb.isFunction(a.promise) ? g : 0, i = 1 === h ? a : fb.Deferred(), j = function(a, c, d) {
-                            return function(e) {
-                                c[a] = this, d[a] = arguments.length > 1 ? Y.call(arguments) : e, d === b ? i.notifyWith(c, d) : --h || i.resolveWith(c, d);
+                    when: function(subordinate) {
+                        var progressValues, progressContexts, resolveContexts, i = 0, resolveValues = slice.call(arguments), length = resolveValues.length, remaining = 1 !== length || subordinate && jQuery.isFunction(subordinate.promise) ? length : 0, deferred = 1 === remaining ? subordinate : jQuery.Deferred(), updateFunc = function(i, contexts, values) {
+                            return function(value) {
+                                contexts[i] = this, values[i] = arguments.length > 1 ? slice.call(arguments) : value, 
+                                values === progressValues ? deferred.notifyWith(contexts, values) : --remaining || deferred.resolveWith(contexts, values);
                             };
                         };
-                        if (g > 1) for (b = new Array(g), c = new Array(g), d = new Array(g); g > e; e++) f[e] && fb.isFunction(f[e].promise) ? f[e].promise().done(j(e, d, f)).fail(i.reject).progress(j(e, c, b)) : --h;
-                        return h || i.resolveWith(d, f), i.promise();
+                        if (length > 1) for (progressValues = new Array(length), progressContexts = new Array(length), 
+                        resolveContexts = new Array(length); length > i; i++) resolveValues[i] && jQuery.isFunction(resolveValues[i].promise) ? resolveValues[i].promise().done(updateFunc(i, resolveContexts, resolveValues)).fail(deferred.reject).progress(updateFunc(i, progressContexts, progressValues)) : --remaining;
+                        return remaining || deferred.resolveWith(resolveContexts, resolveValues), deferred.promise();
                     }
                 });
-                var wb;
-                fb.fn.ready = function(a) {
-                    return fb.ready.promise().done(a), this;
-                }, fb.extend({
+                var readyList;
+                jQuery.fn.ready = function(fn) {
+                    return jQuery.ready.promise().done(fn), this;
+                }, jQuery.extend({
                     isReady: !1,
                     readyWait: 1,
-                    holdReady: function(a) {
-                        a ? fb.readyWait++ : fb.ready(!0);
+                    holdReady: function(hold) {
+                        hold ? jQuery.readyWait++ : jQuery.ready(!0);
                     },
-                    ready: function(a) {
-                        if (a === !0 ? !--fb.readyWait : !fb.isReady) {
-                            if (!pb.body) return setTimeout(fb.ready);
-                            fb.isReady = !0, a !== !0 && --fb.readyWait > 0 || (wb.resolveWith(pb, [ fb ]), 
-                            fb.fn.triggerHandler && (fb(pb).triggerHandler("ready"), fb(pb).off("ready")));
+                    ready: function(wait) {
+                        if (wait === !0 ? !--jQuery.readyWait : !jQuery.isReady) {
+                            if (!document.body) return setTimeout(jQuery.ready);
+                            jQuery.isReady = !0, wait !== !0 && --jQuery.readyWait > 0 || (readyList.resolveWith(document, [ jQuery ]), 
+                            jQuery.fn.triggerHandler && (jQuery(document).triggerHandler("ready"), jQuery(document).off("ready")));
                         }
                     }
-                }), fb.ready.promise = function(a) {
-                    if (!wb) if (wb = fb.Deferred(), "complete" === pb.readyState) setTimeout(fb.ready); else if (pb.addEventListener) pb.addEventListener("DOMContentLoaded", i, !1), 
-                    b.addEventListener("load", i, !1); else {
-                        pb.attachEvent("onreadystatechange", i), b.attachEvent("onload", i);
-                        var c = !1;
+                }), jQuery.ready.promise = function(obj) {
+                    if (!readyList) if (readyList = jQuery.Deferred(), "complete" === document.readyState) setTimeout(jQuery.ready); else if (document.addEventListener) document.addEventListener("DOMContentLoaded", completed, !1), 
+                    window.addEventListener("load", completed, !1); else {
+                        document.attachEvent("onreadystatechange", completed), window.attachEvent("onload", completed);
+                        var top = !1;
                         try {
-                            c = null == b.frameElement && pb.documentElement;
-                        } catch (d) {}
-                        c && c.doScroll && !function e() {
-                            if (!fb.isReady) {
+                            top = null == window.frameElement && document.documentElement;
+                        } catch (e) {}
+                        top && top.doScroll && !function doScrollCheck() {
+                            if (!jQuery.isReady) {
                                 try {
-                                    c.doScroll("left");
-                                } catch (a) {
-                                    return setTimeout(e, 50);
+                                    top.doScroll("left");
+                                } catch (e) {
+                                    return setTimeout(doScrollCheck, 50);
                                 }
-                                h(), fb.ready();
+                                detach(), jQuery.ready();
                             }
                         }();
                     }
-                    return wb.promise(a);
+                    return readyList.promise(obj);
                 };
-                var xb, yb = "undefined";
-                for (xb in fb(db)) break;
-                db.ownLast = "0" !== xb, db.inlineBlockNeedsLayout = !1, fb(function() {
-                    var a, b, c, d;
-                    c = pb.getElementsByTagName("body")[0], c && c.style && (b = pb.createElement("div"), 
-                    d = pb.createElement("div"), d.style.cssText = "position:absolute;border:0;width:0;height:0;top:0;left:-9999px", 
-                    c.appendChild(d).appendChild(b), typeof b.style.zoom !== yb && (b.style.cssText = "display:inline;margin:0;border:0;padding:1px;width:1px;zoom:1", 
-                    db.inlineBlockNeedsLayout = a = 3 === b.offsetWidth, a && (c.style.zoom = 1)), c.removeChild(d));
+                var i, strundefined = "undefined";
+                for (i in jQuery(support)) break;
+                support.ownLast = "0" !== i, support.inlineBlockNeedsLayout = !1, jQuery(function() {
+                    var val, div, body, container;
+                    body = document.getElementsByTagName("body")[0], body && body.style && (div = document.createElement("div"), 
+                    container = document.createElement("div"), container.style.cssText = "position:absolute;border:0;width:0;height:0;top:0;left:-9999px", 
+                    body.appendChild(container).appendChild(div), typeof div.style.zoom !== strundefined && (div.style.cssText = "display:inline;margin:0;border:0;padding:1px;width:1px;zoom:1", 
+                    support.inlineBlockNeedsLayout = val = 3 === div.offsetWidth, val && (body.style.zoom = 1)), 
+                    body.removeChild(container));
                 }), function() {
-                    var a = pb.createElement("div");
-                    if (null == db.deleteExpando) {
-                        db.deleteExpando = !0;
+                    var div = document.createElement("div");
+                    if (null == support.deleteExpando) {
+                        support.deleteExpando = !0;
                         try {
-                            delete a.test;
-                        } catch (b) {
-                            db.deleteExpando = !1;
+                            delete div.test;
+                        } catch (e) {
+                            support.deleteExpando = !1;
                         }
                     }
-                    a = null;
-                }(), fb.acceptData = function(a) {
-                    var b = fb.noData[(a.nodeName + " ").toLowerCase()], c = +a.nodeType || 1;
-                    return 1 !== c && 9 !== c ? !1 : !b || b !== !0 && a.getAttribute("classid") === b;
+                    div = null;
+                }(), jQuery.acceptData = function(elem) {
+                    var noData = jQuery.noData[(elem.nodeName + " ").toLowerCase()], nodeType = +elem.nodeType || 1;
+                    return 1 !== nodeType && 9 !== nodeType ? !1 : !noData || noData !== !0 && elem.getAttribute("classid") === noData;
                 };
-                var zb = /^(?:\{[\w\W]*\}|\[[\w\W]*\])$/, Ab = /([A-Z])/g;
-                fb.extend({
+                var rbrace = /^(?:\{[\w\W]*\}|\[[\w\W]*\])$/, rmultiDash = /([A-Z])/g;
+                jQuery.extend({
                     cache: {},
                     noData: {
                         "applet ": !0,
                         "embed ": !0,
                         "object ": "clsid:D27CDB6E-AE6D-11cf-96B8-444553540000"
                     },
-                    hasData: function(a) {
-                        return a = a.nodeType ? fb.cache[a[fb.expando]] : a[fb.expando], !!a && !k(a);
+                    hasData: function(elem) {
+                        return elem = elem.nodeType ? jQuery.cache[elem[jQuery.expando]] : elem[jQuery.expando], 
+                        !!elem && !isEmptyDataObject(elem);
                     },
-                    data: function(a, b, c) {
-                        return l(a, b, c);
+                    data: function(elem, name, data) {
+                        return internalData(elem, name, data);
                     },
-                    removeData: function(a, b) {
-                        return m(a, b);
+                    removeData: function(elem, name) {
+                        return internalRemoveData(elem, name);
                     },
-                    _data: function(a, b, c) {
-                        return l(a, b, c, !0);
+                    _data: function(elem, name, data) {
+                        return internalData(elem, name, data, !0);
                     },
-                    _removeData: function(a, b) {
-                        return m(a, b, !0);
+                    _removeData: function(elem, name) {
+                        return internalRemoveData(elem, name, !0);
                     }
-                }), fb.fn.extend({
-                    data: function(a, b) {
-                        var c, d, e, f = this[0], g = f && f.attributes;
-                        if (void 0 === a) {
-                            if (this.length && (e = fb.data(f), 1 === f.nodeType && !fb._data(f, "parsedAttrs"))) {
-                                for (c = g.length; c--; ) g[c] && (d = g[c].name, 0 === d.indexOf("data-") && (d = fb.camelCase(d.slice(5)), 
-                                j(f, d, e[d])));
-                                fb._data(f, "parsedAttrs", !0);
+                }), jQuery.fn.extend({
+                    data: function(key, value) {
+                        var i, name, data, elem = this[0], attrs = elem && elem.attributes;
+                        if (void 0 === key) {
+                            if (this.length && (data = jQuery.data(elem), 1 === elem.nodeType && !jQuery._data(elem, "parsedAttrs"))) {
+                                for (i = attrs.length; i--; ) attrs[i] && (name = attrs[i].name, 0 === name.indexOf("data-") && (name = jQuery.camelCase(name.slice(5)), 
+                                dataAttr(elem, name, data[name])));
+                                jQuery._data(elem, "parsedAttrs", !0);
                             }
-                            return e;
+                            return data;
                         }
-                        return "object" == typeof a ? this.each(function() {
-                            fb.data(this, a);
+                        return "object" == typeof key ? this.each(function() {
+                            jQuery.data(this, key);
                         }) : arguments.length > 1 ? this.each(function() {
-                            fb.data(this, a, b);
-                        }) : f ? j(f, a, fb.data(f, a)) : void 0;
+                            jQuery.data(this, key, value);
+                        }) : elem ? dataAttr(elem, key, jQuery.data(elem, key)) : void 0;
                     },
-                    removeData: function(a) {
+                    removeData: function(key) {
                         return this.each(function() {
-                            fb.removeData(this, a);
+                            jQuery.removeData(this, key);
                         });
                     }
-                }), fb.extend({
-                    queue: function(a, b, c) {
-                        var d;
-                        return a ? (b = (b || "fx") + "queue", d = fb._data(a, b), c && (!d || fb.isArray(c) ? d = fb._data(a, b, fb.makeArray(c)) : d.push(c)), 
-                        d || []) : void 0;
+                }), jQuery.extend({
+                    queue: function(elem, type, data) {
+                        var queue;
+                        return elem ? (type = (type || "fx") + "queue", queue = jQuery._data(elem, type), 
+                        data && (!queue || jQuery.isArray(data) ? queue = jQuery._data(elem, type, jQuery.makeArray(data)) : queue.push(data)), 
+                        queue || []) : void 0;
                     },
-                    dequeue: function(a, b) {
-                        b = b || "fx";
-                        var c = fb.queue(a, b), d = c.length, e = c.shift(), f = fb._queueHooks(a, b), g = function() {
-                            fb.dequeue(a, b);
+                    dequeue: function(elem, type) {
+                        type = type || "fx";
+                        var queue = jQuery.queue(elem, type), startLength = queue.length, fn = queue.shift(), hooks = jQuery._queueHooks(elem, type), next = function() {
+                            jQuery.dequeue(elem, type);
                         };
-                        "inprogress" === e && (e = c.shift(), d--), e && ("fx" === b && c.unshift("inprogress"), 
-                        delete f.stop, e.call(a, g, f)), !d && f && f.empty.fire();
+                        "inprogress" === fn && (fn = queue.shift(), startLength--), fn && ("fx" === type && queue.unshift("inprogress"), 
+                        delete hooks.stop, fn.call(elem, next, hooks)), !startLength && hooks && hooks.empty.fire();
                     },
-                    _queueHooks: function(a, b) {
-                        var c = b + "queueHooks";
-                        return fb._data(a, c) || fb._data(a, c, {
-                            empty: fb.Callbacks("once memory").add(function() {
-                                fb._removeData(a, b + "queue"), fb._removeData(a, c);
+                    _queueHooks: function(elem, type) {
+                        var key = type + "queueHooks";
+                        return jQuery._data(elem, key) || jQuery._data(elem, key, {
+                            empty: jQuery.Callbacks("once memory").add(function() {
+                                jQuery._removeData(elem, type + "queue"), jQuery._removeData(elem, key);
                             })
                         });
                     }
-                }), fb.fn.extend({
-                    queue: function(a, b) {
-                        var c = 2;
-                        return "string" != typeof a && (b = a, a = "fx", c--), arguments.length < c ? fb.queue(this[0], a) : void 0 === b ? this : this.each(function() {
-                            var c = fb.queue(this, a, b);
-                            fb._queueHooks(this, a), "fx" === a && "inprogress" !== c[0] && fb.dequeue(this, a);
+                }), jQuery.fn.extend({
+                    queue: function(type, data) {
+                        var setter = 2;
+                        return "string" != typeof type && (data = type, type = "fx", setter--), arguments.length < setter ? jQuery.queue(this[0], type) : void 0 === data ? this : this.each(function() {
+                            var queue = jQuery.queue(this, type, data);
+                            jQuery._queueHooks(this, type), "fx" === type && "inprogress" !== queue[0] && jQuery.dequeue(this, type);
                         });
                     },
-                    dequeue: function(a) {
+                    dequeue: function(type) {
                         return this.each(function() {
-                            fb.dequeue(this, a);
+                            jQuery.dequeue(this, type);
                         });
                     },
-                    clearQueue: function(a) {
-                        return this.queue(a || "fx", []);
+                    clearQueue: function(type) {
+                        return this.queue(type || "fx", []);
                     },
-                    promise: function(a, b) {
-                        var c, d = 1, e = fb.Deferred(), f = this, g = this.length, h = function() {
-                            --d || e.resolveWith(f, [ f ]);
+                    promise: function(type, obj) {
+                        var tmp, count = 1, defer = jQuery.Deferred(), elements = this, i = this.length, resolve = function() {
+                            --count || defer.resolveWith(elements, [ elements ]);
                         };
-                        for ("string" != typeof a && (b = a, a = void 0), a = a || "fx"; g--; ) c = fb._data(f[g], a + "queueHooks"), 
-                        c && c.empty && (d++, c.empty.add(h));
-                        return h(), e.promise(b);
+                        for ("string" != typeof type && (obj = type, type = void 0), type = type || "fx"; i--; ) tmp = jQuery._data(elements[i], type + "queueHooks"), 
+                        tmp && tmp.empty && (count++, tmp.empty.add(resolve));
+                        return resolve(), defer.promise(obj);
                     }
                 });
-                var Bb = /[+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|)/.source, Cb = [ "Top", "Right", "Bottom", "Left" ], Db = function(a, b) {
-                    return a = b || a, "none" === fb.css(a, "display") || !fb.contains(a.ownerDocument, a);
-                }, Eb = fb.access = function(a, b, c, d, e, f, g) {
-                    var h = 0, i = a.length, j = null == c;
-                    if ("object" === fb.type(c)) {
-                        e = !0;
-                        for (h in c) fb.access(a, b, h, c[h], !0, f, g);
-                    } else if (void 0 !== d && (e = !0, fb.isFunction(d) || (g = !0), j && (g ? (b.call(a, d), 
-                    b = null) : (j = b, b = function(a, b, c) {
-                        return j.call(fb(a), c);
-                    })), b)) for (;i > h; h++) b(a[h], c, g ? d : d.call(a[h], h, b(a[h], c)));
-                    return e ? a : j ? b.call(a) : i ? b(a[0], c) : f;
-                }, Fb = /^(?:checkbox|radio)$/i;
+                var pnum = /[+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|)/.source, cssExpand = [ "Top", "Right", "Bottom", "Left" ], isHidden = function(elem, el) {
+                    return elem = el || elem, "none" === jQuery.css(elem, "display") || !jQuery.contains(elem.ownerDocument, elem);
+                }, access = jQuery.access = function(elems, fn, key, value, chainable, emptyGet, raw) {
+                    var i = 0, length = elems.length, bulk = null == key;
+                    if ("object" === jQuery.type(key)) {
+                        chainable = !0;
+                        for (i in key) jQuery.access(elems, fn, i, key[i], !0, emptyGet, raw);
+                    } else if (void 0 !== value && (chainable = !0, jQuery.isFunction(value) || (raw = !0), 
+                    bulk && (raw ? (fn.call(elems, value), fn = null) : (bulk = fn, fn = function(elem, key, value) {
+                        return bulk.call(jQuery(elem), value);
+                    })), fn)) for (;length > i; i++) fn(elems[i], key, raw ? value : value.call(elems[i], i, fn(elems[i], key)));
+                    return chainable ? elems : bulk ? fn.call(elems) : length ? fn(elems[0], key) : emptyGet;
+                }, rcheckableType = /^(?:checkbox|radio)$/i;
                 !function() {
-                    var a = pb.createElement("input"), b = pb.createElement("div"), c = pb.createDocumentFragment();
-                    if (b.innerHTML = "  <link/><table></table><a href='/a'>a</a><input type='checkbox'/>", 
-                    db.leadingWhitespace = 3 === b.firstChild.nodeType, db.tbody = !b.getElementsByTagName("tbody").length, 
-                    db.htmlSerialize = !!b.getElementsByTagName("link").length, db.html5Clone = "<:nav></:nav>" !== pb.createElement("nav").cloneNode(!0).outerHTML, 
-                    a.type = "checkbox", a.checked = !0, c.appendChild(a), db.appendChecked = a.checked, 
-                    b.innerHTML = "<textarea>x</textarea>", db.noCloneChecked = !!b.cloneNode(!0).lastChild.defaultValue, 
-                    c.appendChild(b), b.innerHTML = "<input type='radio' checked='checked' name='t'/>", 
-                    db.checkClone = b.cloneNode(!0).cloneNode(!0).lastChild.checked, db.noCloneEvent = !0, 
-                    b.attachEvent && (b.attachEvent("onclick", function() {
-                        db.noCloneEvent = !1;
-                    }), b.cloneNode(!0).click()), null == db.deleteExpando) {
-                        db.deleteExpando = !0;
+                    var input = document.createElement("input"), div = document.createElement("div"), fragment = document.createDocumentFragment();
+                    if (div.innerHTML = "  <link/><table></table><a href='/a'>a</a><input type='checkbox'/>", 
+                    support.leadingWhitespace = 3 === div.firstChild.nodeType, support.tbody = !div.getElementsByTagName("tbody").length, 
+                    support.htmlSerialize = !!div.getElementsByTagName("link").length, support.html5Clone = "<:nav></:nav>" !== document.createElement("nav").cloneNode(!0).outerHTML, 
+                    input.type = "checkbox", input.checked = !0, fragment.appendChild(input), support.appendChecked = input.checked, 
+                    div.innerHTML = "<textarea>x</textarea>", support.noCloneChecked = !!div.cloneNode(!0).lastChild.defaultValue, 
+                    fragment.appendChild(div), div.innerHTML = "<input type='radio' checked='checked' name='t'/>", 
+                    support.checkClone = div.cloneNode(!0).cloneNode(!0).lastChild.checked, support.noCloneEvent = !0, 
+                    div.attachEvent && (div.attachEvent("onclick", function() {
+                        support.noCloneEvent = !1;
+                    }), div.cloneNode(!0).click()), null == support.deleteExpando) {
+                        support.deleteExpando = !0;
                         try {
-                            delete b.test;
-                        } catch (d) {
-                            db.deleteExpando = !1;
+                            delete div.test;
+                        } catch (e) {
+                            support.deleteExpando = !1;
                         }
                     }
                 }(), function() {
-                    var a, c, d = pb.createElement("div");
-                    for (a in {
+                    var i, eventName, div = document.createElement("div");
+                    for (i in {
                         submit: !0,
                         change: !0,
                         focusin: !0
-                    }) c = "on" + a, (db[a + "Bubbles"] = c in b) || (d.setAttribute(c, "t"), db[a + "Bubbles"] = d.attributes[c].expando === !1);
-                    d = null;
+                    }) eventName = "on" + i, (support[i + "Bubbles"] = eventName in window) || (div.setAttribute(eventName, "t"), 
+                    support[i + "Bubbles"] = div.attributes[eventName].expando === !1);
+                    div = null;
                 }();
-                var Gb = /^(?:input|select|textarea)$/i, Hb = /^key/, Ib = /^(?:mouse|pointer|contextmenu)|click/, Jb = /^(?:focusinfocus|focusoutblur)$/, Kb = /^([^.]*)(?:\.(.+)|)$/;
-                fb.event = {
+                var rformElems = /^(?:input|select|textarea)$/i, rkeyEvent = /^key/, rmouseEvent = /^(?:mouse|pointer|contextmenu)|click/, rfocusMorph = /^(?:focusinfocus|focusoutblur)$/, rtypenamespace = /^([^.]*)(?:\.(.+)|)$/;
+                jQuery.event = {
                     global: {},
-                    add: function(a, b, c, d, e) {
-                        var f, g, h, i, j, k, l, m, n, o, p, q = fb._data(a);
-                        if (q) {
-                            for (c.handler && (i = c, c = i.handler, e = i.selector), c.guid || (c.guid = fb.guid++), 
-                            (g = q.events) || (g = q.events = {}), (k = q.handle) || (k = q.handle = function(a) {
-                                return typeof fb === yb || a && fb.event.triggered === a.type ? void 0 : fb.event.dispatch.apply(k.elem, arguments);
-                            }, k.elem = a), b = (b || "").match(ub) || [ "" ], h = b.length; h--; ) f = Kb.exec(b[h]) || [], 
-                            n = p = f[1], o = (f[2] || "").split(".").sort(), n && (j = fb.event.special[n] || {}, 
-                            n = (e ? j.delegateType : j.bindType) || n, j = fb.event.special[n] || {}, l = fb.extend({
-                                type: n,
-                                origType: p,
-                                data: d,
-                                handler: c,
-                                guid: c.guid,
-                                selector: e,
-                                needsContext: e && fb.expr.match.needsContext.test(e),
-                                namespace: o.join(".")
-                            }, i), (m = g[n]) || (m = g[n] = [], m.delegateCount = 0, j.setup && j.setup.call(a, d, o, k) !== !1 || (a.addEventListener ? a.addEventListener(n, k, !1) : a.attachEvent && a.attachEvent("on" + n, k))), 
-                            j.add && (j.add.call(a, l), l.handler.guid || (l.handler.guid = c.guid)), e ? m.splice(m.delegateCount++, 0, l) : m.push(l), 
-                            fb.event.global[n] = !0);
-                            a = null;
+                    add: function(elem, types, handler, data, selector) {
+                        var tmp, events, t, handleObjIn, special, eventHandle, handleObj, handlers, type, namespaces, origType, elemData = jQuery._data(elem);
+                        if (elemData) {
+                            for (handler.handler && (handleObjIn = handler, handler = handleObjIn.handler, selector = handleObjIn.selector), 
+                            handler.guid || (handler.guid = jQuery.guid++), (events = elemData.events) || (events = elemData.events = {}), 
+                            (eventHandle = elemData.handle) || (eventHandle = elemData.handle = function(e) {
+                                return typeof jQuery === strundefined || e && jQuery.event.triggered === e.type ? void 0 : jQuery.event.dispatch.apply(eventHandle.elem, arguments);
+                            }, eventHandle.elem = elem), types = (types || "").match(rnotwhite) || [ "" ], t = types.length; t--; ) tmp = rtypenamespace.exec(types[t]) || [], 
+                            type = origType = tmp[1], namespaces = (tmp[2] || "").split(".").sort(), type && (special = jQuery.event.special[type] || {}, 
+                            type = (selector ? special.delegateType : special.bindType) || type, special = jQuery.event.special[type] || {}, 
+                            handleObj = jQuery.extend({
+                                type: type,
+                                origType: origType,
+                                data: data,
+                                handler: handler,
+                                guid: handler.guid,
+                                selector: selector,
+                                needsContext: selector && jQuery.expr.match.needsContext.test(selector),
+                                namespace: namespaces.join(".")
+                            }, handleObjIn), (handlers = events[type]) || (handlers = events[type] = [], handlers.delegateCount = 0, 
+                            special.setup && special.setup.call(elem, data, namespaces, eventHandle) !== !1 || (elem.addEventListener ? elem.addEventListener(type, eventHandle, !1) : elem.attachEvent && elem.attachEvent("on" + type, eventHandle))), 
+                            special.add && (special.add.call(elem, handleObj), handleObj.handler.guid || (handleObj.handler.guid = handler.guid)), 
+                            selector ? handlers.splice(handlers.delegateCount++, 0, handleObj) : handlers.push(handleObj), 
+                            jQuery.event.global[type] = !0);
+                            elem = null;
                         }
                     },
-                    remove: function(a, b, c, d, e) {
-                        var f, g, h, i, j, k, l, m, n, o, p, q = fb.hasData(a) && fb._data(a);
-                        if (q && (k = q.events)) {
-                            for (b = (b || "").match(ub) || [ "" ], j = b.length; j--; ) if (h = Kb.exec(b[j]) || [], 
-                            n = p = h[1], o = (h[2] || "").split(".").sort(), n) {
-                                for (l = fb.event.special[n] || {}, n = (d ? l.delegateType : l.bindType) || n, 
-                                m = k[n] || [], h = h[2] && new RegExp("(^|\\.)" + o.join("\\.(?:.*\\.|)") + "(\\.|$)"), 
-                                i = f = m.length; f--; ) g = m[f], !e && p !== g.origType || c && c.guid !== g.guid || h && !h.test(g.namespace) || d && d !== g.selector && ("**" !== d || !g.selector) || (m.splice(f, 1), 
-                                g.selector && m.delegateCount--, l.remove && l.remove.call(a, g));
-                                i && !m.length && (l.teardown && l.teardown.call(a, o, q.handle) !== !1 || fb.removeEvent(a, n, q.handle), 
-                                delete k[n]);
-                            } else for (n in k) fb.event.remove(a, n + b[j], c, d, !0);
-                            fb.isEmptyObject(k) && (delete q.handle, fb._removeData(a, "events"));
+                    remove: function(elem, types, handler, selector, mappedTypes) {
+                        var j, handleObj, tmp, origCount, t, events, special, handlers, type, namespaces, origType, elemData = jQuery.hasData(elem) && jQuery._data(elem);
+                        if (elemData && (events = elemData.events)) {
+                            for (types = (types || "").match(rnotwhite) || [ "" ], t = types.length; t--; ) if (tmp = rtypenamespace.exec(types[t]) || [], 
+                            type = origType = tmp[1], namespaces = (tmp[2] || "").split(".").sort(), type) {
+                                for (special = jQuery.event.special[type] || {}, type = (selector ? special.delegateType : special.bindType) || type, 
+                                handlers = events[type] || [], tmp = tmp[2] && new RegExp("(^|\\.)" + namespaces.join("\\.(?:.*\\.|)") + "(\\.|$)"), 
+                                origCount = j = handlers.length; j--; ) handleObj = handlers[j], !mappedTypes && origType !== handleObj.origType || handler && handler.guid !== handleObj.guid || tmp && !tmp.test(handleObj.namespace) || selector && selector !== handleObj.selector && ("**" !== selector || !handleObj.selector) || (handlers.splice(j, 1), 
+                                handleObj.selector && handlers.delegateCount--, special.remove && special.remove.call(elem, handleObj));
+                                origCount && !handlers.length && (special.teardown && special.teardown.call(elem, namespaces, elemData.handle) !== !1 || jQuery.removeEvent(elem, type, elemData.handle), 
+                                delete events[type]);
+                            } else for (type in events) jQuery.event.remove(elem, type + types[t], handler, selector, !0);
+                            jQuery.isEmptyObject(events) && (delete elemData.handle, jQuery._removeData(elem, "events"));
                         }
                     },
-                    trigger: function(a, c, d, e) {
-                        var f, g, h, i, j, k, l, m = [ d || pb ], n = cb.call(a, "type") ? a.type : a, o = cb.call(a, "namespace") ? a.namespace.split(".") : [];
-                        if (h = k = d = d || pb, 3 !== d.nodeType && 8 !== d.nodeType && !Jb.test(n + fb.event.triggered) && (n.indexOf(".") >= 0 && (o = n.split("."), 
-                        n = o.shift(), o.sort()), g = n.indexOf(":") < 0 && "on" + n, a = a[fb.expando] ? a : new fb.Event(n, "object" == typeof a && a), 
-                        a.isTrigger = e ? 2 : 3, a.namespace = o.join("."), a.namespace_re = a.namespace ? new RegExp("(^|\\.)" + o.join("\\.(?:.*\\.|)") + "(\\.|$)") : null, 
-                        a.result = void 0, a.target || (a.target = d), c = null == c ? [ a ] : fb.makeArray(c, [ a ]), 
-                        j = fb.event.special[n] || {}, e || !j.trigger || j.trigger.apply(d, c) !== !1)) {
-                            if (!e && !j.noBubble && !fb.isWindow(d)) {
-                                for (i = j.delegateType || n, Jb.test(i + n) || (h = h.parentNode); h; h = h.parentNode) m.push(h), 
-                                k = h;
-                                k === (d.ownerDocument || pb) && m.push(k.defaultView || k.parentWindow || b);
+                    trigger: function(event, data, elem, onlyHandlers) {
+                        var handle, ontype, cur, bubbleType, special, tmp, i, eventPath = [ elem || document ], type = hasOwn.call(event, "type") ? event.type : event, namespaces = hasOwn.call(event, "namespace") ? event.namespace.split(".") : [];
+                        if (cur = tmp = elem = elem || document, 3 !== elem.nodeType && 8 !== elem.nodeType && !rfocusMorph.test(type + jQuery.event.triggered) && (type.indexOf(".") >= 0 && (namespaces = type.split("."), 
+                        type = namespaces.shift(), namespaces.sort()), ontype = type.indexOf(":") < 0 && "on" + type, 
+                        event = event[jQuery.expando] ? event : new jQuery.Event(type, "object" == typeof event && event), 
+                        event.isTrigger = onlyHandlers ? 2 : 3, event.namespace = namespaces.join("."), 
+                        event.namespace_re = event.namespace ? new RegExp("(^|\\.)" + namespaces.join("\\.(?:.*\\.|)") + "(\\.|$)") : null, 
+                        event.result = void 0, event.target || (event.target = elem), data = null == data ? [ event ] : jQuery.makeArray(data, [ event ]), 
+                        special = jQuery.event.special[type] || {}, onlyHandlers || !special.trigger || special.trigger.apply(elem, data) !== !1)) {
+                            if (!onlyHandlers && !special.noBubble && !jQuery.isWindow(elem)) {
+                                for (bubbleType = special.delegateType || type, rfocusMorph.test(bubbleType + type) || (cur = cur.parentNode); cur; cur = cur.parentNode) eventPath.push(cur), 
+                                tmp = cur;
+                                tmp === (elem.ownerDocument || document) && eventPath.push(tmp.defaultView || tmp.parentWindow || window);
                             }
-                            for (l = 0; (h = m[l++]) && !a.isPropagationStopped(); ) a.type = l > 1 ? i : j.bindType || n, 
-                            f = (fb._data(h, "events") || {})[a.type] && fb._data(h, "handle"), f && f.apply(h, c), 
-                            f = g && h[g], f && f.apply && fb.acceptData(h) && (a.result = f.apply(h, c), a.result === !1 && a.preventDefault());
-                            if (a.type = n, !e && !a.isDefaultPrevented() && (!j._default || j._default.apply(m.pop(), c) === !1) && fb.acceptData(d) && g && d[n] && !fb.isWindow(d)) {
-                                k = d[g], k && (d[g] = null), fb.event.triggered = n;
+                            for (i = 0; (cur = eventPath[i++]) && !event.isPropagationStopped(); ) event.type = i > 1 ? bubbleType : special.bindType || type, 
+                            handle = (jQuery._data(cur, "events") || {})[event.type] && jQuery._data(cur, "handle"), 
+                            handle && handle.apply(cur, data), handle = ontype && cur[ontype], handle && handle.apply && jQuery.acceptData(cur) && (event.result = handle.apply(cur, data), 
+                            event.result === !1 && event.preventDefault());
+                            if (event.type = type, !onlyHandlers && !event.isDefaultPrevented() && (!special._default || special._default.apply(eventPath.pop(), data) === !1) && jQuery.acceptData(elem) && ontype && elem[type] && !jQuery.isWindow(elem)) {
+                                tmp = elem[ontype], tmp && (elem[ontype] = null), jQuery.event.triggered = type;
                                 try {
-                                    d[n]();
-                                } catch (p) {}
-                                fb.event.triggered = void 0, k && (d[g] = k);
+                                    elem[type]();
+                                } catch (e) {}
+                                jQuery.event.triggered = void 0, tmp && (elem[ontype] = tmp);
                             }
-                            return a.result;
+                            return event.result;
                         }
                     },
-                    dispatch: function(a) {
-                        a = fb.event.fix(a);
-                        var b, c, d, e, f, g = [], h = Y.call(arguments), i = (fb._data(this, "events") || {})[a.type] || [], j = fb.event.special[a.type] || {};
-                        if (h[0] = a, a.delegateTarget = this, !j.preDispatch || j.preDispatch.call(this, a) !== !1) {
-                            for (g = fb.event.handlers.call(this, a, i), b = 0; (e = g[b++]) && !a.isPropagationStopped(); ) for (a.currentTarget = e.elem, 
-                            f = 0; (d = e.handlers[f++]) && !a.isImmediatePropagationStopped(); ) (!a.namespace_re || a.namespace_re.test(d.namespace)) && (a.handleObj = d, 
-                            a.data = d.data, c = ((fb.event.special[d.origType] || {}).handle || d.handler).apply(e.elem, h), 
-                            void 0 !== c && (a.result = c) === !1 && (a.preventDefault(), a.stopPropagation()));
-                            return j.postDispatch && j.postDispatch.call(this, a), a.result;
+                    dispatch: function(event) {
+                        event = jQuery.event.fix(event);
+                        var i, ret, handleObj, matched, j, handlerQueue = [], args = slice.call(arguments), handlers = (jQuery._data(this, "events") || {})[event.type] || [], special = jQuery.event.special[event.type] || {};
+                        if (args[0] = event, event.delegateTarget = this, !special.preDispatch || special.preDispatch.call(this, event) !== !1) {
+                            for (handlerQueue = jQuery.event.handlers.call(this, event, handlers), i = 0; (matched = handlerQueue[i++]) && !event.isPropagationStopped(); ) for (event.currentTarget = matched.elem, 
+                            j = 0; (handleObj = matched.handlers[j++]) && !event.isImmediatePropagationStopped(); ) (!event.namespace_re || event.namespace_re.test(handleObj.namespace)) && (event.handleObj = handleObj, 
+                            event.data = handleObj.data, ret = ((jQuery.event.special[handleObj.origType] || {}).handle || handleObj.handler).apply(matched.elem, args), 
+                            void 0 !== ret && (event.result = ret) === !1 && (event.preventDefault(), event.stopPropagation()));
+                            return special.postDispatch && special.postDispatch.call(this, event), event.result;
                         }
                     },
-                    handlers: function(a, b) {
-                        var c, d, e, f, g = [], h = b.delegateCount, i = a.target;
-                        if (h && i.nodeType && (!a.button || "click" !== a.type)) for (;i != this; i = i.parentNode || this) if (1 === i.nodeType && (i.disabled !== !0 || "click" !== a.type)) {
-                            for (e = [], f = 0; h > f; f++) d = b[f], c = d.selector + " ", void 0 === e[c] && (e[c] = d.needsContext ? fb(c, this).index(i) >= 0 : fb.find(c, this, null, [ i ]).length), 
-                            e[c] && e.push(d);
-                            e.length && g.push({
-                                elem: i,
-                                handlers: e
+                    handlers: function(event, handlers) {
+                        var sel, handleObj, matches, i, handlerQueue = [], delegateCount = handlers.delegateCount, cur = event.target;
+                        if (delegateCount && cur.nodeType && (!event.button || "click" !== event.type)) for (;cur != this; cur = cur.parentNode || this) if (1 === cur.nodeType && (cur.disabled !== !0 || "click" !== event.type)) {
+                            for (matches = [], i = 0; delegateCount > i; i++) handleObj = handlers[i], sel = handleObj.selector + " ", 
+                            void 0 === matches[sel] && (matches[sel] = handleObj.needsContext ? jQuery(sel, this).index(cur) >= 0 : jQuery.find(sel, this, null, [ cur ]).length), 
+                            matches[sel] && matches.push(handleObj);
+                            matches.length && handlerQueue.push({
+                                elem: cur,
+                                handlers: matches
                             });
                         }
-                        return h < b.length && g.push({
+                        return delegateCount < handlers.length && handlerQueue.push({
                             elem: this,
-                            handlers: b.slice(h)
-                        }), g;
+                            handlers: handlers.slice(delegateCount)
+                        }), handlerQueue;
                     },
-                    fix: function(a) {
-                        if (a[fb.expando]) return a;
-                        var b, c, d, e = a.type, f = a, g = this.fixHooks[e];
-                        for (g || (this.fixHooks[e] = g = Ib.test(e) ? this.mouseHooks : Hb.test(e) ? this.keyHooks : {}), 
-                        d = g.props ? this.props.concat(g.props) : this.props, a = new fb.Event(f), b = d.length; b--; ) c = d[b], 
-                        a[c] = f[c];
-                        return a.target || (a.target = f.srcElement || pb), 3 === a.target.nodeType && (a.target = a.target.parentNode), 
-                        a.metaKey = !!a.metaKey, g.filter ? g.filter(a, f) : a;
+                    fix: function(event) {
+                        if (event[jQuery.expando]) return event;
+                        var i, prop, copy, type = event.type, originalEvent = event, fixHook = this.fixHooks[type];
+                        for (fixHook || (this.fixHooks[type] = fixHook = rmouseEvent.test(type) ? this.mouseHooks : rkeyEvent.test(type) ? this.keyHooks : {}), 
+                        copy = fixHook.props ? this.props.concat(fixHook.props) : this.props, event = new jQuery.Event(originalEvent), 
+                        i = copy.length; i--; ) prop = copy[i], event[prop] = originalEvent[prop];
+                        return event.target || (event.target = originalEvent.srcElement || document), 3 === event.target.nodeType && (event.target = event.target.parentNode), 
+                        event.metaKey = !!event.metaKey, fixHook.filter ? fixHook.filter(event, originalEvent) : event;
                     },
                     props: "altKey bubbles cancelable ctrlKey currentTarget eventPhase metaKey relatedTarget shiftKey target timeStamp view which".split(" "),
                     fixHooks: {},
                     keyHooks: {
                         props: "char charCode key keyCode".split(" "),
-                        filter: function(a, b) {
-                            return null == a.which && (a.which = null != b.charCode ? b.charCode : b.keyCode), 
-                            a;
+                        filter: function(event, original) {
+                            return null == event.which && (event.which = null != original.charCode ? original.charCode : original.keyCode), 
+                            event;
                         }
                     },
                     mouseHooks: {
                         props: "button buttons clientX clientY fromElement offsetX offsetY pageX pageY screenX screenY toElement".split(" "),
-                        filter: function(a, b) {
-                            var c, d, e, f = b.button, g = b.fromElement;
-                            return null == a.pageX && null != b.clientX && (d = a.target.ownerDocument || pb, 
-                            e = d.documentElement, c = d.body, a.pageX = b.clientX + (e && e.scrollLeft || c && c.scrollLeft || 0) - (e && e.clientLeft || c && c.clientLeft || 0), 
-                            a.pageY = b.clientY + (e && e.scrollTop || c && c.scrollTop || 0) - (e && e.clientTop || c && c.clientTop || 0)), 
-                            !a.relatedTarget && g && (a.relatedTarget = g === a.target ? b.toElement : g), a.which || void 0 === f || (a.which = 1 & f ? 1 : 2 & f ? 3 : 4 & f ? 2 : 0), 
-                            a;
+                        filter: function(event, original) {
+                            var body, eventDoc, doc, button = original.button, fromElement = original.fromElement;
+                            return null == event.pageX && null != original.clientX && (eventDoc = event.target.ownerDocument || document, 
+                            doc = eventDoc.documentElement, body = eventDoc.body, event.pageX = original.clientX + (doc && doc.scrollLeft || body && body.scrollLeft || 0) - (doc && doc.clientLeft || body && body.clientLeft || 0), 
+                            event.pageY = original.clientY + (doc && doc.scrollTop || body && body.scrollTop || 0) - (doc && doc.clientTop || body && body.clientTop || 0)), 
+                            !event.relatedTarget && fromElement && (event.relatedTarget = fromElement === event.target ? original.toElement : fromElement), 
+                            event.which || void 0 === button || (event.which = 1 & button ? 1 : 2 & button ? 3 : 4 & button ? 2 : 0), 
+                            event;
                         }
                     },
                     special: {
@@ -1991,177 +2066,183 @@
                         },
                         focus: {
                             trigger: function() {
-                                if (this !== p() && this.focus) try {
+                                if (this !== safeActiveElement() && this.focus) try {
                                     return this.focus(), !1;
-                                } catch (a) {}
+                                } catch (e) {}
                             },
                             delegateType: "focusin"
                         },
                         blur: {
                             trigger: function() {
-                                return this === p() && this.blur ? (this.blur(), !1) : void 0;
+                                return this === safeActiveElement() && this.blur ? (this.blur(), !1) : void 0;
                             },
                             delegateType: "focusout"
                         },
                         click: {
                             trigger: function() {
-                                return fb.nodeName(this, "input") && "checkbox" === this.type && this.click ? (this.click(), 
+                                return jQuery.nodeName(this, "input") && "checkbox" === this.type && this.click ? (this.click(), 
                                 !1) : void 0;
                             },
-                            _default: function(a) {
-                                return fb.nodeName(a.target, "a");
+                            _default: function(event) {
+                                return jQuery.nodeName(event.target, "a");
                             }
                         },
                         beforeunload: {
-                            postDispatch: function(a) {
-                                void 0 !== a.result && a.originalEvent && (a.originalEvent.returnValue = a.result);
+                            postDispatch: function(event) {
+                                void 0 !== event.result && event.originalEvent && (event.originalEvent.returnValue = event.result);
                             }
                         }
                     },
-                    simulate: function(a, b, c, d) {
-                        var e = fb.extend(new fb.Event(), c, {
-                            type: a,
+                    simulate: function(type, elem, event, bubble) {
+                        var e = jQuery.extend(new jQuery.Event(), event, {
+                            type: type,
                             isSimulated: !0,
                             originalEvent: {}
                         });
-                        d ? fb.event.trigger(e, null, b) : fb.event.dispatch.call(b, e), e.isDefaultPrevented() && c.preventDefault();
+                        bubble ? jQuery.event.trigger(e, null, elem) : jQuery.event.dispatch.call(elem, e), 
+                        e.isDefaultPrevented() && event.preventDefault();
                     }
-                }, fb.removeEvent = pb.removeEventListener ? function(a, b, c) {
-                    a.removeEventListener && a.removeEventListener(b, c, !1);
-                } : function(a, b, c) {
-                    var d = "on" + b;
-                    a.detachEvent && (typeof a[d] === yb && (a[d] = null), a.detachEvent(d, c));
-                }, fb.Event = function(a, b) {
-                    return this instanceof fb.Event ? (a && a.type ? (this.originalEvent = a, this.type = a.type, 
-                    this.isDefaultPrevented = a.defaultPrevented || void 0 === a.defaultPrevented && a.returnValue === !1 ? n : o) : this.type = a, 
-                    b && fb.extend(this, b), this.timeStamp = a && a.timeStamp || fb.now(), void (this[fb.expando] = !0)) : new fb.Event(a, b);
-                }, fb.Event.prototype = {
-                    isDefaultPrevented: o,
-                    isPropagationStopped: o,
-                    isImmediatePropagationStopped: o,
+                }, jQuery.removeEvent = document.removeEventListener ? function(elem, type, handle) {
+                    elem.removeEventListener && elem.removeEventListener(type, handle, !1);
+                } : function(elem, type, handle) {
+                    var name = "on" + type;
+                    elem.detachEvent && (typeof elem[name] === strundefined && (elem[name] = null), 
+                    elem.detachEvent(name, handle));
+                }, jQuery.Event = function(src, props) {
+                    return this instanceof jQuery.Event ? (src && src.type ? (this.originalEvent = src, 
+                    this.type = src.type, this.isDefaultPrevented = src.defaultPrevented || void 0 === src.defaultPrevented && src.returnValue === !1 ? returnTrue : returnFalse) : this.type = src, 
+                    props && jQuery.extend(this, props), this.timeStamp = src && src.timeStamp || jQuery.now(), 
+                    void (this[jQuery.expando] = !0)) : new jQuery.Event(src, props);
+                }, jQuery.Event.prototype = {
+                    isDefaultPrevented: returnFalse,
+                    isPropagationStopped: returnFalse,
+                    isImmediatePropagationStopped: returnFalse,
                     preventDefault: function() {
-                        var a = this.originalEvent;
-                        this.isDefaultPrevented = n, a && (a.preventDefault ? a.preventDefault() : a.returnValue = !1);
+                        var e = this.originalEvent;
+                        this.isDefaultPrevented = returnTrue, e && (e.preventDefault ? e.preventDefault() : e.returnValue = !1);
                     },
                     stopPropagation: function() {
-                        var a = this.originalEvent;
-                        this.isPropagationStopped = n, a && (a.stopPropagation && a.stopPropagation(), a.cancelBubble = !0);
+                        var e = this.originalEvent;
+                        this.isPropagationStopped = returnTrue, e && (e.stopPropagation && e.stopPropagation(), 
+                        e.cancelBubble = !0);
                     },
                     stopImmediatePropagation: function() {
-                        var a = this.originalEvent;
-                        this.isImmediatePropagationStopped = n, a && a.stopImmediatePropagation && a.stopImmediatePropagation(), 
+                        var e = this.originalEvent;
+                        this.isImmediatePropagationStopped = returnTrue, e && e.stopImmediatePropagation && e.stopImmediatePropagation(), 
                         this.stopPropagation();
                     }
-                }, fb.each({
+                }, jQuery.each({
                     mouseenter: "mouseover",
                     mouseleave: "mouseout",
                     pointerenter: "pointerover",
                     pointerleave: "pointerout"
-                }, function(a, b) {
-                    fb.event.special[a] = {
-                        delegateType: b,
-                        bindType: b,
-                        handle: function(a) {
-                            var c, d = this, e = a.relatedTarget, f = a.handleObj;
-                            return (!e || e !== d && !fb.contains(d, e)) && (a.type = f.origType, c = f.handler.apply(this, arguments), 
-                            a.type = b), c;
+                }, function(orig, fix) {
+                    jQuery.event.special[orig] = {
+                        delegateType: fix,
+                        bindType: fix,
+                        handle: function(event) {
+                            var ret, target = this, related = event.relatedTarget, handleObj = event.handleObj;
+                            return (!related || related !== target && !jQuery.contains(target, related)) && (event.type = handleObj.origType, 
+                            ret = handleObj.handler.apply(this, arguments), event.type = fix), ret;
                         }
                     };
-                }), db.submitBubbles || (fb.event.special.submit = {
+                }), support.submitBubbles || (jQuery.event.special.submit = {
                     setup: function() {
-                        return fb.nodeName(this, "form") ? !1 : void fb.event.add(this, "click._submit keypress._submit", function(a) {
-                            var b = a.target, c = fb.nodeName(b, "input") || fb.nodeName(b, "button") ? b.form : void 0;
-                            c && !fb._data(c, "submitBubbles") && (fb.event.add(c, "submit._submit", function(a) {
-                                a._submit_bubble = !0;
-                            }), fb._data(c, "submitBubbles", !0));
+                        return jQuery.nodeName(this, "form") ? !1 : void jQuery.event.add(this, "click._submit keypress._submit", function(e) {
+                            var elem = e.target, form = jQuery.nodeName(elem, "input") || jQuery.nodeName(elem, "button") ? elem.form : void 0;
+                            form && !jQuery._data(form, "submitBubbles") && (jQuery.event.add(form, "submit._submit", function(event) {
+                                event._submit_bubble = !0;
+                            }), jQuery._data(form, "submitBubbles", !0));
                         });
                     },
-                    postDispatch: function(a) {
-                        a._submit_bubble && (delete a._submit_bubble, this.parentNode && !a.isTrigger && fb.event.simulate("submit", this.parentNode, a, !0));
+                    postDispatch: function(event) {
+                        event._submit_bubble && (delete event._submit_bubble, this.parentNode && !event.isTrigger && jQuery.event.simulate("submit", this.parentNode, event, !0));
                     },
                     teardown: function() {
-                        return fb.nodeName(this, "form") ? !1 : void fb.event.remove(this, "._submit");
+                        return jQuery.nodeName(this, "form") ? !1 : void jQuery.event.remove(this, "._submit");
                     }
-                }), db.changeBubbles || (fb.event.special.change = {
+                }), support.changeBubbles || (jQuery.event.special.change = {
                     setup: function() {
-                        return Gb.test(this.nodeName) ? (("checkbox" === this.type || "radio" === this.type) && (fb.event.add(this, "propertychange._change", function(a) {
-                            "checked" === a.originalEvent.propertyName && (this._just_changed = !0);
-                        }), fb.event.add(this, "click._change", function(a) {
-                            this._just_changed && !a.isTrigger && (this._just_changed = !1), fb.event.simulate("change", this, a, !0);
-                        })), !1) : void fb.event.add(this, "beforeactivate._change", function(a) {
-                            var b = a.target;
-                            Gb.test(b.nodeName) && !fb._data(b, "changeBubbles") && (fb.event.add(b, "change._change", function(a) {
-                                !this.parentNode || a.isSimulated || a.isTrigger || fb.event.simulate("change", this.parentNode, a, !0);
-                            }), fb._data(b, "changeBubbles", !0));
+                        return rformElems.test(this.nodeName) ? (("checkbox" === this.type || "radio" === this.type) && (jQuery.event.add(this, "propertychange._change", function(event) {
+                            "checked" === event.originalEvent.propertyName && (this._just_changed = !0);
+                        }), jQuery.event.add(this, "click._change", function(event) {
+                            this._just_changed && !event.isTrigger && (this._just_changed = !1), jQuery.event.simulate("change", this, event, !0);
+                        })), !1) : void jQuery.event.add(this, "beforeactivate._change", function(e) {
+                            var elem = e.target;
+                            rformElems.test(elem.nodeName) && !jQuery._data(elem, "changeBubbles") && (jQuery.event.add(elem, "change._change", function(event) {
+                                !this.parentNode || event.isSimulated || event.isTrigger || jQuery.event.simulate("change", this.parentNode, event, !0);
+                            }), jQuery._data(elem, "changeBubbles", !0));
                         });
                     },
-                    handle: function(a) {
-                        var b = a.target;
-                        return this !== b || a.isSimulated || a.isTrigger || "radio" !== b.type && "checkbox" !== b.type ? a.handleObj.handler.apply(this, arguments) : void 0;
+                    handle: function(event) {
+                        var elem = event.target;
+                        return this !== elem || event.isSimulated || event.isTrigger || "radio" !== elem.type && "checkbox" !== elem.type ? event.handleObj.handler.apply(this, arguments) : void 0;
                     },
                     teardown: function() {
-                        return fb.event.remove(this, "._change"), !Gb.test(this.nodeName);
+                        return jQuery.event.remove(this, "._change"), !rformElems.test(this.nodeName);
                     }
-                }), db.focusinBubbles || fb.each({
+                }), support.focusinBubbles || jQuery.each({
                     focus: "focusin",
                     blur: "focusout"
-                }, function(a, b) {
-                    var c = function(a) {
-                        fb.event.simulate(b, a.target, fb.event.fix(a), !0);
+                }, function(orig, fix) {
+                    var handler = function(event) {
+                        jQuery.event.simulate(fix, event.target, jQuery.event.fix(event), !0);
                     };
-                    fb.event.special[b] = {
+                    jQuery.event.special[fix] = {
                         setup: function() {
-                            var d = this.ownerDocument || this, e = fb._data(d, b);
-                            e || d.addEventListener(a, c, !0), fb._data(d, b, (e || 0) + 1);
+                            var doc = this.ownerDocument || this, attaches = jQuery._data(doc, fix);
+                            attaches || doc.addEventListener(orig, handler, !0), jQuery._data(doc, fix, (attaches || 0) + 1);
                         },
                         teardown: function() {
-                            var d = this.ownerDocument || this, e = fb._data(d, b) - 1;
-                            e ? fb._data(d, b, e) : (d.removeEventListener(a, c, !0), fb._removeData(d, b));
+                            var doc = this.ownerDocument || this, attaches = jQuery._data(doc, fix) - 1;
+                            attaches ? jQuery._data(doc, fix, attaches) : (doc.removeEventListener(orig, handler, !0), 
+                            jQuery._removeData(doc, fix));
                         }
                     };
-                }), fb.fn.extend({
-                    on: function(a, b, c, d, e) {
-                        var f, g;
-                        if ("object" == typeof a) {
-                            "string" != typeof b && (c = c || b, b = void 0);
-                            for (f in a) this.on(f, b, c, a[f], e);
+                }), jQuery.fn.extend({
+                    on: function(types, selector, data, fn, one) {
+                        var type, origFn;
+                        if ("object" == typeof types) {
+                            "string" != typeof selector && (data = data || selector, selector = void 0);
+                            for (type in types) this.on(type, selector, data, types[type], one);
                             return this;
                         }
-                        if (null == c && null == d ? (d = b, c = b = void 0) : null == d && ("string" == typeof b ? (d = c, 
-                        c = void 0) : (d = c, c = b, b = void 0)), d === !1) d = o; else if (!d) return this;
-                        return 1 === e && (g = d, d = function(a) {
-                            return fb().off(a), g.apply(this, arguments);
-                        }, d.guid = g.guid || (g.guid = fb.guid++)), this.each(function() {
-                            fb.event.add(this, a, d, c, b);
+                        if (null == data && null == fn ? (fn = selector, data = selector = void 0) : null == fn && ("string" == typeof selector ? (fn = data, 
+                        data = void 0) : (fn = data, data = selector, selector = void 0)), fn === !1) fn = returnFalse; else if (!fn) return this;
+                        return 1 === one && (origFn = fn, fn = function(event) {
+                            return jQuery().off(event), origFn.apply(this, arguments);
+                        }, fn.guid = origFn.guid || (origFn.guid = jQuery.guid++)), this.each(function() {
+                            jQuery.event.add(this, types, fn, data, selector);
                         });
                     },
-                    one: function(a, b, c, d) {
-                        return this.on(a, b, c, d, 1);
+                    one: function(types, selector, data, fn) {
+                        return this.on(types, selector, data, fn, 1);
                     },
-                    off: function(a, b, c) {
-                        var d, e;
-                        if (a && a.preventDefault && a.handleObj) return d = a.handleObj, fb(a.delegateTarget).off(d.namespace ? d.origType + "." + d.namespace : d.origType, d.selector, d.handler), 
+                    off: function(types, selector, fn) {
+                        var handleObj, type;
+                        if (types && types.preventDefault && types.handleObj) return handleObj = types.handleObj, 
+                        jQuery(types.delegateTarget).off(handleObj.namespace ? handleObj.origType + "." + handleObj.namespace : handleObj.origType, handleObj.selector, handleObj.handler), 
                         this;
-                        if ("object" == typeof a) {
-                            for (e in a) this.off(e, b, a[e]);
+                        if ("object" == typeof types) {
+                            for (type in types) this.off(type, selector, types[type]);
                             return this;
                         }
-                        return (b === !1 || "function" == typeof b) && (c = b, b = void 0), c === !1 && (c = o), 
-                        this.each(function() {
-                            fb.event.remove(this, a, c, b);
+                        return (selector === !1 || "function" == typeof selector) && (fn = selector, selector = void 0), 
+                        fn === !1 && (fn = returnFalse), this.each(function() {
+                            jQuery.event.remove(this, types, fn, selector);
                         });
                     },
-                    trigger: function(a, b) {
+                    trigger: function(type, data) {
                         return this.each(function() {
-                            fb.event.trigger(a, b, this);
+                            jQuery.event.trigger(type, data, this);
                         });
                     },
-                    triggerHandler: function(a, b) {
-                        var c = this[0];
-                        return c ? fb.event.trigger(a, b, c, !0) : void 0;
+                    triggerHandler: function(type, data) {
+                        var elem = this[0];
+                        return elem ? jQuery.event.trigger(type, data, elem, !0) : void 0;
                     }
                 });
-                var Lb = "abbr|article|aside|audio|bdi|canvas|data|datalist|details|figcaption|figure|footer|header|hgroup|mark|meter|nav|output|progress|section|summary|time|video", Mb = / jQuery\d+="(?:null|\d+)"/g, Nb = new RegExp("<(?:" + Lb + ")[\\s/>]", "i"), Ob = /^\s+/, Pb = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi, Qb = /<([\w:]+)/, Rb = /<tbody/i, Sb = /<|&#?\w+;/, Tb = /<(?:script|style|link)/i, Ub = /checked\s*(?:[^=]|=\s*.checked.)/i, Vb = /^$|\/(?:java|ecma)script/i, Wb = /^true\/(.*)/, Xb = /^\s*<!(?:\[CDATA\[|--)|(?:\]\]|--)>\s*$/g, Yb = {
+                var nodeNames = "abbr|article|aside|audio|bdi|canvas|data|datalist|details|figcaption|figure|footer|header|hgroup|mark|meter|nav|output|progress|section|summary|time|video", rinlinejQuery = / jQuery\d+="(?:null|\d+)"/g, rnoshimcache = new RegExp("<(?:" + nodeNames + ")[\\s/>]", "i"), rleadingWhitespace = /^\s+/, rxhtmlTag = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi, rtagName = /<([\w:]+)/, rtbody = /<tbody/i, rhtml = /<|&#?\w+;/, rnoInnerhtml = /<(?:script|style|link)/i, rchecked = /checked\s*(?:[^=]|=\s*.checked.)/i, rscriptType = /^$|\/(?:java|ecma)script/i, rscriptTypeMasked = /^true\/(.*)/, rcleanScript = /^\s*<!(?:\[CDATA\[|--)|(?:\]\]|--)>\s*$/g, wrapMap = {
                     option: [ 1, "<select multiple='multiple'>", "</select>" ],
                     legend: [ 1, "<fieldset>", "</fieldset>" ],
                     area: [ 1, "<map>", "</map>" ],
@@ -2170,234 +2251,246 @@
                     tr: [ 2, "<table><tbody>", "</tbody></table>" ],
                     col: [ 2, "<table><tbody></tbody><colgroup>", "</colgroup></table>" ],
                     td: [ 3, "<table><tbody><tr>", "</tr></tbody></table>" ],
-                    _default: db.htmlSerialize ? [ 0, "", "" ] : [ 1, "X<div>", "</div>" ]
-                }, Zb = q(pb), $b = Zb.appendChild(pb.createElement("div"));
-                Yb.optgroup = Yb.option, Yb.tbody = Yb.tfoot = Yb.colgroup = Yb.caption = Yb.thead, 
-                Yb.th = Yb.td, fb.extend({
-                    clone: function(a, b, c) {
-                        var d, e, f, g, h, i = fb.contains(a.ownerDocument, a);
-                        if (db.html5Clone || fb.isXMLDoc(a) || !Nb.test("<" + a.nodeName + ">") ? f = a.cloneNode(!0) : ($b.innerHTML = a.outerHTML, 
-                        $b.removeChild(f = $b.firstChild)), !(db.noCloneEvent && db.noCloneChecked || 1 !== a.nodeType && 11 !== a.nodeType || fb.isXMLDoc(a))) for (d = r(f), 
-                        h = r(a), g = 0; null != (e = h[g]); ++g) d[g] && y(e, d[g]);
-                        if (b) if (c) for (h = h || r(a), d = d || r(f), g = 0; null != (e = h[g]); g++) x(e, d[g]); else x(a, f);
-                        return d = r(f, "script"), d.length > 0 && w(d, !i && r(a, "script")), d = h = e = null, 
-                        f;
+                    _default: support.htmlSerialize ? [ 0, "", "" ] : [ 1, "X<div>", "</div>" ]
+                }, safeFragment = createSafeFragment(document), fragmentDiv = safeFragment.appendChild(document.createElement("div"));
+                wrapMap.optgroup = wrapMap.option, wrapMap.tbody = wrapMap.tfoot = wrapMap.colgroup = wrapMap.caption = wrapMap.thead, 
+                wrapMap.th = wrapMap.td, jQuery.extend({
+                    clone: function(elem, dataAndEvents, deepDataAndEvents) {
+                        var destElements, node, clone, i, srcElements, inPage = jQuery.contains(elem.ownerDocument, elem);
+                        if (support.html5Clone || jQuery.isXMLDoc(elem) || !rnoshimcache.test("<" + elem.nodeName + ">") ? clone = elem.cloneNode(!0) : (fragmentDiv.innerHTML = elem.outerHTML, 
+                        fragmentDiv.removeChild(clone = fragmentDiv.firstChild)), !(support.noCloneEvent && support.noCloneChecked || 1 !== elem.nodeType && 11 !== elem.nodeType || jQuery.isXMLDoc(elem))) for (destElements = getAll(clone), 
+                        srcElements = getAll(elem), i = 0; null != (node = srcElements[i]); ++i) destElements[i] && fixCloneNodeIssues(node, destElements[i]);
+                        if (dataAndEvents) if (deepDataAndEvents) for (srcElements = srcElements || getAll(elem), 
+                        destElements = destElements || getAll(clone), i = 0; null != (node = srcElements[i]); i++) cloneCopyEvent(node, destElements[i]); else cloneCopyEvent(elem, clone);
+                        return destElements = getAll(clone, "script"), destElements.length > 0 && setGlobalEval(destElements, !inPage && getAll(elem, "script")), 
+                        destElements = srcElements = node = null, clone;
                     },
-                    buildFragment: function(a, b, c, d) {
-                        for (var e, f, g, h, i, j, k, l = a.length, m = q(b), n = [], o = 0; l > o; o++) if (f = a[o], 
-                        f || 0 === f) if ("object" === fb.type(f)) fb.merge(n, f.nodeType ? [ f ] : f); else if (Sb.test(f)) {
-                            for (h = h || m.appendChild(b.createElement("div")), i = (Qb.exec(f) || [ "", "" ])[1].toLowerCase(), 
-                            k = Yb[i] || Yb._default, h.innerHTML = k[1] + f.replace(Pb, "<$1></$2>") + k[2], 
-                            e = k[0]; e--; ) h = h.lastChild;
-                            if (!db.leadingWhitespace && Ob.test(f) && n.push(b.createTextNode(Ob.exec(f)[0])), 
-                            !db.tbody) for (f = "table" !== i || Rb.test(f) ? "<table>" !== k[1] || Rb.test(f) ? 0 : h : h.firstChild, 
-                            e = f && f.childNodes.length; e--; ) fb.nodeName(j = f.childNodes[e], "tbody") && !j.childNodes.length && f.removeChild(j);
-                            for (fb.merge(n, h.childNodes), h.textContent = ""; h.firstChild; ) h.removeChild(h.firstChild);
-                            h = m.lastChild;
-                        } else n.push(b.createTextNode(f));
-                        for (h && m.removeChild(h), db.appendChecked || fb.grep(r(n, "input"), s), o = 0; f = n[o++]; ) if ((!d || -1 === fb.inArray(f, d)) && (g = fb.contains(f.ownerDocument, f), 
-                        h = r(m.appendChild(f), "script"), g && w(h), c)) for (e = 0; f = h[e++]; ) Vb.test(f.type || "") && c.push(f);
-                        return h = null, m;
+                    buildFragment: function(elems, context, scripts, selection) {
+                        for (var j, elem, contains, tmp, tag, tbody, wrap, l = elems.length, safe = createSafeFragment(context), nodes = [], i = 0; l > i; i++) if (elem = elems[i], 
+                        elem || 0 === elem) if ("object" === jQuery.type(elem)) jQuery.merge(nodes, elem.nodeType ? [ elem ] : elem); else if (rhtml.test(elem)) {
+                            for (tmp = tmp || safe.appendChild(context.createElement("div")), tag = (rtagName.exec(elem) || [ "", "" ])[1].toLowerCase(), 
+                            wrap = wrapMap[tag] || wrapMap._default, tmp.innerHTML = wrap[1] + elem.replace(rxhtmlTag, "<$1></$2>") + wrap[2], 
+                            j = wrap[0]; j--; ) tmp = tmp.lastChild;
+                            if (!support.leadingWhitespace && rleadingWhitespace.test(elem) && nodes.push(context.createTextNode(rleadingWhitespace.exec(elem)[0])), 
+                            !support.tbody) for (elem = "table" !== tag || rtbody.test(elem) ? "<table>" !== wrap[1] || rtbody.test(elem) ? 0 : tmp : tmp.firstChild, 
+                            j = elem && elem.childNodes.length; j--; ) jQuery.nodeName(tbody = elem.childNodes[j], "tbody") && !tbody.childNodes.length && elem.removeChild(tbody);
+                            for (jQuery.merge(nodes, tmp.childNodes), tmp.textContent = ""; tmp.firstChild; ) tmp.removeChild(tmp.firstChild);
+                            tmp = safe.lastChild;
+                        } else nodes.push(context.createTextNode(elem));
+                        for (tmp && safe.removeChild(tmp), support.appendChecked || jQuery.grep(getAll(nodes, "input"), fixDefaultChecked), 
+                        i = 0; elem = nodes[i++]; ) if ((!selection || -1 === jQuery.inArray(elem, selection)) && (contains = jQuery.contains(elem.ownerDocument, elem), 
+                        tmp = getAll(safe.appendChild(elem), "script"), contains && setGlobalEval(tmp), 
+                        scripts)) for (j = 0; elem = tmp[j++]; ) rscriptType.test(elem.type || "") && scripts.push(elem);
+                        return tmp = null, safe;
                     },
-                    cleanData: function(a, b) {
-                        for (var c, d, e, f, g = 0, h = fb.expando, i = fb.cache, j = db.deleteExpando, k = fb.event.special; null != (c = a[g]); g++) if ((b || fb.acceptData(c)) && (e = c[h], 
-                        f = e && i[e])) {
-                            if (f.events) for (d in f.events) k[d] ? fb.event.remove(c, d) : fb.removeEvent(c, d, f.handle);
-                            i[e] && (delete i[e], j ? delete c[h] : typeof c.removeAttribute !== yb ? c.removeAttribute(h) : c[h] = null, 
-                            X.push(e));
+                    cleanData: function(elems, acceptData) {
+                        for (var elem, type, id, data, i = 0, internalKey = jQuery.expando, cache = jQuery.cache, deleteExpando = support.deleteExpando, special = jQuery.event.special; null != (elem = elems[i]); i++) if ((acceptData || jQuery.acceptData(elem)) && (id = elem[internalKey], 
+                        data = id && cache[id])) {
+                            if (data.events) for (type in data.events) special[type] ? jQuery.event.remove(elem, type) : jQuery.removeEvent(elem, type, data.handle);
+                            cache[id] && (delete cache[id], deleteExpando ? delete elem[internalKey] : typeof elem.removeAttribute !== strundefined ? elem.removeAttribute(internalKey) : elem[internalKey] = null, 
+                            deletedIds.push(id));
                         }
                     }
-                }), fb.fn.extend({
-                    text: function(a) {
-                        return Eb(this, function(a) {
-                            return void 0 === a ? fb.text(this) : this.empty().append((this[0] && this[0].ownerDocument || pb).createTextNode(a));
-                        }, null, a, arguments.length);
+                }), jQuery.fn.extend({
+                    text: function(value) {
+                        return access(this, function(value) {
+                            return void 0 === value ? jQuery.text(this) : this.empty().append((this[0] && this[0].ownerDocument || document).createTextNode(value));
+                        }, null, value, arguments.length);
                     },
                     append: function() {
-                        return this.domManip(arguments, function(a) {
+                        return this.domManip(arguments, function(elem) {
                             if (1 === this.nodeType || 11 === this.nodeType || 9 === this.nodeType) {
-                                var b = t(this, a);
-                                b.appendChild(a);
+                                var target = manipulationTarget(this, elem);
+                                target.appendChild(elem);
                             }
                         });
                     },
                     prepend: function() {
-                        return this.domManip(arguments, function(a) {
+                        return this.domManip(arguments, function(elem) {
                             if (1 === this.nodeType || 11 === this.nodeType || 9 === this.nodeType) {
-                                var b = t(this, a);
-                                b.insertBefore(a, b.firstChild);
+                                var target = manipulationTarget(this, elem);
+                                target.insertBefore(elem, target.firstChild);
                             }
                         });
                     },
                     before: function() {
-                        return this.domManip(arguments, function(a) {
-                            this.parentNode && this.parentNode.insertBefore(a, this);
+                        return this.domManip(arguments, function(elem) {
+                            this.parentNode && this.parentNode.insertBefore(elem, this);
                         });
                     },
                     after: function() {
-                        return this.domManip(arguments, function(a) {
-                            this.parentNode && this.parentNode.insertBefore(a, this.nextSibling);
+                        return this.domManip(arguments, function(elem) {
+                            this.parentNode && this.parentNode.insertBefore(elem, this.nextSibling);
                         });
                     },
-                    remove: function(a, b) {
-                        for (var c, d = a ? fb.filter(a, this) : this, e = 0; null != (c = d[e]); e++) b || 1 !== c.nodeType || fb.cleanData(r(c)), 
-                        c.parentNode && (b && fb.contains(c.ownerDocument, c) && w(r(c, "script")), c.parentNode.removeChild(c));
+                    remove: function(selector, keepData) {
+                        for (var elem, elems = selector ? jQuery.filter(selector, this) : this, i = 0; null != (elem = elems[i]); i++) keepData || 1 !== elem.nodeType || jQuery.cleanData(getAll(elem)), 
+                        elem.parentNode && (keepData && jQuery.contains(elem.ownerDocument, elem) && setGlobalEval(getAll(elem, "script")), 
+                        elem.parentNode.removeChild(elem));
                         return this;
                     },
                     empty: function() {
-                        for (var a, b = 0; null != (a = this[b]); b++) {
-                            for (1 === a.nodeType && fb.cleanData(r(a, !1)); a.firstChild; ) a.removeChild(a.firstChild);
-                            a.options && fb.nodeName(a, "select") && (a.options.length = 0);
+                        for (var elem, i = 0; null != (elem = this[i]); i++) {
+                            for (1 === elem.nodeType && jQuery.cleanData(getAll(elem, !1)); elem.firstChild; ) elem.removeChild(elem.firstChild);
+                            elem.options && jQuery.nodeName(elem, "select") && (elem.options.length = 0);
                         }
                         return this;
                     },
-                    clone: function(a, b) {
-                        return a = null == a ? !1 : a, b = null == b ? a : b, this.map(function() {
-                            return fb.clone(this, a, b);
+                    clone: function(dataAndEvents, deepDataAndEvents) {
+                        return dataAndEvents = null == dataAndEvents ? !1 : dataAndEvents, deepDataAndEvents = null == deepDataAndEvents ? dataAndEvents : deepDataAndEvents, 
+                        this.map(function() {
+                            return jQuery.clone(this, dataAndEvents, deepDataAndEvents);
                         });
                     },
-                    html: function(a) {
-                        return Eb(this, function(a) {
-                            var b = this[0] || {}, c = 0, d = this.length;
-                            if (void 0 === a) return 1 === b.nodeType ? b.innerHTML.replace(Mb, "") : void 0;
-                            if (!("string" != typeof a || Tb.test(a) || !db.htmlSerialize && Nb.test(a) || !db.leadingWhitespace && Ob.test(a) || Yb[(Qb.exec(a) || [ "", "" ])[1].toLowerCase()])) {
-                                a = a.replace(Pb, "<$1></$2>");
+                    html: function(value) {
+                        return access(this, function(value) {
+                            var elem = this[0] || {}, i = 0, l = this.length;
+                            if (void 0 === value) return 1 === elem.nodeType ? elem.innerHTML.replace(rinlinejQuery, "") : void 0;
+                            if (!("string" != typeof value || rnoInnerhtml.test(value) || !support.htmlSerialize && rnoshimcache.test(value) || !support.leadingWhitespace && rleadingWhitespace.test(value) || wrapMap[(rtagName.exec(value) || [ "", "" ])[1].toLowerCase()])) {
+                                value = value.replace(rxhtmlTag, "<$1></$2>");
                                 try {
-                                    for (;d > c; c++) b = this[c] || {}, 1 === b.nodeType && (fb.cleanData(r(b, !1)), 
-                                    b.innerHTML = a);
-                                    b = 0;
+                                    for (;l > i; i++) elem = this[i] || {}, 1 === elem.nodeType && (jQuery.cleanData(getAll(elem, !1)), 
+                                    elem.innerHTML = value);
+                                    elem = 0;
                                 } catch (e) {}
                             }
-                            b && this.empty().append(a);
-                        }, null, a, arguments.length);
+                            elem && this.empty().append(value);
+                        }, null, value, arguments.length);
                     },
                     replaceWith: function() {
-                        var a = arguments[0];
-                        return this.domManip(arguments, function(b) {
-                            a = this.parentNode, fb.cleanData(r(this)), a && a.replaceChild(b, this);
-                        }), a && (a.length || a.nodeType) ? this : this.remove();
+                        var arg = arguments[0];
+                        return this.domManip(arguments, function(elem) {
+                            arg = this.parentNode, jQuery.cleanData(getAll(this)), arg && arg.replaceChild(elem, this);
+                        }), arg && (arg.length || arg.nodeType) ? this : this.remove();
                     },
-                    detach: function(a) {
-                        return this.remove(a, !0);
+                    detach: function(selector) {
+                        return this.remove(selector, !0);
                     },
-                    domManip: function(a, b) {
-                        a = Z.apply([], a);
-                        var c, d, e, f, g, h, i = 0, j = this.length, k = this, l = j - 1, m = a[0], n = fb.isFunction(m);
-                        if (n || j > 1 && "string" == typeof m && !db.checkClone && Ub.test(m)) return this.each(function(c) {
-                            var d = k.eq(c);
-                            n && (a[0] = m.call(this, c, d.html())), d.domManip(a, b);
+                    domManip: function(args, callback) {
+                        args = concat.apply([], args);
+                        var first, node, hasScripts, scripts, doc, fragment, i = 0, l = this.length, set = this, iNoClone = l - 1, value = args[0], isFunction = jQuery.isFunction(value);
+                        if (isFunction || l > 1 && "string" == typeof value && !support.checkClone && rchecked.test(value)) return this.each(function(index) {
+                            var self = set.eq(index);
+                            isFunction && (args[0] = value.call(this, index, self.html())), self.domManip(args, callback);
                         });
-                        if (j && (h = fb.buildFragment(a, this[0].ownerDocument, !1, this), c = h.firstChild, 
-                        1 === h.childNodes.length && (h = c), c)) {
-                            for (f = fb.map(r(h, "script"), u), e = f.length; j > i; i++) d = h, i !== l && (d = fb.clone(d, !0, !0), 
-                            e && fb.merge(f, r(d, "script"))), b.call(this[i], d, i);
-                            if (e) for (g = f[f.length - 1].ownerDocument, fb.map(f, v), i = 0; e > i; i++) d = f[i], 
-                            Vb.test(d.type || "") && !fb._data(d, "globalEval") && fb.contains(g, d) && (d.src ? fb._evalUrl && fb._evalUrl(d.src) : fb.globalEval((d.text || d.textContent || d.innerHTML || "").replace(Xb, "")));
-                            h = c = null;
+                        if (l && (fragment = jQuery.buildFragment(args, this[0].ownerDocument, !1, this), 
+                        first = fragment.firstChild, 1 === fragment.childNodes.length && (fragment = first), 
+                        first)) {
+                            for (scripts = jQuery.map(getAll(fragment, "script"), disableScript), hasScripts = scripts.length; l > i; i++) node = fragment, 
+                            i !== iNoClone && (node = jQuery.clone(node, !0, !0), hasScripts && jQuery.merge(scripts, getAll(node, "script"))), 
+                            callback.call(this[i], node, i);
+                            if (hasScripts) for (doc = scripts[scripts.length - 1].ownerDocument, jQuery.map(scripts, restoreScript), 
+                            i = 0; hasScripts > i; i++) node = scripts[i], rscriptType.test(node.type || "") && !jQuery._data(node, "globalEval") && jQuery.contains(doc, node) && (node.src ? jQuery._evalUrl && jQuery._evalUrl(node.src) : jQuery.globalEval((node.text || node.textContent || node.innerHTML || "").replace(rcleanScript, "")));
+                            fragment = first = null;
                         }
                         return this;
                     }
-                }), fb.each({
+                }), jQuery.each({
                     appendTo: "append",
                     prependTo: "prepend",
                     insertBefore: "before",
                     insertAfter: "after",
                     replaceAll: "replaceWith"
-                }, function(a, b) {
-                    fb.fn[a] = function(a) {
-                        for (var c, d = 0, e = [], f = fb(a), g = f.length - 1; g >= d; d++) c = d === g ? this : this.clone(!0), 
-                        fb(f[d])[b](c), $.apply(e, c.get());
-                        return this.pushStack(e);
+                }, function(name, original) {
+                    jQuery.fn[name] = function(selector) {
+                        for (var elems, i = 0, ret = [], insert = jQuery(selector), last = insert.length - 1; last >= i; i++) elems = i === last ? this : this.clone(!0), 
+                        jQuery(insert[i])[original](elems), push.apply(ret, elems.get());
+                        return this.pushStack(ret);
                     };
                 });
-                var _b, ac = {};
+                var iframe, elemdisplay = {};
                 !function() {
-                    var a;
-                    db.shrinkWrapBlocks = function() {
-                        if (null != a) return a;
-                        a = !1;
-                        var b, c, d;
-                        return c = pb.getElementsByTagName("body")[0], c && c.style ? (b = pb.createElement("div"), 
-                        d = pb.createElement("div"), d.style.cssText = "position:absolute;border:0;width:0;height:0;top:0;left:-9999px", 
-                        c.appendChild(d).appendChild(b), typeof b.style.zoom !== yb && (b.style.cssText = "-webkit-box-sizing:content-box;-moz-box-sizing:content-box;box-sizing:content-box;display:block;margin:0;border:0;padding:1px;width:1px;zoom:1", 
-                        b.appendChild(pb.createElement("div")).style.width = "5px", a = 3 !== b.offsetWidth), 
-                        c.removeChild(d), a) : void 0;
+                    var shrinkWrapBlocksVal;
+                    support.shrinkWrapBlocks = function() {
+                        if (null != shrinkWrapBlocksVal) return shrinkWrapBlocksVal;
+                        shrinkWrapBlocksVal = !1;
+                        var div, body, container;
+                        return body = document.getElementsByTagName("body")[0], body && body.style ? (div = document.createElement("div"), 
+                        container = document.createElement("div"), container.style.cssText = "position:absolute;border:0;width:0;height:0;top:0;left:-9999px", 
+                        body.appendChild(container).appendChild(div), typeof div.style.zoom !== strundefined && (div.style.cssText = "-webkit-box-sizing:content-box;-moz-box-sizing:content-box;box-sizing:content-box;display:block;margin:0;border:0;padding:1px;width:1px;zoom:1", 
+                        div.appendChild(document.createElement("div")).style.width = "5px", shrinkWrapBlocksVal = 3 !== div.offsetWidth), 
+                        body.removeChild(container), shrinkWrapBlocksVal) : void 0;
                     };
                 }();
-                var bc, cc, dc = /^margin/, ec = new RegExp("^(" + Bb + ")(?!px)[a-z%]+$", "i"), fc = /^(top|right|bottom|left)$/;
-                b.getComputedStyle ? (bc = function(a) {
-                    return a.ownerDocument.defaultView.getComputedStyle(a, null);
-                }, cc = function(a, b, c) {
-                    var d, e, f, g, h = a.style;
-                    return c = c || bc(a), g = c ? c.getPropertyValue(b) || c[b] : void 0, c && ("" !== g || fb.contains(a.ownerDocument, a) || (g = fb.style(a, b)), 
-                    ec.test(g) && dc.test(b) && (d = h.width, e = h.minWidth, f = h.maxWidth, h.minWidth = h.maxWidth = h.width = g, 
-                    g = c.width, h.width = d, h.minWidth = e, h.maxWidth = f)), void 0 === g ? g : g + "";
-                }) : pb.documentElement.currentStyle && (bc = function(a) {
-                    return a.currentStyle;
-                }, cc = function(a, b, c) {
-                    var d, e, f, g, h = a.style;
-                    return c = c || bc(a), g = c ? c[b] : void 0, null == g && h && h[b] && (g = h[b]), 
-                    ec.test(g) && !fc.test(b) && (d = h.left, e = a.runtimeStyle, f = e && e.left, f && (e.left = a.currentStyle.left), 
-                    h.left = "fontSize" === b ? "1em" : g, g = h.pixelLeft + "px", h.left = d, f && (e.left = f)), 
-                    void 0 === g ? g : g + "" || "auto";
+                var getStyles, curCSS, rmargin = /^margin/, rnumnonpx = new RegExp("^(" + pnum + ")(?!px)[a-z%]+$", "i"), rposition = /^(top|right|bottom|left)$/;
+                window.getComputedStyle ? (getStyles = function(elem) {
+                    return elem.ownerDocument.defaultView.getComputedStyle(elem, null);
+                }, curCSS = function(elem, name, computed) {
+                    var width, minWidth, maxWidth, ret, style = elem.style;
+                    return computed = computed || getStyles(elem), ret = computed ? computed.getPropertyValue(name) || computed[name] : void 0, 
+                    computed && ("" !== ret || jQuery.contains(elem.ownerDocument, elem) || (ret = jQuery.style(elem, name)), 
+                    rnumnonpx.test(ret) && rmargin.test(name) && (width = style.width, minWidth = style.minWidth, 
+                    maxWidth = style.maxWidth, style.minWidth = style.maxWidth = style.width = ret, 
+                    ret = computed.width, style.width = width, style.minWidth = minWidth, style.maxWidth = maxWidth)), 
+                    void 0 === ret ? ret : ret + "";
+                }) : document.documentElement.currentStyle && (getStyles = function(elem) {
+                    return elem.currentStyle;
+                }, curCSS = function(elem, name, computed) {
+                    var left, rs, rsLeft, ret, style = elem.style;
+                    return computed = computed || getStyles(elem), ret = computed ? computed[name] : void 0, 
+                    null == ret && style && style[name] && (ret = style[name]), rnumnonpx.test(ret) && !rposition.test(name) && (left = style.left, 
+                    rs = elem.runtimeStyle, rsLeft = rs && rs.left, rsLeft && (rs.left = elem.currentStyle.left), 
+                    style.left = "fontSize" === name ? "1em" : ret, ret = style.pixelLeft + "px", style.left = left, 
+                    rsLeft && (rs.left = rsLeft)), void 0 === ret ? ret : ret + "" || "auto";
                 }), function() {
-                    function a() {
-                        var a, c, d, e;
-                        c = pb.getElementsByTagName("body")[0], c && c.style && (a = pb.createElement("div"), 
-                        d = pb.createElement("div"), d.style.cssText = "position:absolute;border:0;width:0;height:0;top:0;left:-9999px", 
-                        c.appendChild(d).appendChild(a), a.style.cssText = "-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box;display:block;margin-top:1%;top:1%;border:1px;padding:1px;width:4px;position:absolute", 
-                        f = g = !1, i = !0, b.getComputedStyle && (f = "1%" !== (b.getComputedStyle(a, null) || {}).top, 
-                        g = "4px" === (b.getComputedStyle(a, null) || {
+                    function computeStyleTests() {
+                        var div, body, container, contents;
+                        body = document.getElementsByTagName("body")[0], body && body.style && (div = document.createElement("div"), 
+                        container = document.createElement("div"), container.style.cssText = "position:absolute;border:0;width:0;height:0;top:0;left:-9999px", 
+                        body.appendChild(container).appendChild(div), div.style.cssText = "-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box;display:block;margin-top:1%;top:1%;border:1px;padding:1px;width:4px;position:absolute", 
+                        pixelPositionVal = boxSizingReliableVal = !1, reliableMarginRightVal = !0, window.getComputedStyle && (pixelPositionVal = "1%" !== (window.getComputedStyle(div, null) || {}).top, 
+                        boxSizingReliableVal = "4px" === (window.getComputedStyle(div, null) || {
                             width: "4px"
-                        }).width, e = a.appendChild(pb.createElement("div")), e.style.cssText = a.style.cssText = "-webkit-box-sizing:content-box;-moz-box-sizing:content-box;box-sizing:content-box;display:block;margin:0;border:0;padding:0", 
-                        e.style.marginRight = e.style.width = "0", a.style.width = "1px", i = !parseFloat((b.getComputedStyle(e, null) || {}).marginRight)), 
-                        a.innerHTML = "<table><tr><td></td><td>t</td></tr></table>", e = a.getElementsByTagName("td"), 
-                        e[0].style.cssText = "margin:0;border:0;padding:0;display:none", h = 0 === e[0].offsetHeight, 
-                        h && (e[0].style.display = "", e[1].style.display = "none", h = 0 === e[0].offsetHeight), 
-                        c.removeChild(d));
+                        }).width, contents = div.appendChild(document.createElement("div")), contents.style.cssText = div.style.cssText = "-webkit-box-sizing:content-box;-moz-box-sizing:content-box;box-sizing:content-box;display:block;margin:0;border:0;padding:0", 
+                        contents.style.marginRight = contents.style.width = "0", div.style.width = "1px", 
+                        reliableMarginRightVal = !parseFloat((window.getComputedStyle(contents, null) || {}).marginRight)), 
+                        div.innerHTML = "<table><tr><td></td><td>t</td></tr></table>", contents = div.getElementsByTagName("td"), 
+                        contents[0].style.cssText = "margin:0;border:0;padding:0;display:none", reliableHiddenOffsetsVal = 0 === contents[0].offsetHeight, 
+                        reliableHiddenOffsetsVal && (contents[0].style.display = "", contents[1].style.display = "none", 
+                        reliableHiddenOffsetsVal = 0 === contents[0].offsetHeight), body.removeChild(container));
                     }
-                    var c, d, e, f, g, h, i;
-                    c = pb.createElement("div"), c.innerHTML = "  <link/><table></table><a href='/a'>a</a><input type='checkbox'/>", 
-                    e = c.getElementsByTagName("a")[0], d = e && e.style, d && (d.cssText = "float:left;opacity:.5", 
-                    db.opacity = "0.5" === d.opacity, db.cssFloat = !!d.cssFloat, c.style.backgroundClip = "content-box", 
-                    c.cloneNode(!0).style.backgroundClip = "", db.clearCloneStyle = "content-box" === c.style.backgroundClip, 
-                    db.boxSizing = "" === d.boxSizing || "" === d.MozBoxSizing || "" === d.WebkitBoxSizing, 
-                    fb.extend(db, {
+                    var div, style, a, pixelPositionVal, boxSizingReliableVal, reliableHiddenOffsetsVal, reliableMarginRightVal;
+                    div = document.createElement("div"), div.innerHTML = "  <link/><table></table><a href='/a'>a</a><input type='checkbox'/>", 
+                    a = div.getElementsByTagName("a")[0], style = a && a.style, style && (style.cssText = "float:left;opacity:.5", 
+                    support.opacity = "0.5" === style.opacity, support.cssFloat = !!style.cssFloat, 
+                    div.style.backgroundClip = "content-box", div.cloneNode(!0).style.backgroundClip = "", 
+                    support.clearCloneStyle = "content-box" === div.style.backgroundClip, support.boxSizing = "" === style.boxSizing || "" === style.MozBoxSizing || "" === style.WebkitBoxSizing, 
+                    jQuery.extend(support, {
                         reliableHiddenOffsets: function() {
-                            return null == h && a(), h;
+                            return null == reliableHiddenOffsetsVal && computeStyleTests(), reliableHiddenOffsetsVal;
                         },
                         boxSizingReliable: function() {
-                            return null == g && a(), g;
+                            return null == boxSizingReliableVal && computeStyleTests(), boxSizingReliableVal;
                         },
                         pixelPosition: function() {
-                            return null == f && a(), f;
+                            return null == pixelPositionVal && computeStyleTests(), pixelPositionVal;
                         },
                         reliableMarginRight: function() {
-                            return null == i && a(), i;
+                            return null == reliableMarginRightVal && computeStyleTests(), reliableMarginRightVal;
                         }
                     }));
-                }(), fb.swap = function(a, b, c, d) {
-                    var e, f, g = {};
-                    for (f in b) g[f] = a.style[f], a.style[f] = b[f];
-                    e = c.apply(a, d || []);
-                    for (f in b) a.style[f] = g[f];
-                    return e;
+                }(), jQuery.swap = function(elem, options, callback, args) {
+                    var ret, name, old = {};
+                    for (name in options) old[name] = elem.style[name], elem.style[name] = options[name];
+                    ret = callback.apply(elem, args || []);
+                    for (name in options) elem.style[name] = old[name];
+                    return ret;
                 };
-                var gc = /alpha\([^)]*\)/i, hc = /opacity\s*=\s*([^)]*)/, ic = /^(none|table(?!-c[ea]).+)/, jc = new RegExp("^(" + Bb + ")(.*)$", "i"), kc = new RegExp("^([+-])=(" + Bb + ")", "i"), lc = {
+                var ralpha = /alpha\([^)]*\)/i, ropacity = /opacity\s*=\s*([^)]*)/, rdisplayswap = /^(none|table(?!-c[ea]).+)/, rnumsplit = new RegExp("^(" + pnum + ")(.*)$", "i"), rrelNum = new RegExp("^([+-])=(" + pnum + ")", "i"), cssShow = {
                     position: "absolute",
                     visibility: "hidden",
                     display: "block"
-                }, mc = {
+                }, cssNormalTransform = {
                     letterSpacing: "0",
                     fontWeight: "400"
-                }, nc = [ "Webkit", "O", "Moz", "ms" ];
-                fb.extend({
+                }, cssPrefixes = [ "Webkit", "O", "Moz", "ms" ];
+                jQuery.extend({
                     cssHooks: {
                         opacity: {
-                            get: function(a, b) {
-                                if (b) {
-                                    var c = cc(a, "opacity");
-                                    return "" === c ? "1" : c;
+                            get: function(elem, computed) {
+                                if (computed) {
+                                    var ret = curCSS(elem, "opacity");
+                                    return "" === ret ? "1" : ret;
                                 }
                             }
                         }
@@ -2417,199 +2510,202 @@
                         zoom: !0
                     },
                     cssProps: {
-                        "float": db.cssFloat ? "cssFloat" : "styleFloat"
+                        "float": support.cssFloat ? "cssFloat" : "styleFloat"
                     },
-                    style: function(a, b, c, d) {
-                        if (a && 3 !== a.nodeType && 8 !== a.nodeType && a.style) {
-                            var e, f, g, h = fb.camelCase(b), i = a.style;
-                            if (b = fb.cssProps[h] || (fb.cssProps[h] = C(i, h)), g = fb.cssHooks[b] || fb.cssHooks[h], 
-                            void 0 === c) return g && "get" in g && void 0 !== (e = g.get(a, !1, d)) ? e : i[b];
-                            if (f = typeof c, "string" === f && (e = kc.exec(c)) && (c = (e[1] + 1) * e[2] + parseFloat(fb.css(a, b)), 
-                            f = "number"), null != c && c === c && ("number" !== f || fb.cssNumber[h] || (c += "px"), 
-                            db.clearCloneStyle || "" !== c || 0 !== b.indexOf("background") || (i[b] = "inherit"), 
-                            !(g && "set" in g && void 0 === (c = g.set(a, c, d))))) try {
-                                i[b] = c;
-                            } catch (j) {}
+                    style: function(elem, name, value, extra) {
+                        if (elem && 3 !== elem.nodeType && 8 !== elem.nodeType && elem.style) {
+                            var ret, type, hooks, origName = jQuery.camelCase(name), style = elem.style;
+                            if (name = jQuery.cssProps[origName] || (jQuery.cssProps[origName] = vendorPropName(style, origName)), 
+                            hooks = jQuery.cssHooks[name] || jQuery.cssHooks[origName], void 0 === value) return hooks && "get" in hooks && void 0 !== (ret = hooks.get(elem, !1, extra)) ? ret : style[name];
+                            if (type = typeof value, "string" === type && (ret = rrelNum.exec(value)) && (value = (ret[1] + 1) * ret[2] + parseFloat(jQuery.css(elem, name)), 
+                            type = "number"), null != value && value === value && ("number" !== type || jQuery.cssNumber[origName] || (value += "px"), 
+                            support.clearCloneStyle || "" !== value || 0 !== name.indexOf("background") || (style[name] = "inherit"), 
+                            !(hooks && "set" in hooks && void 0 === (value = hooks.set(elem, value, extra))))) try {
+                                style[name] = value;
+                            } catch (e) {}
                         }
                     },
-                    css: function(a, b, c, d) {
-                        var e, f, g, h = fb.camelCase(b);
-                        return b = fb.cssProps[h] || (fb.cssProps[h] = C(a.style, h)), g = fb.cssHooks[b] || fb.cssHooks[h], 
-                        g && "get" in g && (f = g.get(a, !0, c)), void 0 === f && (f = cc(a, b, d)), "normal" === f && b in mc && (f = mc[b]), 
-                        "" === c || c ? (e = parseFloat(f), c === !0 || fb.isNumeric(e) ? e || 0 : f) : f;
+                    css: function(elem, name, extra, styles) {
+                        var num, val, hooks, origName = jQuery.camelCase(name);
+                        return name = jQuery.cssProps[origName] || (jQuery.cssProps[origName] = vendorPropName(elem.style, origName)), 
+                        hooks = jQuery.cssHooks[name] || jQuery.cssHooks[origName], hooks && "get" in hooks && (val = hooks.get(elem, !0, extra)), 
+                        void 0 === val && (val = curCSS(elem, name, styles)), "normal" === val && name in cssNormalTransform && (val = cssNormalTransform[name]), 
+                        "" === extra || extra ? (num = parseFloat(val), extra === !0 || jQuery.isNumeric(num) ? num || 0 : val) : val;
                     }
-                }), fb.each([ "height", "width" ], function(a, b) {
-                    fb.cssHooks[b] = {
-                        get: function(a, c, d) {
-                            return c ? ic.test(fb.css(a, "display")) && 0 === a.offsetWidth ? fb.swap(a, lc, function() {
-                                return G(a, b, d);
-                            }) : G(a, b, d) : void 0;
+                }), jQuery.each([ "height", "width" ], function(i, name) {
+                    jQuery.cssHooks[name] = {
+                        get: function(elem, computed, extra) {
+                            return computed ? rdisplayswap.test(jQuery.css(elem, "display")) && 0 === elem.offsetWidth ? jQuery.swap(elem, cssShow, function() {
+                                return getWidthOrHeight(elem, name, extra);
+                            }) : getWidthOrHeight(elem, name, extra) : void 0;
                         },
-                        set: function(a, c, d) {
-                            var e = d && bc(a);
-                            return E(a, c, d ? F(a, b, d, db.boxSizing && "border-box" === fb.css(a, "boxSizing", !1, e), e) : 0);
+                        set: function(elem, value, extra) {
+                            var styles = extra && getStyles(elem);
+                            return setPositiveNumber(elem, value, extra ? augmentWidthOrHeight(elem, name, extra, support.boxSizing && "border-box" === jQuery.css(elem, "boxSizing", !1, styles), styles) : 0);
                         }
                     };
-                }), db.opacity || (fb.cssHooks.opacity = {
-                    get: function(a, b) {
-                        return hc.test((b && a.currentStyle ? a.currentStyle.filter : a.style.filter) || "") ? .01 * parseFloat(RegExp.$1) + "" : b ? "1" : "";
+                }), support.opacity || (jQuery.cssHooks.opacity = {
+                    get: function(elem, computed) {
+                        return ropacity.test((computed && elem.currentStyle ? elem.currentStyle.filter : elem.style.filter) || "") ? .01 * parseFloat(RegExp.$1) + "" : computed ? "1" : "";
                     },
-                    set: function(a, b) {
-                        var c = a.style, d = a.currentStyle, e = fb.isNumeric(b) ? "alpha(opacity=" + 100 * b + ")" : "", f = d && d.filter || c.filter || "";
-                        c.zoom = 1, (b >= 1 || "" === b) && "" === fb.trim(f.replace(gc, "")) && c.removeAttribute && (c.removeAttribute("filter"), 
-                        "" === b || d && !d.filter) || (c.filter = gc.test(f) ? f.replace(gc, e) : f + " " + e);
+                    set: function(elem, value) {
+                        var style = elem.style, currentStyle = elem.currentStyle, opacity = jQuery.isNumeric(value) ? "alpha(opacity=" + 100 * value + ")" : "", filter = currentStyle && currentStyle.filter || style.filter || "";
+                        style.zoom = 1, (value >= 1 || "" === value) && "" === jQuery.trim(filter.replace(ralpha, "")) && style.removeAttribute && (style.removeAttribute("filter"), 
+                        "" === value || currentStyle && !currentStyle.filter) || (style.filter = ralpha.test(filter) ? filter.replace(ralpha, opacity) : filter + " " + opacity);
                     }
-                }), fb.cssHooks.marginRight = B(db.reliableMarginRight, function(a, b) {
-                    return b ? fb.swap(a, {
+                }), jQuery.cssHooks.marginRight = addGetHookIf(support.reliableMarginRight, function(elem, computed) {
+                    return computed ? jQuery.swap(elem, {
                         display: "inline-block"
-                    }, cc, [ a, "marginRight" ]) : void 0;
-                }), fb.each({
+                    }, curCSS, [ elem, "marginRight" ]) : void 0;
+                }), jQuery.each({
                     margin: "",
                     padding: "",
                     border: "Width"
-                }, function(a, b) {
-                    fb.cssHooks[a + b] = {
-                        expand: function(c) {
-                            for (var d = 0, e = {}, f = "string" == typeof c ? c.split(" ") : [ c ]; 4 > d; d++) e[a + Cb[d] + b] = f[d] || f[d - 2] || f[0];
-                            return e;
+                }, function(prefix, suffix) {
+                    jQuery.cssHooks[prefix + suffix] = {
+                        expand: function(value) {
+                            for (var i = 0, expanded = {}, parts = "string" == typeof value ? value.split(" ") : [ value ]; 4 > i; i++) expanded[prefix + cssExpand[i] + suffix] = parts[i] || parts[i - 2] || parts[0];
+                            return expanded;
                         }
-                    }, dc.test(a) || (fb.cssHooks[a + b].set = E);
-                }), fb.fn.extend({
-                    css: function(a, b) {
-                        return Eb(this, function(a, b, c) {
-                            var d, e, f = {}, g = 0;
-                            if (fb.isArray(b)) {
-                                for (d = bc(a), e = b.length; e > g; g++) f[b[g]] = fb.css(a, b[g], !1, d);
-                                return f;
+                    }, rmargin.test(prefix) || (jQuery.cssHooks[prefix + suffix].set = setPositiveNumber);
+                }), jQuery.fn.extend({
+                    css: function(name, value) {
+                        return access(this, function(elem, name, value) {
+                            var styles, len, map = {}, i = 0;
+                            if (jQuery.isArray(name)) {
+                                for (styles = getStyles(elem), len = name.length; len > i; i++) map[name[i]] = jQuery.css(elem, name[i], !1, styles);
+                                return map;
                             }
-                            return void 0 !== c ? fb.style(a, b, c) : fb.css(a, b);
-                        }, a, b, arguments.length > 1);
+                            return void 0 !== value ? jQuery.style(elem, name, value) : jQuery.css(elem, name);
+                        }, name, value, arguments.length > 1);
                     },
                     show: function() {
-                        return D(this, !0);
+                        return showHide(this, !0);
                     },
                     hide: function() {
-                        return D(this);
+                        return showHide(this);
                     },
-                    toggle: function(a) {
-                        return "boolean" == typeof a ? a ? this.show() : this.hide() : this.each(function() {
-                            Db(this) ? fb(this).show() : fb(this).hide();
+                    toggle: function(state) {
+                        return "boolean" == typeof state ? state ? this.show() : this.hide() : this.each(function() {
+                            isHidden(this) ? jQuery(this).show() : jQuery(this).hide();
                         });
                     }
-                }), fb.Tween = H, H.prototype = {
-                    constructor: H,
-                    init: function(a, b, c, d, e, f) {
-                        this.elem = a, this.prop = c, this.easing = e || "swing", this.options = b, this.start = this.now = this.cur(), 
-                        this.end = d, this.unit = f || (fb.cssNumber[c] ? "" : "px");
+                }), jQuery.Tween = Tween, Tween.prototype = {
+                    constructor: Tween,
+                    init: function(elem, options, prop, end, easing, unit) {
+                        this.elem = elem, this.prop = prop, this.easing = easing || "swing", this.options = options, 
+                        this.start = this.now = this.cur(), this.end = end, this.unit = unit || (jQuery.cssNumber[prop] ? "" : "px");
                     },
                     cur: function() {
-                        var a = H.propHooks[this.prop];
-                        return a && a.get ? a.get(this) : H.propHooks._default.get(this);
+                        var hooks = Tween.propHooks[this.prop];
+                        return hooks && hooks.get ? hooks.get(this) : Tween.propHooks._default.get(this);
                     },
-                    run: function(a) {
-                        var b, c = H.propHooks[this.prop];
-                        return this.pos = b = this.options.duration ? fb.easing[this.easing](a, this.options.duration * a, 0, 1, this.options.duration) : a, 
-                        this.now = (this.end - this.start) * b + this.start, this.options.step && this.options.step.call(this.elem, this.now, this), 
-                        c && c.set ? c.set(this) : H.propHooks._default.set(this), this;
+                    run: function(percent) {
+                        var eased, hooks = Tween.propHooks[this.prop];
+                        return this.pos = eased = this.options.duration ? jQuery.easing[this.easing](percent, this.options.duration * percent, 0, 1, this.options.duration) : percent, 
+                        this.now = (this.end - this.start) * eased + this.start, this.options.step && this.options.step.call(this.elem, this.now, this), 
+                        hooks && hooks.set ? hooks.set(this) : Tween.propHooks._default.set(this), this;
                     }
-                }, H.prototype.init.prototype = H.prototype, H.propHooks = {
+                }, Tween.prototype.init.prototype = Tween.prototype, Tween.propHooks = {
                     _default: {
-                        get: function(a) {
-                            var b;
-                            return null == a.elem[a.prop] || a.elem.style && null != a.elem.style[a.prop] ? (b = fb.css(a.elem, a.prop, ""), 
-                            b && "auto" !== b ? b : 0) : a.elem[a.prop];
+                        get: function(tween) {
+                            var result;
+                            return null == tween.elem[tween.prop] || tween.elem.style && null != tween.elem.style[tween.prop] ? (result = jQuery.css(tween.elem, tween.prop, ""), 
+                            result && "auto" !== result ? result : 0) : tween.elem[tween.prop];
                         },
-                        set: function(a) {
-                            fb.fx.step[a.prop] ? fb.fx.step[a.prop](a) : a.elem.style && (null != a.elem.style[fb.cssProps[a.prop]] || fb.cssHooks[a.prop]) ? fb.style(a.elem, a.prop, a.now + a.unit) : a.elem[a.prop] = a.now;
+                        set: function(tween) {
+                            jQuery.fx.step[tween.prop] ? jQuery.fx.step[tween.prop](tween) : tween.elem.style && (null != tween.elem.style[jQuery.cssProps[tween.prop]] || jQuery.cssHooks[tween.prop]) ? jQuery.style(tween.elem, tween.prop, tween.now + tween.unit) : tween.elem[tween.prop] = tween.now;
                         }
                     }
-                }, H.propHooks.scrollTop = H.propHooks.scrollLeft = {
-                    set: function(a) {
-                        a.elem.nodeType && a.elem.parentNode && (a.elem[a.prop] = a.now);
+                }, Tween.propHooks.scrollTop = Tween.propHooks.scrollLeft = {
+                    set: function(tween) {
+                        tween.elem.nodeType && tween.elem.parentNode && (tween.elem[tween.prop] = tween.now);
                     }
-                }, fb.easing = {
-                    linear: function(a) {
-                        return a;
+                }, jQuery.easing = {
+                    linear: function(p) {
+                        return p;
                     },
-                    swing: function(a) {
-                        return .5 - Math.cos(a * Math.PI) / 2;
+                    swing: function(p) {
+                        return .5 - Math.cos(p * Math.PI) / 2;
                     }
-                }, fb.fx = H.prototype.init, fb.fx.step = {};
-                var oc, pc, qc = /^(?:toggle|show|hide)$/, rc = new RegExp("^(?:([+-])=|)(" + Bb + ")([a-z%]*)$", "i"), sc = /queueHooks$/, tc = [ L ], uc = {
-                    "*": [ function(a, b) {
-                        var c = this.createTween(a, b), d = c.cur(), e = rc.exec(b), f = e && e[3] || (fb.cssNumber[a] ? "" : "px"), g = (fb.cssNumber[a] || "px" !== f && +d) && rc.exec(fb.css(c.elem, a)), h = 1, i = 20;
-                        if (g && g[3] !== f) {
-                            f = f || g[3], e = e || [], g = +d || 1;
-                            do h = h || ".5", g /= h, fb.style(c.elem, a, g + f); while (h !== (h = c.cur() / d) && 1 !== h && --i);
+                }, jQuery.fx = Tween.prototype.init, jQuery.fx.step = {};
+                var fxNow, timerId, rfxtypes = /^(?:toggle|show|hide)$/, rfxnum = new RegExp("^(?:([+-])=|)(" + pnum + ")([a-z%]*)$", "i"), rrun = /queueHooks$/, animationPrefilters = [ defaultPrefilter ], tweeners = {
+                    "*": [ function(prop, value) {
+                        var tween = this.createTween(prop, value), target = tween.cur(), parts = rfxnum.exec(value), unit = parts && parts[3] || (jQuery.cssNumber[prop] ? "" : "px"), start = (jQuery.cssNumber[prop] || "px" !== unit && +target) && rfxnum.exec(jQuery.css(tween.elem, prop)), scale = 1, maxIterations = 20;
+                        if (start && start[3] !== unit) {
+                            unit = unit || start[3], parts = parts || [], start = +target || 1;
+                            do scale = scale || ".5", start /= scale, jQuery.style(tween.elem, prop, start + unit); while (scale !== (scale = tween.cur() / target) && 1 !== scale && --maxIterations);
                         }
-                        return e && (g = c.start = +g || +d || 0, c.unit = f, c.end = e[1] ? g + (e[1] + 1) * e[2] : +e[2]), 
-                        c;
+                        return parts && (start = tween.start = +start || +target || 0, tween.unit = unit, 
+                        tween.end = parts[1] ? start + (parts[1] + 1) * parts[2] : +parts[2]), tween;
                     } ]
                 };
-                fb.Animation = fb.extend(N, {
-                    tweener: function(a, b) {
-                        fb.isFunction(a) ? (b = a, a = [ "*" ]) : a = a.split(" ");
-                        for (var c, d = 0, e = a.length; e > d; d++) c = a[d], uc[c] = uc[c] || [], uc[c].unshift(b);
+                jQuery.Animation = jQuery.extend(Animation, {
+                    tweener: function(props, callback) {
+                        jQuery.isFunction(props) ? (callback = props, props = [ "*" ]) : props = props.split(" ");
+                        for (var prop, index = 0, length = props.length; length > index; index++) prop = props[index], 
+                        tweeners[prop] = tweeners[prop] || [], tweeners[prop].unshift(callback);
                     },
-                    prefilter: function(a, b) {
-                        b ? tc.unshift(a) : tc.push(a);
+                    prefilter: function(callback, prepend) {
+                        prepend ? animationPrefilters.unshift(callback) : animationPrefilters.push(callback);
                     }
-                }), fb.speed = function(a, b, c) {
-                    var d = a && "object" == typeof a ? fb.extend({}, a) : {
-                        complete: c || !c && b || fb.isFunction(a) && a,
-                        duration: a,
-                        easing: c && b || b && !fb.isFunction(b) && b
+                }), jQuery.speed = function(speed, easing, fn) {
+                    var opt = speed && "object" == typeof speed ? jQuery.extend({}, speed) : {
+                        complete: fn || !fn && easing || jQuery.isFunction(speed) && speed,
+                        duration: speed,
+                        easing: fn && easing || easing && !jQuery.isFunction(easing) && easing
                     };
-                    return d.duration = fb.fx.off ? 0 : "number" == typeof d.duration ? d.duration : d.duration in fb.fx.speeds ? fb.fx.speeds[d.duration] : fb.fx.speeds._default, 
-                    (null == d.queue || d.queue === !0) && (d.queue = "fx"), d.old = d.complete, d.complete = function() {
-                        fb.isFunction(d.old) && d.old.call(this), d.queue && fb.dequeue(this, d.queue);
-                    }, d;
-                }, fb.fn.extend({
-                    fadeTo: function(a, b, c, d) {
-                        return this.filter(Db).css("opacity", 0).show().end().animate({
-                            opacity: b
-                        }, a, c, d);
+                    return opt.duration = jQuery.fx.off ? 0 : "number" == typeof opt.duration ? opt.duration : opt.duration in jQuery.fx.speeds ? jQuery.fx.speeds[opt.duration] : jQuery.fx.speeds._default, 
+                    (null == opt.queue || opt.queue === !0) && (opt.queue = "fx"), opt.old = opt.complete, 
+                    opt.complete = function() {
+                        jQuery.isFunction(opt.old) && opt.old.call(this), opt.queue && jQuery.dequeue(this, opt.queue);
+                    }, opt;
+                }, jQuery.fn.extend({
+                    fadeTo: function(speed, to, easing, callback) {
+                        return this.filter(isHidden).css("opacity", 0).show().end().animate({
+                            opacity: to
+                        }, speed, easing, callback);
                     },
-                    animate: function(a, b, c, d) {
-                        var e = fb.isEmptyObject(a), f = fb.speed(b, c, d), g = function() {
-                            var b = N(this, fb.extend({}, a), f);
-                            (e || fb._data(this, "finish")) && b.stop(!0);
+                    animate: function(prop, speed, easing, callback) {
+                        var empty = jQuery.isEmptyObject(prop), optall = jQuery.speed(speed, easing, callback), doAnimation = function() {
+                            var anim = Animation(this, jQuery.extend({}, prop), optall);
+                            (empty || jQuery._data(this, "finish")) && anim.stop(!0);
                         };
-                        return g.finish = g, e || f.queue === !1 ? this.each(g) : this.queue(f.queue, g);
+                        return doAnimation.finish = doAnimation, empty || optall.queue === !1 ? this.each(doAnimation) : this.queue(optall.queue, doAnimation);
                     },
-                    stop: function(a, b, c) {
-                        var d = function(a) {
-                            var b = a.stop;
-                            delete a.stop, b(c);
+                    stop: function(type, clearQueue, gotoEnd) {
+                        var stopQueue = function(hooks) {
+                            var stop = hooks.stop;
+                            delete hooks.stop, stop(gotoEnd);
                         };
-                        return "string" != typeof a && (c = b, b = a, a = void 0), b && a !== !1 && this.queue(a || "fx", []), 
-                        this.each(function() {
-                            var b = !0, e = null != a && a + "queueHooks", f = fb.timers, g = fb._data(this);
-                            if (e) g[e] && g[e].stop && d(g[e]); else for (e in g) g[e] && g[e].stop && sc.test(e) && d(g[e]);
-                            for (e = f.length; e--; ) f[e].elem !== this || null != a && f[e].queue !== a || (f[e].anim.stop(c), 
-                            b = !1, f.splice(e, 1));
-                            (b || !c) && fb.dequeue(this, a);
+                        return "string" != typeof type && (gotoEnd = clearQueue, clearQueue = type, type = void 0), 
+                        clearQueue && type !== !1 && this.queue(type || "fx", []), this.each(function() {
+                            var dequeue = !0, index = null != type && type + "queueHooks", timers = jQuery.timers, data = jQuery._data(this);
+                            if (index) data[index] && data[index].stop && stopQueue(data[index]); else for (index in data) data[index] && data[index].stop && rrun.test(index) && stopQueue(data[index]);
+                            for (index = timers.length; index--; ) timers[index].elem !== this || null != type && timers[index].queue !== type || (timers[index].anim.stop(gotoEnd), 
+                            dequeue = !1, timers.splice(index, 1));
+                            (dequeue || !gotoEnd) && jQuery.dequeue(this, type);
                         });
                     },
-                    finish: function(a) {
-                        return a !== !1 && (a = a || "fx"), this.each(function() {
-                            var b, c = fb._data(this), d = c[a + "queue"], e = c[a + "queueHooks"], f = fb.timers, g = d ? d.length : 0;
-                            for (c.finish = !0, fb.queue(this, a, []), e && e.stop && e.stop.call(this, !0), 
-                            b = f.length; b--; ) f[b].elem === this && f[b].queue === a && (f[b].anim.stop(!0), 
-                            f.splice(b, 1));
-                            for (b = 0; g > b; b++) d[b] && d[b].finish && d[b].finish.call(this);
-                            delete c.finish;
+                    finish: function(type) {
+                        return type !== !1 && (type = type || "fx"), this.each(function() {
+                            var index, data = jQuery._data(this), queue = data[type + "queue"], hooks = data[type + "queueHooks"], timers = jQuery.timers, length = queue ? queue.length : 0;
+                            for (data.finish = !0, jQuery.queue(this, type, []), hooks && hooks.stop && hooks.stop.call(this, !0), 
+                            index = timers.length; index--; ) timers[index].elem === this && timers[index].queue === type && (timers[index].anim.stop(!0), 
+                            timers.splice(index, 1));
+                            for (index = 0; length > index; index++) queue[index] && queue[index].finish && queue[index].finish.call(this);
+                            delete data.finish;
                         });
                     }
-                }), fb.each([ "toggle", "show", "hide" ], function(a, b) {
-                    var c = fb.fn[b];
-                    fb.fn[b] = function(a, d, e) {
-                        return null == a || "boolean" == typeof a ? c.apply(this, arguments) : this.animate(J(b, !0), a, d, e);
+                }), jQuery.each([ "toggle", "show", "hide" ], function(i, name) {
+                    var cssFn = jQuery.fn[name];
+                    jQuery.fn[name] = function(speed, easing, callback) {
+                        return null == speed || "boolean" == typeof speed ? cssFn.apply(this, arguments) : this.animate(genFx(name, !0), speed, easing, callback);
                     };
-                }), fb.each({
-                    slideDown: J("show"),
-                    slideUp: J("hide"),
-                    slideToggle: J("toggle"),
+                }), jQuery.each({
+                    slideDown: genFx("show"),
+                    slideUp: genFx("hide"),
+                    slideToggle: genFx("toggle"),
                     fadeIn: {
                         opacity: "show"
                     },
@@ -2619,319 +2715,331 @@
                     fadeToggle: {
                         opacity: "toggle"
                     }
-                }, function(a, b) {
-                    fb.fn[a] = function(a, c, d) {
-                        return this.animate(b, a, c, d);
+                }, function(name, props) {
+                    jQuery.fn[name] = function(speed, easing, callback) {
+                        return this.animate(props, speed, easing, callback);
                     };
-                }), fb.timers = [], fb.fx.tick = function() {
-                    var a, b = fb.timers, c = 0;
-                    for (oc = fb.now(); c < b.length; c++) a = b[c], a() || b[c] !== a || b.splice(c--, 1);
-                    b.length || fb.fx.stop(), oc = void 0;
-                }, fb.fx.timer = function(a) {
-                    fb.timers.push(a), a() ? fb.fx.start() : fb.timers.pop();
-                }, fb.fx.interval = 13, fb.fx.start = function() {
-                    pc || (pc = setInterval(fb.fx.tick, fb.fx.interval));
-                }, fb.fx.stop = function() {
-                    clearInterval(pc), pc = null;
-                }, fb.fx.speeds = {
+                }), jQuery.timers = [], jQuery.fx.tick = function() {
+                    var timer, timers = jQuery.timers, i = 0;
+                    for (fxNow = jQuery.now(); i < timers.length; i++) timer = timers[i], timer() || timers[i] !== timer || timers.splice(i--, 1);
+                    timers.length || jQuery.fx.stop(), fxNow = void 0;
+                }, jQuery.fx.timer = function(timer) {
+                    jQuery.timers.push(timer), timer() ? jQuery.fx.start() : jQuery.timers.pop();
+                }, jQuery.fx.interval = 13, jQuery.fx.start = function() {
+                    timerId || (timerId = setInterval(jQuery.fx.tick, jQuery.fx.interval));
+                }, jQuery.fx.stop = function() {
+                    clearInterval(timerId), timerId = null;
+                }, jQuery.fx.speeds = {
                     slow: 600,
                     fast: 200,
                     _default: 400
-                }, fb.fn.delay = function(a, b) {
-                    return a = fb.fx ? fb.fx.speeds[a] || a : a, b = b || "fx", this.queue(b, function(b, c) {
-                        var d = setTimeout(b, a);
-                        c.stop = function() {
-                            clearTimeout(d);
+                }, jQuery.fn.delay = function(time, type) {
+                    return time = jQuery.fx ? jQuery.fx.speeds[time] || time : time, type = type || "fx", 
+                    this.queue(type, function(next, hooks) {
+                        var timeout = setTimeout(next, time);
+                        hooks.stop = function() {
+                            clearTimeout(timeout);
                         };
                     });
                 }, function() {
-                    var a, b, c, d, e;
-                    b = pb.createElement("div"), b.setAttribute("className", "t"), b.innerHTML = "  <link/><table></table><a href='/a'>a</a><input type='checkbox'/>", 
-                    d = b.getElementsByTagName("a")[0], c = pb.createElement("select"), e = c.appendChild(pb.createElement("option")), 
-                    a = b.getElementsByTagName("input")[0], d.style.cssText = "top:1px", db.getSetAttribute = "t" !== b.className, 
-                    db.style = /top/.test(d.getAttribute("style")), db.hrefNormalized = "/a" === d.getAttribute("href"), 
-                    db.checkOn = !!a.value, db.optSelected = e.selected, db.enctype = !!pb.createElement("form").enctype, 
-                    c.disabled = !0, db.optDisabled = !e.disabled, a = pb.createElement("input"), a.setAttribute("value", ""), 
-                    db.input = "" === a.getAttribute("value"), a.value = "t", a.setAttribute("type", "radio"), 
-                    db.radioValue = "t" === a.value;
+                    var input, div, select, a, opt;
+                    div = document.createElement("div"), div.setAttribute("className", "t"), div.innerHTML = "  <link/><table></table><a href='/a'>a</a><input type='checkbox'/>", 
+                    a = div.getElementsByTagName("a")[0], select = document.createElement("select"), 
+                    opt = select.appendChild(document.createElement("option")), input = div.getElementsByTagName("input")[0], 
+                    a.style.cssText = "top:1px", support.getSetAttribute = "t" !== div.className, support.style = /top/.test(a.getAttribute("style")), 
+                    support.hrefNormalized = "/a" === a.getAttribute("href"), support.checkOn = !!input.value, 
+                    support.optSelected = opt.selected, support.enctype = !!document.createElement("form").enctype, 
+                    select.disabled = !0, support.optDisabled = !opt.disabled, input = document.createElement("input"), 
+                    input.setAttribute("value", ""), support.input = "" === input.getAttribute("value"), 
+                    input.value = "t", input.setAttribute("type", "radio"), support.radioValue = "t" === input.value;
                 }();
-                var vc = /\r/g;
-                fb.fn.extend({
-                    val: function(a) {
-                        var b, c, d, e = this[0];
+                var rreturn = /\r/g;
+                jQuery.fn.extend({
+                    val: function(value) {
+                        var hooks, ret, isFunction, elem = this[0];
                         {
-                            if (arguments.length) return d = fb.isFunction(a), this.each(function(c) {
-                                var e;
-                                1 === this.nodeType && (e = d ? a.call(this, c, fb(this).val()) : a, null == e ? e = "" : "number" == typeof e ? e += "" : fb.isArray(e) && (e = fb.map(e, function(a) {
-                                    return null == a ? "" : a + "";
-                                })), b = fb.valHooks[this.type] || fb.valHooks[this.nodeName.toLowerCase()], b && "set" in b && void 0 !== b.set(this, e, "value") || (this.value = e));
+                            if (arguments.length) return isFunction = jQuery.isFunction(value), this.each(function(i) {
+                                var val;
+                                1 === this.nodeType && (val = isFunction ? value.call(this, i, jQuery(this).val()) : value, 
+                                null == val ? val = "" : "number" == typeof val ? val += "" : jQuery.isArray(val) && (val = jQuery.map(val, function(value) {
+                                    return null == value ? "" : value + "";
+                                })), hooks = jQuery.valHooks[this.type] || jQuery.valHooks[this.nodeName.toLowerCase()], 
+                                hooks && "set" in hooks && void 0 !== hooks.set(this, val, "value") || (this.value = val));
                             });
-                            if (e) return b = fb.valHooks[e.type] || fb.valHooks[e.nodeName.toLowerCase()], 
-                            b && "get" in b && void 0 !== (c = b.get(e, "value")) ? c : (c = e.value, "string" == typeof c ? c.replace(vc, "") : null == c ? "" : c);
+                            if (elem) return hooks = jQuery.valHooks[elem.type] || jQuery.valHooks[elem.nodeName.toLowerCase()], 
+                            hooks && "get" in hooks && void 0 !== (ret = hooks.get(elem, "value")) ? ret : (ret = elem.value, 
+                            "string" == typeof ret ? ret.replace(rreturn, "") : null == ret ? "" : ret);
                         }
                     }
-                }), fb.extend({
+                }), jQuery.extend({
                     valHooks: {
                         option: {
-                            get: function(a) {
-                                var b = fb.find.attr(a, "value");
-                                return null != b ? b : fb.trim(fb.text(a));
+                            get: function(elem) {
+                                var val = jQuery.find.attr(elem, "value");
+                                return null != val ? val : jQuery.trim(jQuery.text(elem));
                             }
                         },
                         select: {
-                            get: function(a) {
-                                for (var b, c, d = a.options, e = a.selectedIndex, f = "select-one" === a.type || 0 > e, g = f ? null : [], h = f ? e + 1 : d.length, i = 0 > e ? h : f ? e : 0; h > i; i++) if (c = d[i], 
-                                !(!c.selected && i !== e || (db.optDisabled ? c.disabled : null !== c.getAttribute("disabled")) || c.parentNode.disabled && fb.nodeName(c.parentNode, "optgroup"))) {
-                                    if (b = fb(c).val(), f) return b;
-                                    g.push(b);
+                            get: function(elem) {
+                                for (var value, option, options = elem.options, index = elem.selectedIndex, one = "select-one" === elem.type || 0 > index, values = one ? null : [], max = one ? index + 1 : options.length, i = 0 > index ? max : one ? index : 0; max > i; i++) if (option = options[i], 
+                                !(!option.selected && i !== index || (support.optDisabled ? option.disabled : null !== option.getAttribute("disabled")) || option.parentNode.disabled && jQuery.nodeName(option.parentNode, "optgroup"))) {
+                                    if (value = jQuery(option).val(), one) return value;
+                                    values.push(value);
                                 }
-                                return g;
+                                return values;
                             },
-                            set: function(a, b) {
-                                for (var c, d, e = a.options, f = fb.makeArray(b), g = e.length; g--; ) if (d = e[g], 
-                                fb.inArray(fb.valHooks.option.get(d), f) >= 0) try {
-                                    d.selected = c = !0;
-                                } catch (h) {
-                                    d.scrollHeight;
-                                } else d.selected = !1;
-                                return c || (a.selectedIndex = -1), e;
+                            set: function(elem, value) {
+                                for (var optionSet, option, options = elem.options, values = jQuery.makeArray(value), i = options.length; i--; ) if (option = options[i], 
+                                jQuery.inArray(jQuery.valHooks.option.get(option), values) >= 0) try {
+                                    option.selected = optionSet = !0;
+                                } catch (_) {
+                                    option.scrollHeight;
+                                } else option.selected = !1;
+                                return optionSet || (elem.selectedIndex = -1), options;
                             }
                         }
                     }
-                }), fb.each([ "radio", "checkbox" ], function() {
-                    fb.valHooks[this] = {
-                        set: function(a, b) {
-                            return fb.isArray(b) ? a.checked = fb.inArray(fb(a).val(), b) >= 0 : void 0;
+                }), jQuery.each([ "radio", "checkbox" ], function() {
+                    jQuery.valHooks[this] = {
+                        set: function(elem, value) {
+                            return jQuery.isArray(value) ? elem.checked = jQuery.inArray(jQuery(elem).val(), value) >= 0 : void 0;
                         }
-                    }, db.checkOn || (fb.valHooks[this].get = function(a) {
-                        return null === a.getAttribute("value") ? "on" : a.value;
+                    }, support.checkOn || (jQuery.valHooks[this].get = function(elem) {
+                        return null === elem.getAttribute("value") ? "on" : elem.value;
                     });
                 });
-                var wc, xc, yc = fb.expr.attrHandle, zc = /^(?:checked|selected)$/i, Ac = db.getSetAttribute, Bc = db.input;
-                fb.fn.extend({
-                    attr: function(a, b) {
-                        return Eb(this, fb.attr, a, b, arguments.length > 1);
+                var nodeHook, boolHook, attrHandle = jQuery.expr.attrHandle, ruseDefault = /^(?:checked|selected)$/i, getSetAttribute = support.getSetAttribute, getSetInput = support.input;
+                jQuery.fn.extend({
+                    attr: function(name, value) {
+                        return access(this, jQuery.attr, name, value, arguments.length > 1);
                     },
-                    removeAttr: function(a) {
+                    removeAttr: function(name) {
                         return this.each(function() {
-                            fb.removeAttr(this, a);
+                            jQuery.removeAttr(this, name);
                         });
                     }
-                }), fb.extend({
-                    attr: function(a, b, c) {
-                        var d, e, f = a.nodeType;
-                        if (a && 3 !== f && 8 !== f && 2 !== f) return typeof a.getAttribute === yb ? fb.prop(a, b, c) : (1 === f && fb.isXMLDoc(a) || (b = b.toLowerCase(), 
-                        d = fb.attrHooks[b] || (fb.expr.match.bool.test(b) ? xc : wc)), void 0 === c ? d && "get" in d && null !== (e = d.get(a, b)) ? e : (e = fb.find.attr(a, b), 
-                        null == e ? void 0 : e) : null !== c ? d && "set" in d && void 0 !== (e = d.set(a, c, b)) ? e : (a.setAttribute(b, c + ""), 
-                        c) : void fb.removeAttr(a, b));
+                }), jQuery.extend({
+                    attr: function(elem, name, value) {
+                        var hooks, ret, nType = elem.nodeType;
+                        if (elem && 3 !== nType && 8 !== nType && 2 !== nType) return typeof elem.getAttribute === strundefined ? jQuery.prop(elem, name, value) : (1 === nType && jQuery.isXMLDoc(elem) || (name = name.toLowerCase(), 
+                        hooks = jQuery.attrHooks[name] || (jQuery.expr.match.bool.test(name) ? boolHook : nodeHook)), 
+                        void 0 === value ? hooks && "get" in hooks && null !== (ret = hooks.get(elem, name)) ? ret : (ret = jQuery.find.attr(elem, name), 
+                        null == ret ? void 0 : ret) : null !== value ? hooks && "set" in hooks && void 0 !== (ret = hooks.set(elem, value, name)) ? ret : (elem.setAttribute(name, value + ""), 
+                        value) : void jQuery.removeAttr(elem, name));
                     },
-                    removeAttr: function(a, b) {
-                        var c, d, e = 0, f = b && b.match(ub);
-                        if (f && 1 === a.nodeType) for (;c = f[e++]; ) d = fb.propFix[c] || c, fb.expr.match.bool.test(c) ? Bc && Ac || !zc.test(c) ? a[d] = !1 : a[fb.camelCase("default-" + c)] = a[d] = !1 : fb.attr(a, c, ""), 
-                        a.removeAttribute(Ac ? c : d);
+                    removeAttr: function(elem, value) {
+                        var name, propName, i = 0, attrNames = value && value.match(rnotwhite);
+                        if (attrNames && 1 === elem.nodeType) for (;name = attrNames[i++]; ) propName = jQuery.propFix[name] || name, 
+                        jQuery.expr.match.bool.test(name) ? getSetInput && getSetAttribute || !ruseDefault.test(name) ? elem[propName] = !1 : elem[jQuery.camelCase("default-" + name)] = elem[propName] = !1 : jQuery.attr(elem, name, ""), 
+                        elem.removeAttribute(getSetAttribute ? name : propName);
                     },
                     attrHooks: {
                         type: {
-                            set: function(a, b) {
-                                if (!db.radioValue && "radio" === b && fb.nodeName(a, "input")) {
-                                    var c = a.value;
-                                    return a.setAttribute("type", b), c && (a.value = c), b;
+                            set: function(elem, value) {
+                                if (!support.radioValue && "radio" === value && jQuery.nodeName(elem, "input")) {
+                                    var val = elem.value;
+                                    return elem.setAttribute("type", value), val && (elem.value = val), value;
                                 }
                             }
                         }
                     }
-                }), xc = {
-                    set: function(a, b, c) {
-                        return b === !1 ? fb.removeAttr(a, c) : Bc && Ac || !zc.test(c) ? a.setAttribute(!Ac && fb.propFix[c] || c, c) : a[fb.camelCase("default-" + c)] = a[c] = !0, 
-                        c;
+                }), boolHook = {
+                    set: function(elem, value, name) {
+                        return value === !1 ? jQuery.removeAttr(elem, name) : getSetInput && getSetAttribute || !ruseDefault.test(name) ? elem.setAttribute(!getSetAttribute && jQuery.propFix[name] || name, name) : elem[jQuery.camelCase("default-" + name)] = elem[name] = !0, 
+                        name;
                     }
-                }, fb.each(fb.expr.match.bool.source.match(/\w+/g), function(a, b) {
-                    var c = yc[b] || fb.find.attr;
-                    yc[b] = Bc && Ac || !zc.test(b) ? function(a, b, d) {
-                        var e, f;
-                        return d || (f = yc[b], yc[b] = e, e = null != c(a, b, d) ? b.toLowerCase() : null, 
-                        yc[b] = f), e;
-                    } : function(a, b, c) {
-                        return c ? void 0 : a[fb.camelCase("default-" + b)] ? b.toLowerCase() : null;
+                }, jQuery.each(jQuery.expr.match.bool.source.match(/\w+/g), function(i, name) {
+                    var getter = attrHandle[name] || jQuery.find.attr;
+                    attrHandle[name] = getSetInput && getSetAttribute || !ruseDefault.test(name) ? function(elem, name, isXML) {
+                        var ret, handle;
+                        return isXML || (handle = attrHandle[name], attrHandle[name] = ret, ret = null != getter(elem, name, isXML) ? name.toLowerCase() : null, 
+                        attrHandle[name] = handle), ret;
+                    } : function(elem, name, isXML) {
+                        return isXML ? void 0 : elem[jQuery.camelCase("default-" + name)] ? name.toLowerCase() : null;
                     };
-                }), Bc && Ac || (fb.attrHooks.value = {
-                    set: function(a, b, c) {
-                        return fb.nodeName(a, "input") ? void (a.defaultValue = b) : wc && wc.set(a, b, c);
+                }), getSetInput && getSetAttribute || (jQuery.attrHooks.value = {
+                    set: function(elem, value, name) {
+                        return jQuery.nodeName(elem, "input") ? void (elem.defaultValue = value) : nodeHook && nodeHook.set(elem, value, name);
                     }
-                }), Ac || (wc = {
-                    set: function(a, b, c) {
-                        var d = a.getAttributeNode(c);
-                        return d || a.setAttributeNode(d = a.ownerDocument.createAttribute(c)), d.value = b += "", 
-                        "value" === c || b === a.getAttribute(c) ? b : void 0;
+                }), getSetAttribute || (nodeHook = {
+                    set: function(elem, value, name) {
+                        var ret = elem.getAttributeNode(name);
+                        return ret || elem.setAttributeNode(ret = elem.ownerDocument.createAttribute(name)), 
+                        ret.value = value += "", "value" === name || value === elem.getAttribute(name) ? value : void 0;
                     }
-                }, yc.id = yc.name = yc.coords = function(a, b, c) {
-                    var d;
-                    return c ? void 0 : (d = a.getAttributeNode(b)) && "" !== d.value ? d.value : null;
-                }, fb.valHooks.button = {
-                    get: function(a, b) {
-                        var c = a.getAttributeNode(b);
-                        return c && c.specified ? c.value : void 0;
+                }, attrHandle.id = attrHandle.name = attrHandle.coords = function(elem, name, isXML) {
+                    var ret;
+                    return isXML ? void 0 : (ret = elem.getAttributeNode(name)) && "" !== ret.value ? ret.value : null;
+                }, jQuery.valHooks.button = {
+                    get: function(elem, name) {
+                        var ret = elem.getAttributeNode(name);
+                        return ret && ret.specified ? ret.value : void 0;
                     },
-                    set: wc.set
-                }, fb.attrHooks.contenteditable = {
-                    set: function(a, b, c) {
-                        wc.set(a, "" === b ? !1 : b, c);
+                    set: nodeHook.set
+                }, jQuery.attrHooks.contenteditable = {
+                    set: function(elem, value, name) {
+                        nodeHook.set(elem, "" === value ? !1 : value, name);
                     }
-                }, fb.each([ "width", "height" ], function(a, b) {
-                    fb.attrHooks[b] = {
-                        set: function(a, c) {
-                            return "" === c ? (a.setAttribute(b, "auto"), c) : void 0;
+                }, jQuery.each([ "width", "height" ], function(i, name) {
+                    jQuery.attrHooks[name] = {
+                        set: function(elem, value) {
+                            return "" === value ? (elem.setAttribute(name, "auto"), value) : void 0;
                         }
                     };
-                })), db.style || (fb.attrHooks.style = {
-                    get: function(a) {
-                        return a.style.cssText || void 0;
+                })), support.style || (jQuery.attrHooks.style = {
+                    get: function(elem) {
+                        return elem.style.cssText || void 0;
                     },
-                    set: function(a, b) {
-                        return a.style.cssText = b + "";
+                    set: function(elem, value) {
+                        return elem.style.cssText = value + "";
                     }
                 });
-                var Cc = /^(?:input|select|textarea|button|object)$/i, Dc = /^(?:a|area)$/i;
-                fb.fn.extend({
-                    prop: function(a, b) {
-                        return Eb(this, fb.prop, a, b, arguments.length > 1);
+                var rfocusable = /^(?:input|select|textarea|button|object)$/i, rclickable = /^(?:a|area)$/i;
+                jQuery.fn.extend({
+                    prop: function(name, value) {
+                        return access(this, jQuery.prop, name, value, arguments.length > 1);
                     },
-                    removeProp: function(a) {
-                        return a = fb.propFix[a] || a, this.each(function() {
+                    removeProp: function(name) {
+                        return name = jQuery.propFix[name] || name, this.each(function() {
                             try {
-                                this[a] = void 0, delete this[a];
-                            } catch (b) {}
+                                this[name] = void 0, delete this[name];
+                            } catch (e) {}
                         });
                     }
-                }), fb.extend({
+                }), jQuery.extend({
                     propFix: {
                         "for": "htmlFor",
                         "class": "className"
                     },
-                    prop: function(a, b, c) {
-                        var d, e, f, g = a.nodeType;
-                        if (a && 3 !== g && 8 !== g && 2 !== g) return f = 1 !== g || !fb.isXMLDoc(a), f && (b = fb.propFix[b] || b, 
-                        e = fb.propHooks[b]), void 0 !== c ? e && "set" in e && void 0 !== (d = e.set(a, c, b)) ? d : a[b] = c : e && "get" in e && null !== (d = e.get(a, b)) ? d : a[b];
+                    prop: function(elem, name, value) {
+                        var ret, hooks, notxml, nType = elem.nodeType;
+                        if (elem && 3 !== nType && 8 !== nType && 2 !== nType) return notxml = 1 !== nType || !jQuery.isXMLDoc(elem), 
+                        notxml && (name = jQuery.propFix[name] || name, hooks = jQuery.propHooks[name]), 
+                        void 0 !== value ? hooks && "set" in hooks && void 0 !== (ret = hooks.set(elem, value, name)) ? ret : elem[name] = value : hooks && "get" in hooks && null !== (ret = hooks.get(elem, name)) ? ret : elem[name];
                     },
                     propHooks: {
                         tabIndex: {
-                            get: function(a) {
-                                var b = fb.find.attr(a, "tabindex");
-                                return b ? parseInt(b, 10) : Cc.test(a.nodeName) || Dc.test(a.nodeName) && a.href ? 0 : -1;
+                            get: function(elem) {
+                                var tabindex = jQuery.find.attr(elem, "tabindex");
+                                return tabindex ? parseInt(tabindex, 10) : rfocusable.test(elem.nodeName) || rclickable.test(elem.nodeName) && elem.href ? 0 : -1;
                             }
                         }
                     }
-                }), db.hrefNormalized || fb.each([ "href", "src" ], function(a, b) {
-                    fb.propHooks[b] = {
-                        get: function(a) {
-                            return a.getAttribute(b, 4);
+                }), support.hrefNormalized || jQuery.each([ "href", "src" ], function(i, name) {
+                    jQuery.propHooks[name] = {
+                        get: function(elem) {
+                            return elem.getAttribute(name, 4);
                         }
                     };
-                }), db.optSelected || (fb.propHooks.selected = {
-                    get: function(a) {
-                        var b = a.parentNode;
-                        return b && (b.selectedIndex, b.parentNode && b.parentNode.selectedIndex), null;
+                }), support.optSelected || (jQuery.propHooks.selected = {
+                    get: function(elem) {
+                        var parent = elem.parentNode;
+                        return parent && (parent.selectedIndex, parent.parentNode && parent.parentNode.selectedIndex), 
+                        null;
                     }
-                }), fb.each([ "tabIndex", "readOnly", "maxLength", "cellSpacing", "cellPadding", "rowSpan", "colSpan", "useMap", "frameBorder", "contentEditable" ], function() {
-                    fb.propFix[this.toLowerCase()] = this;
-                }), db.enctype || (fb.propFix.enctype = "encoding");
-                var Ec = /[\t\r\n\f]/g;
-                fb.fn.extend({
-                    addClass: function(a) {
-                        var b, c, d, e, f, g, h = 0, i = this.length, j = "string" == typeof a && a;
-                        if (fb.isFunction(a)) return this.each(function(b) {
-                            fb(this).addClass(a.call(this, b, this.className));
+                }), jQuery.each([ "tabIndex", "readOnly", "maxLength", "cellSpacing", "cellPadding", "rowSpan", "colSpan", "useMap", "frameBorder", "contentEditable" ], function() {
+                    jQuery.propFix[this.toLowerCase()] = this;
+                }), support.enctype || (jQuery.propFix.enctype = "encoding");
+                var rclass = /[\t\r\n\f]/g;
+                jQuery.fn.extend({
+                    addClass: function(value) {
+                        var classes, elem, cur, clazz, j, finalValue, i = 0, len = this.length, proceed = "string" == typeof value && value;
+                        if (jQuery.isFunction(value)) return this.each(function(j) {
+                            jQuery(this).addClass(value.call(this, j, this.className));
                         });
-                        if (j) for (b = (a || "").match(ub) || []; i > h; h++) if (c = this[h], d = 1 === c.nodeType && (c.className ? (" " + c.className + " ").replace(Ec, " ") : " ")) {
-                            for (f = 0; e = b[f++]; ) d.indexOf(" " + e + " ") < 0 && (d += e + " ");
-                            g = fb.trim(d), c.className !== g && (c.className = g);
+                        if (proceed) for (classes = (value || "").match(rnotwhite) || []; len > i; i++) if (elem = this[i], 
+                        cur = 1 === elem.nodeType && (elem.className ? (" " + elem.className + " ").replace(rclass, " ") : " ")) {
+                            for (j = 0; clazz = classes[j++]; ) cur.indexOf(" " + clazz + " ") < 0 && (cur += clazz + " ");
+                            finalValue = jQuery.trim(cur), elem.className !== finalValue && (elem.className = finalValue);
                         }
                         return this;
                     },
-                    removeClass: function(a) {
-                        var b, c, d, e, f, g, h = 0, i = this.length, j = 0 === arguments.length || "string" == typeof a && a;
-                        if (fb.isFunction(a)) return this.each(function(b) {
-                            fb(this).removeClass(a.call(this, b, this.className));
+                    removeClass: function(value) {
+                        var classes, elem, cur, clazz, j, finalValue, i = 0, len = this.length, proceed = 0 === arguments.length || "string" == typeof value && value;
+                        if (jQuery.isFunction(value)) return this.each(function(j) {
+                            jQuery(this).removeClass(value.call(this, j, this.className));
                         });
-                        if (j) for (b = (a || "").match(ub) || []; i > h; h++) if (c = this[h], d = 1 === c.nodeType && (c.className ? (" " + c.className + " ").replace(Ec, " ") : "")) {
-                            for (f = 0; e = b[f++]; ) for (;d.indexOf(" " + e + " ") >= 0; ) d = d.replace(" " + e + " ", " ");
-                            g = a ? fb.trim(d) : "", c.className !== g && (c.className = g);
+                        if (proceed) for (classes = (value || "").match(rnotwhite) || []; len > i; i++) if (elem = this[i], 
+                        cur = 1 === elem.nodeType && (elem.className ? (" " + elem.className + " ").replace(rclass, " ") : "")) {
+                            for (j = 0; clazz = classes[j++]; ) for (;cur.indexOf(" " + clazz + " ") >= 0; ) cur = cur.replace(" " + clazz + " ", " ");
+                            finalValue = value ? jQuery.trim(cur) : "", elem.className !== finalValue && (elem.className = finalValue);
                         }
                         return this;
                     },
-                    toggleClass: function(a, b) {
-                        var c = typeof a;
-                        return "boolean" == typeof b && "string" === c ? b ? this.addClass(a) : this.removeClass(a) : this.each(fb.isFunction(a) ? function(c) {
-                            fb(this).toggleClass(a.call(this, c, this.className, b), b);
+                    toggleClass: function(value, stateVal) {
+                        var type = typeof value;
+                        return "boolean" == typeof stateVal && "string" === type ? stateVal ? this.addClass(value) : this.removeClass(value) : this.each(jQuery.isFunction(value) ? function(i) {
+                            jQuery(this).toggleClass(value.call(this, i, this.className, stateVal), stateVal);
                         } : function() {
-                            if ("string" === c) for (var b, d = 0, e = fb(this), f = a.match(ub) || []; b = f[d++]; ) e.hasClass(b) ? e.removeClass(b) : e.addClass(b); else (c === yb || "boolean" === c) && (this.className && fb._data(this, "__className__", this.className), 
-                            this.className = this.className || a === !1 ? "" : fb._data(this, "__className__") || "");
+                            if ("string" === type) for (var className, i = 0, self = jQuery(this), classNames = value.match(rnotwhite) || []; className = classNames[i++]; ) self.hasClass(className) ? self.removeClass(className) : self.addClass(className); else (type === strundefined || "boolean" === type) && (this.className && jQuery._data(this, "__className__", this.className), 
+                            this.className = this.className || value === !1 ? "" : jQuery._data(this, "__className__") || "");
                         });
                     },
-                    hasClass: function(a) {
-                        for (var b = " " + a + " ", c = 0, d = this.length; d > c; c++) if (1 === this[c].nodeType && (" " + this[c].className + " ").replace(Ec, " ").indexOf(b) >= 0) return !0;
+                    hasClass: function(selector) {
+                        for (var className = " " + selector + " ", i = 0, l = this.length; l > i; i++) if (1 === this[i].nodeType && (" " + this[i].className + " ").replace(rclass, " ").indexOf(className) >= 0) return !0;
                         return !1;
                     }
-                }), fb.each("blur focus focusin focusout load resize scroll unload click dblclick mousedown mouseup mousemove mouseover mouseout mouseenter mouseleave change select submit keydown keypress keyup error contextmenu".split(" "), function(a, b) {
-                    fb.fn[b] = function(a, c) {
-                        return arguments.length > 0 ? this.on(b, null, a, c) : this.trigger(b);
+                }), jQuery.each("blur focus focusin focusout load resize scroll unload click dblclick mousedown mouseup mousemove mouseover mouseout mouseenter mouseleave change select submit keydown keypress keyup error contextmenu".split(" "), function(i, name) {
+                    jQuery.fn[name] = function(data, fn) {
+                        return arguments.length > 0 ? this.on(name, null, data, fn) : this.trigger(name);
                     };
-                }), fb.fn.extend({
-                    hover: function(a, b) {
-                        return this.mouseenter(a).mouseleave(b || a);
+                }), jQuery.fn.extend({
+                    hover: function(fnOver, fnOut) {
+                        return this.mouseenter(fnOver).mouseleave(fnOut || fnOver);
                     },
-                    bind: function(a, b, c) {
-                        return this.on(a, null, b, c);
+                    bind: function(types, data, fn) {
+                        return this.on(types, null, data, fn);
                     },
-                    unbind: function(a, b) {
-                        return this.off(a, null, b);
+                    unbind: function(types, fn) {
+                        return this.off(types, null, fn);
                     },
-                    delegate: function(a, b, c, d) {
-                        return this.on(b, a, c, d);
+                    delegate: function(selector, types, data, fn) {
+                        return this.on(types, selector, data, fn);
                     },
-                    undelegate: function(a, b, c) {
-                        return 1 === arguments.length ? this.off(a, "**") : this.off(b, a || "**", c);
+                    undelegate: function(selector, types, fn) {
+                        return 1 === arguments.length ? this.off(selector, "**") : this.off(types, selector || "**", fn);
                     }
                 });
-                var Fc = fb.now(), Gc = /\?/, Hc = /(,)|(\[|{)|(}|])|"(?:[^"\\\r\n]|\\["\\\/bfnrt]|\\u[\da-fA-F]{4})*"\s*:?|true|false|null|-?(?!0\d)\d+(?:\.\d+|)(?:[eE][+-]?\d+|)/g;
-                fb.parseJSON = function(a) {
-                    if (b.JSON && b.JSON.parse) return b.JSON.parse(a + "");
-                    var c, d = null, e = fb.trim(a + "");
-                    return e && !fb.trim(e.replace(Hc, function(a, b, e, f) {
-                        return c && b && (d = 0), 0 === d ? a : (c = e || b, d += !f - !e, "");
-                    })) ? Function("return " + e)() : fb.error("Invalid JSON: " + a);
-                }, fb.parseXML = function(a) {
-                    var c, d;
-                    if (!a || "string" != typeof a) return null;
+                var nonce = jQuery.now(), rquery = /\?/, rvalidtokens = /(,)|(\[|{)|(}|])|"(?:[^"\\\r\n]|\\["\\\/bfnrt]|\\u[\da-fA-F]{4})*"\s*:?|true|false|null|-?(?!0\d)\d+(?:\.\d+|)(?:[eE][+-]?\d+|)/g;
+                jQuery.parseJSON = function(data) {
+                    if (window.JSON && window.JSON.parse) return window.JSON.parse(data + "");
+                    var requireNonComma, depth = null, str = jQuery.trim(data + "");
+                    return str && !jQuery.trim(str.replace(rvalidtokens, function(token, comma, open, close) {
+                        return requireNonComma && comma && (depth = 0), 0 === depth ? token : (requireNonComma = open || comma, 
+                        depth += !close - !open, "");
+                    })) ? Function("return " + str)() : jQuery.error("Invalid JSON: " + data);
+                }, jQuery.parseXML = function(data) {
+                    var xml, tmp;
+                    if (!data || "string" != typeof data) return null;
                     try {
-                        b.DOMParser ? (d = new DOMParser(), c = d.parseFromString(a, "text/xml")) : (c = new ActiveXObject("Microsoft.XMLDOM"), 
-                        c.async = "false", c.loadXML(a));
+                        window.DOMParser ? (tmp = new DOMParser(), xml = tmp.parseFromString(data, "text/xml")) : (xml = new ActiveXObject("Microsoft.XMLDOM"), 
+                        xml.async = "false", xml.loadXML(data));
                     } catch (e) {
-                        c = void 0;
+                        xml = void 0;
                     }
-                    return c && c.documentElement && !c.getElementsByTagName("parsererror").length || fb.error("Invalid XML: " + a), 
-                    c;
+                    return xml && xml.documentElement && !xml.getElementsByTagName("parsererror").length || jQuery.error("Invalid XML: " + data), 
+                    xml;
                 };
-                var Ic, Jc, Kc = /#.*$/, Lc = /([?&])_=[^&]*/, Mc = /^(.*?):[ \t]*([^\r\n]*)\r?$/gm, Nc = /^(?:about|app|app-storage|.+-extension|file|res|widget):$/, Oc = /^(?:GET|HEAD)$/, Pc = /^\/\//, Qc = /^([\w.+-]+:)(?:\/\/(?:[^\/?#]*@|)([^\/?#:]*)(?::(\d+)|)|)/, Rc = {}, Sc = {}, Tc = "*/".concat("*");
+                var ajaxLocParts, ajaxLocation, rhash = /#.*$/, rts = /([?&])_=[^&]*/, rheaders = /^(.*?):[ \t]*([^\r\n]*)\r?$/gm, rlocalProtocol = /^(?:about|app|app-storage|.+-extension|file|res|widget):$/, rnoContent = /^(?:GET|HEAD)$/, rprotocol = /^\/\//, rurl = /^([\w.+-]+:)(?:\/\/(?:[^\/?#]*@|)([^\/?#:]*)(?::(\d+)|)|)/, prefilters = {}, transports = {}, allTypes = "*/".concat("*");
                 try {
-                    Jc = location.href;
-                } catch (Uc) {
-                    Jc = pb.createElement("a"), Jc.href = "", Jc = Jc.href;
+                    ajaxLocation = location.href;
+                } catch (e) {
+                    ajaxLocation = document.createElement("a"), ajaxLocation.href = "", ajaxLocation = ajaxLocation.href;
                 }
-                Ic = Qc.exec(Jc.toLowerCase()) || [], fb.extend({
+                ajaxLocParts = rurl.exec(ajaxLocation.toLowerCase()) || [], jQuery.extend({
                     active: 0,
                     lastModified: {},
                     etag: {},
                     ajaxSettings: {
-                        url: Jc,
+                        url: ajaxLocation,
                         type: "GET",
-                        isLocal: Nc.test(Ic[1]),
+                        isLocal: rlocalProtocol.test(ajaxLocParts[1]),
                         global: !0,
                         processData: !0,
                         async: !0,
                         contentType: "application/x-www-form-urlencoded; charset=UTF-8",
                         accepts: {
-                            "*": Tc,
+                            "*": allTypes,
                             text: "text/plain",
                             html: "text/html",
                             xml: "application/xml, text/xml",
@@ -2950,230 +3058,245 @@
                         converters: {
                             "* text": String,
                             "text html": !0,
-                            "text json": fb.parseJSON,
-                            "text xml": fb.parseXML
+                            "text json": jQuery.parseJSON,
+                            "text xml": jQuery.parseXML
                         },
                         flatOptions: {
                             url: !0,
                             context: !0
                         }
                     },
-                    ajaxSetup: function(a, b) {
-                        return b ? Q(Q(a, fb.ajaxSettings), b) : Q(fb.ajaxSettings, a);
+                    ajaxSetup: function(target, settings) {
+                        return settings ? ajaxExtend(ajaxExtend(target, jQuery.ajaxSettings), settings) : ajaxExtend(jQuery.ajaxSettings, target);
                     },
-                    ajaxPrefilter: O(Rc),
-                    ajaxTransport: O(Sc),
-                    ajax: function(a, b) {
-                        function c(a, b, c, d) {
-                            var e, k, r, s, u, w = b;
-                            2 !== t && (t = 2, h && clearTimeout(h), j = void 0, g = d || "", v.readyState = a > 0 ? 4 : 0, 
-                            e = a >= 200 && 300 > a || 304 === a, c && (s = R(l, v, c)), s = S(l, s, v, e), 
-                            e ? (l.ifModified && (u = v.getResponseHeader("Last-Modified"), u && (fb.lastModified[f] = u), 
-                            u = v.getResponseHeader("etag"), u && (fb.etag[f] = u)), 204 === a || "HEAD" === l.type ? w = "nocontent" : 304 === a ? w = "notmodified" : (w = s.state, 
-                            k = s.data, r = s.error, e = !r)) : (r = w, (a || !w) && (w = "error", 0 > a && (a = 0))), 
-                            v.status = a, v.statusText = (b || w) + "", e ? o.resolveWith(m, [ k, w, v ]) : o.rejectWith(m, [ v, w, r ]), 
-                            v.statusCode(q), q = void 0, i && n.trigger(e ? "ajaxSuccess" : "ajaxError", [ v, l, e ? k : r ]), 
-                            p.fireWith(m, [ v, w ]), i && (n.trigger("ajaxComplete", [ v, l ]), --fb.active || fb.event.trigger("ajaxStop")));
+                    ajaxPrefilter: addToPrefiltersOrTransports(prefilters),
+                    ajaxTransport: addToPrefiltersOrTransports(transports),
+                    ajax: function(url, options) {
+                        function done(status, nativeStatusText, responses, headers) {
+                            var isSuccess, success, error, response, modified, statusText = nativeStatusText;
+                            2 !== state && (state = 2, timeoutTimer && clearTimeout(timeoutTimer), transport = void 0, 
+                            responseHeadersString = headers || "", jqXHR.readyState = status > 0 ? 4 : 0, isSuccess = status >= 200 && 300 > status || 304 === status, 
+                            responses && (response = ajaxHandleResponses(s, jqXHR, responses)), response = ajaxConvert(s, response, jqXHR, isSuccess), 
+                            isSuccess ? (s.ifModified && (modified = jqXHR.getResponseHeader("Last-Modified"), 
+                            modified && (jQuery.lastModified[cacheURL] = modified), modified = jqXHR.getResponseHeader("etag"), 
+                            modified && (jQuery.etag[cacheURL] = modified)), 204 === status || "HEAD" === s.type ? statusText = "nocontent" : 304 === status ? statusText = "notmodified" : (statusText = response.state, 
+                            success = response.data, error = response.error, isSuccess = !error)) : (error = statusText, 
+                            (status || !statusText) && (statusText = "error", 0 > status && (status = 0))), 
+                            jqXHR.status = status, jqXHR.statusText = (nativeStatusText || statusText) + "", 
+                            isSuccess ? deferred.resolveWith(callbackContext, [ success, statusText, jqXHR ]) : deferred.rejectWith(callbackContext, [ jqXHR, statusText, error ]), 
+                            jqXHR.statusCode(statusCode), statusCode = void 0, fireGlobals && globalEventContext.trigger(isSuccess ? "ajaxSuccess" : "ajaxError", [ jqXHR, s, isSuccess ? success : error ]), 
+                            completeDeferred.fireWith(callbackContext, [ jqXHR, statusText ]), fireGlobals && (globalEventContext.trigger("ajaxComplete", [ jqXHR, s ]), 
+                            --jQuery.active || jQuery.event.trigger("ajaxStop")));
                         }
-                        "object" == typeof a && (b = a, a = void 0), b = b || {};
-                        var d, e, f, g, h, i, j, k, l = fb.ajaxSetup({}, b), m = l.context || l, n = l.context && (m.nodeType || m.jquery) ? fb(m) : fb.event, o = fb.Deferred(), p = fb.Callbacks("once memory"), q = l.statusCode || {}, r = {}, s = {}, t = 0, u = "canceled", v = {
+                        "object" == typeof url && (options = url, url = void 0), options = options || {};
+                        var parts, i, cacheURL, responseHeadersString, timeoutTimer, fireGlobals, transport, responseHeaders, s = jQuery.ajaxSetup({}, options), callbackContext = s.context || s, globalEventContext = s.context && (callbackContext.nodeType || callbackContext.jquery) ? jQuery(callbackContext) : jQuery.event, deferred = jQuery.Deferred(), completeDeferred = jQuery.Callbacks("once memory"), statusCode = s.statusCode || {}, requestHeaders = {}, requestHeadersNames = {}, state = 0, strAbort = "canceled", jqXHR = {
                             readyState: 0,
-                            getResponseHeader: function(a) {
-                                var b;
-                                if (2 === t) {
-                                    if (!k) for (k = {}; b = Mc.exec(g); ) k[b[1].toLowerCase()] = b[2];
-                                    b = k[a.toLowerCase()];
+                            getResponseHeader: function(key) {
+                                var match;
+                                if (2 === state) {
+                                    if (!responseHeaders) for (responseHeaders = {}; match = rheaders.exec(responseHeadersString); ) responseHeaders[match[1].toLowerCase()] = match[2];
+                                    match = responseHeaders[key.toLowerCase()];
                                 }
-                                return null == b ? null : b;
+                                return null == match ? null : match;
                             },
                             getAllResponseHeaders: function() {
-                                return 2 === t ? g : null;
+                                return 2 === state ? responseHeadersString : null;
                             },
-                            setRequestHeader: function(a, b) {
-                                var c = a.toLowerCase();
-                                return t || (a = s[c] = s[c] || a, r[a] = b), this;
+                            setRequestHeader: function(name, value) {
+                                var lname = name.toLowerCase();
+                                return state || (name = requestHeadersNames[lname] = requestHeadersNames[lname] || name, 
+                                requestHeaders[name] = value), this;
                             },
-                            overrideMimeType: function(a) {
-                                return t || (l.mimeType = a), this;
+                            overrideMimeType: function(type) {
+                                return state || (s.mimeType = type), this;
                             },
-                            statusCode: function(a) {
-                                var b;
-                                if (a) if (2 > t) for (b in a) q[b] = [ q[b], a[b] ]; else v.always(a[v.status]);
+                            statusCode: function(map) {
+                                var code;
+                                if (map) if (2 > state) for (code in map) statusCode[code] = [ statusCode[code], map[code] ]; else jqXHR.always(map[jqXHR.status]);
                                 return this;
                             },
-                            abort: function(a) {
-                                var b = a || u;
-                                return j && j.abort(b), c(0, b), this;
+                            abort: function(statusText) {
+                                var finalText = statusText || strAbort;
+                                return transport && transport.abort(finalText), done(0, finalText), this;
                             }
                         };
-                        if (o.promise(v).complete = p.add, v.success = v.done, v.error = v.fail, l.url = ((a || l.url || Jc) + "").replace(Kc, "").replace(Pc, Ic[1] + "//"), 
-                        l.type = b.method || b.type || l.method || l.type, l.dataTypes = fb.trim(l.dataType || "*").toLowerCase().match(ub) || [ "" ], 
-                        null == l.crossDomain && (d = Qc.exec(l.url.toLowerCase()), l.crossDomain = !(!d || d[1] === Ic[1] && d[2] === Ic[2] && (d[3] || ("http:" === d[1] ? "80" : "443")) === (Ic[3] || ("http:" === Ic[1] ? "80" : "443")))), 
-                        l.data && l.processData && "string" != typeof l.data && (l.data = fb.param(l.data, l.traditional)), 
-                        P(Rc, l, b, v), 2 === t) return v;
-                        i = l.global, i && 0 === fb.active++ && fb.event.trigger("ajaxStart"), l.type = l.type.toUpperCase(), 
-                        l.hasContent = !Oc.test(l.type), f = l.url, l.hasContent || (l.data && (f = l.url += (Gc.test(f) ? "&" : "?") + l.data, 
-                        delete l.data), l.cache === !1 && (l.url = Lc.test(f) ? f.replace(Lc, "$1_=" + Fc++) : f + (Gc.test(f) ? "&" : "?") + "_=" + Fc++)), 
-                        l.ifModified && (fb.lastModified[f] && v.setRequestHeader("If-Modified-Since", fb.lastModified[f]), 
-                        fb.etag[f] && v.setRequestHeader("If-None-Match", fb.etag[f])), (l.data && l.hasContent && l.contentType !== !1 || b.contentType) && v.setRequestHeader("Content-Type", l.contentType), 
-                        v.setRequestHeader("Accept", l.dataTypes[0] && l.accepts[l.dataTypes[0]] ? l.accepts[l.dataTypes[0]] + ("*" !== l.dataTypes[0] ? ", " + Tc + "; q=0.01" : "") : l.accepts["*"]);
-                        for (e in l.headers) v.setRequestHeader(e, l.headers[e]);
-                        if (l.beforeSend && (l.beforeSend.call(m, v, l) === !1 || 2 === t)) return v.abort();
-                        u = "abort";
-                        for (e in {
+                        if (deferred.promise(jqXHR).complete = completeDeferred.add, jqXHR.success = jqXHR.done, 
+                        jqXHR.error = jqXHR.fail, s.url = ((url || s.url || ajaxLocation) + "").replace(rhash, "").replace(rprotocol, ajaxLocParts[1] + "//"), 
+                        s.type = options.method || options.type || s.method || s.type, s.dataTypes = jQuery.trim(s.dataType || "*").toLowerCase().match(rnotwhite) || [ "" ], 
+                        null == s.crossDomain && (parts = rurl.exec(s.url.toLowerCase()), s.crossDomain = !(!parts || parts[1] === ajaxLocParts[1] && parts[2] === ajaxLocParts[2] && (parts[3] || ("http:" === parts[1] ? "80" : "443")) === (ajaxLocParts[3] || ("http:" === ajaxLocParts[1] ? "80" : "443")))), 
+                        s.data && s.processData && "string" != typeof s.data && (s.data = jQuery.param(s.data, s.traditional)), 
+                        inspectPrefiltersOrTransports(prefilters, s, options, jqXHR), 2 === state) return jqXHR;
+                        fireGlobals = s.global, fireGlobals && 0 === jQuery.active++ && jQuery.event.trigger("ajaxStart"), 
+                        s.type = s.type.toUpperCase(), s.hasContent = !rnoContent.test(s.type), cacheURL = s.url, 
+                        s.hasContent || (s.data && (cacheURL = s.url += (rquery.test(cacheURL) ? "&" : "?") + s.data, 
+                        delete s.data), s.cache === !1 && (s.url = rts.test(cacheURL) ? cacheURL.replace(rts, "$1_=" + nonce++) : cacheURL + (rquery.test(cacheURL) ? "&" : "?") + "_=" + nonce++)), 
+                        s.ifModified && (jQuery.lastModified[cacheURL] && jqXHR.setRequestHeader("If-Modified-Since", jQuery.lastModified[cacheURL]), 
+                        jQuery.etag[cacheURL] && jqXHR.setRequestHeader("If-None-Match", jQuery.etag[cacheURL])), 
+                        (s.data && s.hasContent && s.contentType !== !1 || options.contentType) && jqXHR.setRequestHeader("Content-Type", s.contentType), 
+                        jqXHR.setRequestHeader("Accept", s.dataTypes[0] && s.accepts[s.dataTypes[0]] ? s.accepts[s.dataTypes[0]] + ("*" !== s.dataTypes[0] ? ", " + allTypes + "; q=0.01" : "") : s.accepts["*"]);
+                        for (i in s.headers) jqXHR.setRequestHeader(i, s.headers[i]);
+                        if (s.beforeSend && (s.beforeSend.call(callbackContext, jqXHR, s) === !1 || 2 === state)) return jqXHR.abort();
+                        strAbort = "abort";
+                        for (i in {
                             success: 1,
                             error: 1,
                             complete: 1
-                        }) v[e](l[e]);
-                        if (j = P(Sc, l, b, v)) {
-                            v.readyState = 1, i && n.trigger("ajaxSend", [ v, l ]), l.async && l.timeout > 0 && (h = setTimeout(function() {
-                                v.abort("timeout");
-                            }, l.timeout));
+                        }) jqXHR[i](s[i]);
+                        if (transport = inspectPrefiltersOrTransports(transports, s, options, jqXHR)) {
+                            jqXHR.readyState = 1, fireGlobals && globalEventContext.trigger("ajaxSend", [ jqXHR, s ]), 
+                            s.async && s.timeout > 0 && (timeoutTimer = setTimeout(function() {
+                                jqXHR.abort("timeout");
+                            }, s.timeout));
                             try {
-                                t = 1, j.send(r, c);
-                            } catch (w) {
-                                if (!(2 > t)) throw w;
-                                c(-1, w);
+                                state = 1, transport.send(requestHeaders, done);
+                            } catch (e) {
+                                if (!(2 > state)) throw e;
+                                done(-1, e);
                             }
-                        } else c(-1, "No Transport");
-                        return v;
+                        } else done(-1, "No Transport");
+                        return jqXHR;
                     },
-                    getJSON: function(a, b, c) {
-                        return fb.get(a, b, c, "json");
+                    getJSON: function(url, data, callback) {
+                        return jQuery.get(url, data, callback, "json");
                     },
-                    getScript: function(a, b) {
-                        return fb.get(a, void 0, b, "script");
+                    getScript: function(url, callback) {
+                        return jQuery.get(url, void 0, callback, "script");
                     }
-                }), fb.each([ "get", "post" ], function(a, b) {
-                    fb[b] = function(a, c, d, e) {
-                        return fb.isFunction(c) && (e = e || d, d = c, c = void 0), fb.ajax({
-                            url: a,
-                            type: b,
-                            dataType: e,
-                            data: c,
-                            success: d
+                }), jQuery.each([ "get", "post" ], function(i, method) {
+                    jQuery[method] = function(url, data, callback, type) {
+                        return jQuery.isFunction(data) && (type = type || callback, callback = data, data = void 0), 
+                        jQuery.ajax({
+                            url: url,
+                            type: method,
+                            dataType: type,
+                            data: data,
+                            success: callback
                         });
                     };
-                }), fb.each([ "ajaxStart", "ajaxStop", "ajaxComplete", "ajaxError", "ajaxSuccess", "ajaxSend" ], function(a, b) {
-                    fb.fn[b] = function(a) {
-                        return this.on(b, a);
+                }), jQuery.each([ "ajaxStart", "ajaxStop", "ajaxComplete", "ajaxError", "ajaxSuccess", "ajaxSend" ], function(i, type) {
+                    jQuery.fn[type] = function(fn) {
+                        return this.on(type, fn);
                     };
-                }), fb._evalUrl = function(a) {
-                    return fb.ajax({
-                        url: a,
+                }), jQuery._evalUrl = function(url) {
+                    return jQuery.ajax({
+                        url: url,
                         type: "GET",
                         dataType: "script",
                         async: !1,
                         global: !1,
                         "throws": !0
                     });
-                }, fb.fn.extend({
-                    wrapAll: function(a) {
-                        if (fb.isFunction(a)) return this.each(function(b) {
-                            fb(this).wrapAll(a.call(this, b));
+                }, jQuery.fn.extend({
+                    wrapAll: function(html) {
+                        if (jQuery.isFunction(html)) return this.each(function(i) {
+                            jQuery(this).wrapAll(html.call(this, i));
                         });
                         if (this[0]) {
-                            var b = fb(a, this[0].ownerDocument).eq(0).clone(!0);
-                            this[0].parentNode && b.insertBefore(this[0]), b.map(function() {
-                                for (var a = this; a.firstChild && 1 === a.firstChild.nodeType; ) a = a.firstChild;
-                                return a;
+                            var wrap = jQuery(html, this[0].ownerDocument).eq(0).clone(!0);
+                            this[0].parentNode && wrap.insertBefore(this[0]), wrap.map(function() {
+                                for (var elem = this; elem.firstChild && 1 === elem.firstChild.nodeType; ) elem = elem.firstChild;
+                                return elem;
                             }).append(this);
                         }
                         return this;
                     },
-                    wrapInner: function(a) {
-                        return this.each(fb.isFunction(a) ? function(b) {
-                            fb(this).wrapInner(a.call(this, b));
+                    wrapInner: function(html) {
+                        return this.each(jQuery.isFunction(html) ? function(i) {
+                            jQuery(this).wrapInner(html.call(this, i));
                         } : function() {
-                            var b = fb(this), c = b.contents();
-                            c.length ? c.wrapAll(a) : b.append(a);
+                            var self = jQuery(this), contents = self.contents();
+                            contents.length ? contents.wrapAll(html) : self.append(html);
                         });
                     },
-                    wrap: function(a) {
-                        var b = fb.isFunction(a);
-                        return this.each(function(c) {
-                            fb(this).wrapAll(b ? a.call(this, c) : a);
+                    wrap: function(html) {
+                        var isFunction = jQuery.isFunction(html);
+                        return this.each(function(i) {
+                            jQuery(this).wrapAll(isFunction ? html.call(this, i) : html);
                         });
                     },
                     unwrap: function() {
                         return this.parent().each(function() {
-                            fb.nodeName(this, "body") || fb(this).replaceWith(this.childNodes);
+                            jQuery.nodeName(this, "body") || jQuery(this).replaceWith(this.childNodes);
                         }).end();
                     }
-                }), fb.expr.filters.hidden = function(a) {
-                    return a.offsetWidth <= 0 && a.offsetHeight <= 0 || !db.reliableHiddenOffsets() && "none" === (a.style && a.style.display || fb.css(a, "display"));
-                }, fb.expr.filters.visible = function(a) {
-                    return !fb.expr.filters.hidden(a);
+                }), jQuery.expr.filters.hidden = function(elem) {
+                    return elem.offsetWidth <= 0 && elem.offsetHeight <= 0 || !support.reliableHiddenOffsets() && "none" === (elem.style && elem.style.display || jQuery.css(elem, "display"));
+                }, jQuery.expr.filters.visible = function(elem) {
+                    return !jQuery.expr.filters.hidden(elem);
                 };
-                var Vc = /%20/g, Wc = /\[\]$/, Xc = /\r?\n/g, Yc = /^(?:submit|button|image|reset|file)$/i, Zc = /^(?:input|select|textarea|keygen)/i;
-                fb.param = function(a, b) {
-                    var c, d = [], e = function(a, b) {
-                        b = fb.isFunction(b) ? b() : null == b ? "" : b, d[d.length] = encodeURIComponent(a) + "=" + encodeURIComponent(b);
+                var r20 = /%20/g, rbracket = /\[\]$/, rCRLF = /\r?\n/g, rsubmitterTypes = /^(?:submit|button|image|reset|file)$/i, rsubmittable = /^(?:input|select|textarea|keygen)/i;
+                jQuery.param = function(a, traditional) {
+                    var prefix, s = [], add = function(key, value) {
+                        value = jQuery.isFunction(value) ? value() : null == value ? "" : value, s[s.length] = encodeURIComponent(key) + "=" + encodeURIComponent(value);
                     };
-                    if (void 0 === b && (b = fb.ajaxSettings && fb.ajaxSettings.traditional), fb.isArray(a) || a.jquery && !fb.isPlainObject(a)) fb.each(a, function() {
-                        e(this.name, this.value);
-                    }); else for (c in a) T(c, a[c], b, e);
-                    return d.join("&").replace(Vc, "+");
-                }, fb.fn.extend({
+                    if (void 0 === traditional && (traditional = jQuery.ajaxSettings && jQuery.ajaxSettings.traditional), 
+                    jQuery.isArray(a) || a.jquery && !jQuery.isPlainObject(a)) jQuery.each(a, function() {
+                        add(this.name, this.value);
+                    }); else for (prefix in a) buildParams(prefix, a[prefix], traditional, add);
+                    return s.join("&").replace(r20, "+");
+                }, jQuery.fn.extend({
                     serialize: function() {
-                        return fb.param(this.serializeArray());
+                        return jQuery.param(this.serializeArray());
                     },
                     serializeArray: function() {
                         return this.map(function() {
-                            var a = fb.prop(this, "elements");
-                            return a ? fb.makeArray(a) : this;
+                            var elements = jQuery.prop(this, "elements");
+                            return elements ? jQuery.makeArray(elements) : this;
                         }).filter(function() {
-                            var a = this.type;
-                            return this.name && !fb(this).is(":disabled") && Zc.test(this.nodeName) && !Yc.test(a) && (this.checked || !Fb.test(a));
-                        }).map(function(a, b) {
-                            var c = fb(this).val();
-                            return null == c ? null : fb.isArray(c) ? fb.map(c, function(a) {
+                            var type = this.type;
+                            return this.name && !jQuery(this).is(":disabled") && rsubmittable.test(this.nodeName) && !rsubmitterTypes.test(type) && (this.checked || !rcheckableType.test(type));
+                        }).map(function(i, elem) {
+                            var val = jQuery(this).val();
+                            return null == val ? null : jQuery.isArray(val) ? jQuery.map(val, function(val) {
                                 return {
-                                    name: b.name,
-                                    value: a.replace(Xc, "\r\n")
+                                    name: elem.name,
+                                    value: val.replace(rCRLF, "\r\n")
                                 };
                             }) : {
-                                name: b.name,
-                                value: c.replace(Xc, "\r\n")
+                                name: elem.name,
+                                value: val.replace(rCRLF, "\r\n")
                             };
                         }).get();
                     }
-                }), fb.ajaxSettings.xhr = void 0 !== b.ActiveXObject ? function() {
-                    return !this.isLocal && /^(get|post|head|put|delete|options)$/i.test(this.type) && U() || V();
-                } : U;
-                var $c = 0, _c = {}, ad = fb.ajaxSettings.xhr();
-                b.ActiveXObject && fb(b).on("unload", function() {
-                    for (var a in _c) _c[a](void 0, !0);
-                }), db.cors = !!ad && "withCredentials" in ad, ad = db.ajax = !!ad, ad && fb.ajaxTransport(function(a) {
-                    if (!a.crossDomain || db.cors) {
-                        var b;
+                }), jQuery.ajaxSettings.xhr = void 0 !== window.ActiveXObject ? function() {
+                    return !this.isLocal && /^(get|post|head|put|delete|options)$/i.test(this.type) && createStandardXHR() || createActiveXHR();
+                } : createStandardXHR;
+                var xhrId = 0, xhrCallbacks = {}, xhrSupported = jQuery.ajaxSettings.xhr();
+                window.ActiveXObject && jQuery(window).on("unload", function() {
+                    for (var key in xhrCallbacks) xhrCallbacks[key](void 0, !0);
+                }), support.cors = !!xhrSupported && "withCredentials" in xhrSupported, xhrSupported = support.ajax = !!xhrSupported, 
+                xhrSupported && jQuery.ajaxTransport(function(options) {
+                    if (!options.crossDomain || support.cors) {
+                        var callback;
                         return {
-                            send: function(c, d) {
-                                var e, f = a.xhr(), g = ++$c;
-                                if (f.open(a.type, a.url, a.async, a.username, a.password), a.xhrFields) for (e in a.xhrFields) f[e] = a.xhrFields[e];
-                                a.mimeType && f.overrideMimeType && f.overrideMimeType(a.mimeType), a.crossDomain || c["X-Requested-With"] || (c["X-Requested-With"] = "XMLHttpRequest");
-                                for (e in c) void 0 !== c[e] && f.setRequestHeader(e, c[e] + "");
-                                f.send(a.hasContent && a.data || null), b = function(c, e) {
-                                    var h, i, j;
-                                    if (b && (e || 4 === f.readyState)) if (delete _c[g], b = void 0, f.onreadystatechange = fb.noop, 
-                                    e) 4 !== f.readyState && f.abort(); else {
-                                        j = {}, h = f.status, "string" == typeof f.responseText && (j.text = f.responseText);
+                            send: function(headers, complete) {
+                                var i, xhr = options.xhr(), id = ++xhrId;
+                                if (xhr.open(options.type, options.url, options.async, options.username, options.password), 
+                                options.xhrFields) for (i in options.xhrFields) xhr[i] = options.xhrFields[i];
+                                options.mimeType && xhr.overrideMimeType && xhr.overrideMimeType(options.mimeType), 
+                                options.crossDomain || headers["X-Requested-With"] || (headers["X-Requested-With"] = "XMLHttpRequest");
+                                for (i in headers) void 0 !== headers[i] && xhr.setRequestHeader(i, headers[i] + "");
+                                xhr.send(options.hasContent && options.data || null), callback = function(_, isAbort) {
+                                    var status, statusText, responses;
+                                    if (callback && (isAbort || 4 === xhr.readyState)) if (delete xhrCallbacks[id], 
+                                    callback = void 0, xhr.onreadystatechange = jQuery.noop, isAbort) 4 !== xhr.readyState && xhr.abort(); else {
+                                        responses = {}, status = xhr.status, "string" == typeof xhr.responseText && (responses.text = xhr.responseText);
                                         try {
-                                            i = f.statusText;
-                                        } catch (k) {
-                                            i = "";
+                                            statusText = xhr.statusText;
+                                        } catch (e) {
+                                            statusText = "";
                                         }
-                                        h || !a.isLocal || a.crossDomain ? 1223 === h && (h = 204) : h = j.text ? 200 : 404;
+                                        status || !options.isLocal || options.crossDomain ? 1223 === status && (status = 204) : status = responses.text ? 200 : 404;
                                     }
-                                    j && d(h, i, j, f.getAllResponseHeaders());
-                                }, a.async ? 4 === f.readyState ? setTimeout(b) : f.onreadystatechange = _c[g] = b : b();
+                                    responses && complete(status, statusText, responses, xhr.getAllResponseHeaders());
+                                }, options.async ? 4 === xhr.readyState ? setTimeout(callback) : xhr.onreadystatechange = xhrCallbacks[id] = callback : callback();
                             },
                             abort: function() {
-                                b && b(void 0, !0);
+                                callback && callback(void 0, !0);
                             }
                         };
                     }
-                }), fb.ajaxSetup({
+                }), jQuery.ajaxSetup({
                     accepts: {
                         script: "text/javascript, application/javascript, application/ecmascript, application/x-ecmascript"
                     },
@@ -3181,290 +3304,305 @@
                         script: /(?:java|ecma)script/
                     },
                     converters: {
-                        "text script": function(a) {
-                            return fb.globalEval(a), a;
+                        "text script": function(text) {
+                            return jQuery.globalEval(text), text;
                         }
                     }
-                }), fb.ajaxPrefilter("script", function(a) {
-                    void 0 === a.cache && (a.cache = !1), a.crossDomain && (a.type = "GET", a.global = !1);
-                }), fb.ajaxTransport("script", function(a) {
-                    if (a.crossDomain) {
-                        var b, c = pb.head || fb("head")[0] || pb.documentElement;
+                }), jQuery.ajaxPrefilter("script", function(s) {
+                    void 0 === s.cache && (s.cache = !1), s.crossDomain && (s.type = "GET", s.global = !1);
+                }), jQuery.ajaxTransport("script", function(s) {
+                    if (s.crossDomain) {
+                        var script, head = document.head || jQuery("head")[0] || document.documentElement;
                         return {
-                            send: function(d, e) {
-                                b = pb.createElement("script"), b.async = !0, a.scriptCharset && (b.charset = a.scriptCharset), 
-                                b.src = a.url, b.onload = b.onreadystatechange = function(a, c) {
-                                    (c || !b.readyState || /loaded|complete/.test(b.readyState)) && (b.onload = b.onreadystatechange = null, 
-                                    b.parentNode && b.parentNode.removeChild(b), b = null, c || e(200, "success"));
-                                }, c.insertBefore(b, c.firstChild);
+                            send: function(_, callback) {
+                                script = document.createElement("script"), script.async = !0, s.scriptCharset && (script.charset = s.scriptCharset), 
+                                script.src = s.url, script.onload = script.onreadystatechange = function(_, isAbort) {
+                                    (isAbort || !script.readyState || /loaded|complete/.test(script.readyState)) && (script.onload = script.onreadystatechange = null, 
+                                    script.parentNode && script.parentNode.removeChild(script), script = null, isAbort || callback(200, "success"));
+                                }, head.insertBefore(script, head.firstChild);
                             },
                             abort: function() {
-                                b && b.onload(void 0, !0);
+                                script && script.onload(void 0, !0);
                             }
                         };
                     }
                 });
-                var bd = [], cd = /(=)\?(?=&|$)|\?\?/;
-                fb.ajaxSetup({
+                var oldCallbacks = [], rjsonp = /(=)\?(?=&|$)|\?\?/;
+                jQuery.ajaxSetup({
                     jsonp: "callback",
                     jsonpCallback: function() {
-                        var a = bd.pop() || fb.expando + "_" + Fc++;
-                        return this[a] = !0, a;
+                        var callback = oldCallbacks.pop() || jQuery.expando + "_" + nonce++;
+                        return this[callback] = !0, callback;
                     }
-                }), fb.ajaxPrefilter("json jsonp", function(a, c, d) {
-                    var e, f, g, h = a.jsonp !== !1 && (cd.test(a.url) ? "url" : "string" == typeof a.data && !(a.contentType || "").indexOf("application/x-www-form-urlencoded") && cd.test(a.data) && "data");
-                    return h || "jsonp" === a.dataTypes[0] ? (e = a.jsonpCallback = fb.isFunction(a.jsonpCallback) ? a.jsonpCallback() : a.jsonpCallback, 
-                    h ? a[h] = a[h].replace(cd, "$1" + e) : a.jsonp !== !1 && (a.url += (Gc.test(a.url) ? "&" : "?") + a.jsonp + "=" + e), 
-                    a.converters["script json"] = function() {
-                        return g || fb.error(e + " was not called"), g[0];
-                    }, a.dataTypes[0] = "json", f = b[e], b[e] = function() {
-                        g = arguments;
-                    }, d.always(function() {
-                        b[e] = f, a[e] && (a.jsonpCallback = c.jsonpCallback, bd.push(e)), g && fb.isFunction(f) && f(g[0]), 
-                        g = f = void 0;
+                }), jQuery.ajaxPrefilter("json jsonp", function(s, originalSettings, jqXHR) {
+                    var callbackName, overwritten, responseContainer, jsonProp = s.jsonp !== !1 && (rjsonp.test(s.url) ? "url" : "string" == typeof s.data && !(s.contentType || "").indexOf("application/x-www-form-urlencoded") && rjsonp.test(s.data) && "data");
+                    return jsonProp || "jsonp" === s.dataTypes[0] ? (callbackName = s.jsonpCallback = jQuery.isFunction(s.jsonpCallback) ? s.jsonpCallback() : s.jsonpCallback, 
+                    jsonProp ? s[jsonProp] = s[jsonProp].replace(rjsonp, "$1" + callbackName) : s.jsonp !== !1 && (s.url += (rquery.test(s.url) ? "&" : "?") + s.jsonp + "=" + callbackName), 
+                    s.converters["script json"] = function() {
+                        return responseContainer || jQuery.error(callbackName + " was not called"), responseContainer[0];
+                    }, s.dataTypes[0] = "json", overwritten = window[callbackName], window[callbackName] = function() {
+                        responseContainer = arguments;
+                    }, jqXHR.always(function() {
+                        window[callbackName] = overwritten, s[callbackName] && (s.jsonpCallback = originalSettings.jsonpCallback, 
+                        oldCallbacks.push(callbackName)), responseContainer && jQuery.isFunction(overwritten) && overwritten(responseContainer[0]), 
+                        responseContainer = overwritten = void 0;
                     }), "script") : void 0;
-                }), fb.parseHTML = function(a, b, c) {
-                    if (!a || "string" != typeof a) return null;
-                    "boolean" == typeof b && (c = b, b = !1), b = b || pb;
-                    var d = mb.exec(a), e = !c && [];
-                    return d ? [ b.createElement(d[1]) ] : (d = fb.buildFragment([ a ], b, e), e && e.length && fb(e).remove(), 
-                    fb.merge([], d.childNodes));
+                }), jQuery.parseHTML = function(data, context, keepScripts) {
+                    if (!data || "string" != typeof data) return null;
+                    "boolean" == typeof context && (keepScripts = context, context = !1), context = context || document;
+                    var parsed = rsingleTag.exec(data), scripts = !keepScripts && [];
+                    return parsed ? [ context.createElement(parsed[1]) ] : (parsed = jQuery.buildFragment([ data ], context, scripts), 
+                    scripts && scripts.length && jQuery(scripts).remove(), jQuery.merge([], parsed.childNodes));
                 };
-                var dd = fb.fn.load;
-                fb.fn.load = function(a, b, c) {
-                    if ("string" != typeof a && dd) return dd.apply(this, arguments);
-                    var d, e, f, g = this, h = a.indexOf(" ");
-                    return h >= 0 && (d = fb.trim(a.slice(h, a.length)), a = a.slice(0, h)), fb.isFunction(b) ? (c = b, 
-                    b = void 0) : b && "object" == typeof b && (f = "POST"), g.length > 0 && fb.ajax({
-                        url: a,
-                        type: f,
+                var _load = jQuery.fn.load;
+                jQuery.fn.load = function(url, params, callback) {
+                    if ("string" != typeof url && _load) return _load.apply(this, arguments);
+                    var selector, response, type, self = this, off = url.indexOf(" ");
+                    return off >= 0 && (selector = jQuery.trim(url.slice(off, url.length)), url = url.slice(0, off)), 
+                    jQuery.isFunction(params) ? (callback = params, params = void 0) : params && "object" == typeof params && (type = "POST"), 
+                    self.length > 0 && jQuery.ajax({
+                        url: url,
+                        type: type,
                         dataType: "html",
-                        data: b
-                    }).done(function(a) {
-                        e = arguments, g.html(d ? fb("<div>").append(fb.parseHTML(a)).find(d) : a);
-                    }).complete(c && function(a, b) {
-                        g.each(c, e || [ a.responseText, b, a ]);
+                        data: params
+                    }).done(function(responseText) {
+                        response = arguments, self.html(selector ? jQuery("<div>").append(jQuery.parseHTML(responseText)).find(selector) : responseText);
+                    }).complete(callback && function(jqXHR, status) {
+                        self.each(callback, response || [ jqXHR.responseText, status, jqXHR ]);
                     }), this;
-                }, fb.expr.filters.animated = function(a) {
-                    return fb.grep(fb.timers, function(b) {
-                        return a === b.elem;
+                }, jQuery.expr.filters.animated = function(elem) {
+                    return jQuery.grep(jQuery.timers, function(fn) {
+                        return elem === fn.elem;
                     }).length;
                 };
-                var ed = b.document.documentElement;
-                fb.offset = {
-                    setOffset: function(a, b, c) {
-                        var d, e, f, g, h, i, j, k = fb.css(a, "position"), l = fb(a), m = {};
-                        "static" === k && (a.style.position = "relative"), h = l.offset(), f = fb.css(a, "top"), 
-                        i = fb.css(a, "left"), j = ("absolute" === k || "fixed" === k) && fb.inArray("auto", [ f, i ]) > -1, 
-                        j ? (d = l.position(), g = d.top, e = d.left) : (g = parseFloat(f) || 0, e = parseFloat(i) || 0), 
-                        fb.isFunction(b) && (b = b.call(a, c, h)), null != b.top && (m.top = b.top - h.top + g), 
-                        null != b.left && (m.left = b.left - h.left + e), "using" in b ? b.using.call(a, m) : l.css(m);
+                var docElem = window.document.documentElement;
+                jQuery.offset = {
+                    setOffset: function(elem, options, i) {
+                        var curPosition, curLeft, curCSSTop, curTop, curOffset, curCSSLeft, calculatePosition, position = jQuery.css(elem, "position"), curElem = jQuery(elem), props = {};
+                        "static" === position && (elem.style.position = "relative"), curOffset = curElem.offset(), 
+                        curCSSTop = jQuery.css(elem, "top"), curCSSLeft = jQuery.css(elem, "left"), calculatePosition = ("absolute" === position || "fixed" === position) && jQuery.inArray("auto", [ curCSSTop, curCSSLeft ]) > -1, 
+                        calculatePosition ? (curPosition = curElem.position(), curTop = curPosition.top, 
+                        curLeft = curPosition.left) : (curTop = parseFloat(curCSSTop) || 0, curLeft = parseFloat(curCSSLeft) || 0), 
+                        jQuery.isFunction(options) && (options = options.call(elem, i, curOffset)), null != options.top && (props.top = options.top - curOffset.top + curTop), 
+                        null != options.left && (props.left = options.left - curOffset.left + curLeft), 
+                        "using" in options ? options.using.call(elem, props) : curElem.css(props);
                     }
-                }, fb.fn.extend({
-                    offset: function(a) {
-                        if (arguments.length) return void 0 === a ? this : this.each(function(b) {
-                            fb.offset.setOffset(this, a, b);
+                }, jQuery.fn.extend({
+                    offset: function(options) {
+                        if (arguments.length) return void 0 === options ? this : this.each(function(i) {
+                            jQuery.offset.setOffset(this, options, i);
                         });
-                        var b, c, d = {
+                        var docElem, win, box = {
                             top: 0,
                             left: 0
-                        }, e = this[0], f = e && e.ownerDocument;
-                        if (f) return b = f.documentElement, fb.contains(b, e) ? (typeof e.getBoundingClientRect !== yb && (d = e.getBoundingClientRect()), 
-                        c = W(f), {
-                            top: d.top + (c.pageYOffset || b.scrollTop) - (b.clientTop || 0),
-                            left: d.left + (c.pageXOffset || b.scrollLeft) - (b.clientLeft || 0)
-                        }) : d;
+                        }, elem = this[0], doc = elem && elem.ownerDocument;
+                        if (doc) return docElem = doc.documentElement, jQuery.contains(docElem, elem) ? (typeof elem.getBoundingClientRect !== strundefined && (box = elem.getBoundingClientRect()), 
+                        win = getWindow(doc), {
+                            top: box.top + (win.pageYOffset || docElem.scrollTop) - (docElem.clientTop || 0),
+                            left: box.left + (win.pageXOffset || docElem.scrollLeft) - (docElem.clientLeft || 0)
+                        }) : box;
                     },
                     position: function() {
                         if (this[0]) {
-                            var a, b, c = {
+                            var offsetParent, offset, parentOffset = {
                                 top: 0,
                                 left: 0
-                            }, d = this[0];
-                            return "fixed" === fb.css(d, "position") ? b = d.getBoundingClientRect() : (a = this.offsetParent(), 
-                            b = this.offset(), fb.nodeName(a[0], "html") || (c = a.offset()), c.top += fb.css(a[0], "borderTopWidth", !0), 
-                            c.left += fb.css(a[0], "borderLeftWidth", !0)), {
-                                top: b.top - c.top - fb.css(d, "marginTop", !0),
-                                left: b.left - c.left - fb.css(d, "marginLeft", !0)
+                            }, elem = this[0];
+                            return "fixed" === jQuery.css(elem, "position") ? offset = elem.getBoundingClientRect() : (offsetParent = this.offsetParent(), 
+                            offset = this.offset(), jQuery.nodeName(offsetParent[0], "html") || (parentOffset = offsetParent.offset()), 
+                            parentOffset.top += jQuery.css(offsetParent[0], "borderTopWidth", !0), parentOffset.left += jQuery.css(offsetParent[0], "borderLeftWidth", !0)), 
+                            {
+                                top: offset.top - parentOffset.top - jQuery.css(elem, "marginTop", !0),
+                                left: offset.left - parentOffset.left - jQuery.css(elem, "marginLeft", !0)
                             };
                         }
                     },
                     offsetParent: function() {
                         return this.map(function() {
-                            for (var a = this.offsetParent || ed; a && !fb.nodeName(a, "html") && "static" === fb.css(a, "position"); ) a = a.offsetParent;
-                            return a || ed;
+                            for (var offsetParent = this.offsetParent || docElem; offsetParent && !jQuery.nodeName(offsetParent, "html") && "static" === jQuery.css(offsetParent, "position"); ) offsetParent = offsetParent.offsetParent;
+                            return offsetParent || docElem;
                         });
                     }
-                }), fb.each({
+                }), jQuery.each({
                     scrollLeft: "pageXOffset",
                     scrollTop: "pageYOffset"
-                }, function(a, b) {
-                    var c = /Y/.test(b);
-                    fb.fn[a] = function(d) {
-                        return Eb(this, function(a, d, e) {
-                            var f = W(a);
-                            return void 0 === e ? f ? b in f ? f[b] : f.document.documentElement[d] : a[d] : void (f ? f.scrollTo(c ? fb(f).scrollLeft() : e, c ? e : fb(f).scrollTop()) : a[d] = e);
-                        }, a, d, arguments.length, null);
+                }, function(method, prop) {
+                    var top = /Y/.test(prop);
+                    jQuery.fn[method] = function(val) {
+                        return access(this, function(elem, method, val) {
+                            var win = getWindow(elem);
+                            return void 0 === val ? win ? prop in win ? win[prop] : win.document.documentElement[method] : elem[method] : void (win ? win.scrollTo(top ? jQuery(win).scrollLeft() : val, top ? val : jQuery(win).scrollTop()) : elem[method] = val);
+                        }, method, val, arguments.length, null);
                     };
-                }), fb.each([ "top", "left" ], function(a, b) {
-                    fb.cssHooks[b] = B(db.pixelPosition, function(a, c) {
-                        return c ? (c = cc(a, b), ec.test(c) ? fb(a).position()[b] + "px" : c) : void 0;
+                }), jQuery.each([ "top", "left" ], function(i, prop) {
+                    jQuery.cssHooks[prop] = addGetHookIf(support.pixelPosition, function(elem, computed) {
+                        return computed ? (computed = curCSS(elem, prop), rnumnonpx.test(computed) ? jQuery(elem).position()[prop] + "px" : computed) : void 0;
                     });
-                }), fb.each({
+                }), jQuery.each({
                     Height: "height",
                     Width: "width"
-                }, function(a, b) {
-                    fb.each({
-                        padding: "inner" + a,
-                        content: b,
-                        "": "outer" + a
-                    }, function(c, d) {
-                        fb.fn[d] = function(d, e) {
-                            var f = arguments.length && (c || "boolean" != typeof d), g = c || (d === !0 || e === !0 ? "margin" : "border");
-                            return Eb(this, function(b, c, d) {
-                                var e;
-                                return fb.isWindow(b) ? b.document.documentElement["client" + a] : 9 === b.nodeType ? (e = b.documentElement, 
-                                Math.max(b.body["scroll" + a], e["scroll" + a], b.body["offset" + a], e["offset" + a], e["client" + a])) : void 0 === d ? fb.css(b, c, g) : fb.style(b, c, d, g);
-                            }, b, f ? d : void 0, f, null);
+                }, function(name, type) {
+                    jQuery.each({
+                        padding: "inner" + name,
+                        content: type,
+                        "": "outer" + name
+                    }, function(defaultExtra, funcName) {
+                        jQuery.fn[funcName] = function(margin, value) {
+                            var chainable = arguments.length && (defaultExtra || "boolean" != typeof margin), extra = defaultExtra || (margin === !0 || value === !0 ? "margin" : "border");
+                            return access(this, function(elem, type, value) {
+                                var doc;
+                                return jQuery.isWindow(elem) ? elem.document.documentElement["client" + name] : 9 === elem.nodeType ? (doc = elem.documentElement, 
+                                Math.max(elem.body["scroll" + name], doc["scroll" + name], elem.body["offset" + name], doc["offset" + name], doc["client" + name])) : void 0 === value ? jQuery.css(elem, type, extra) : jQuery.style(elem, type, value, extra);
+                            }, type, chainable ? margin : void 0, chainable, null);
                         };
                     });
-                }), fb.fn.size = function() {
+                }), jQuery.fn.size = function() {
                     return this.length;
-                }, fb.fn.andSelf = fb.fn.addBack, "function" == typeof a && a.amd && a("jquery", [], function() {
-                    return fb;
+                }, jQuery.fn.andSelf = jQuery.fn.addBack, "function" == typeof define && define.amd && define("jquery", [], function() {
+                    return jQuery;
                 });
-                var fd = b.jQuery, gd = b.$;
-                return fb.noConflict = function(a) {
-                    return b.$ === fb && (b.$ = gd), a && b.jQuery === fb && (b.jQuery = fd), fb;
-                }, typeof c === yb && (b.jQuery = b.$ = fb), fb;
+                var _jQuery = window.jQuery, _$ = window.$;
+                return jQuery.noConflict = function(deep) {
+                    return window.$ === jQuery && (window.$ = _$), deep && window.jQuery === jQuery && (window.jQuery = _jQuery), 
+                    jQuery;
+                }, typeof noGlobal === strundefined && (window.jQuery = window.$ = jQuery), jQuery;
             });
         }, {} ],
-        "/Users/dave/dev/projects/myna-js/src/main/bootstrap.coffee": [ function(a, b) {
-            var c, d, e, f, g, h;
-            h = a("./common/log"), f = a("./common/hash"), g = a("./common/jsonp"), c = function(a) {
-                var b, c;
-                return b = d(a), c = e(b), {
-                    initLocal: b,
-                    initRemote: c
+        "/Users/dave/dev/projects/myna-js/src/main/bootstrap.coffee": [ function(require, module) {
+            var create, createLocalInit, createRemoteInit, hash, jsonp, log;
+            log = require("./common/log"), hash = require("./common/hash"), jsonp = require("./common/jsonp"), 
+            create = function(createClient) {
+                var initLocal, initRemote;
+                return initLocal = createLocalInit(createClient), initRemote = createRemoteInit(initLocal), 
+                {
+                    initLocal: initLocal,
+                    initRemote: initRemote
                 };
-            }, d = function(a) {
-                return function(b) {
-                    var c, d, e, g, i, j, k;
-                    return null != f.params.debug && (h.enabled = !0), h.debug("myna.initLocal", b), 
-                    "deployment" !== b.typename && h.error("myna.initLocal", 'Myna needs a deployment to initialise. The given JSON is not a deployment.\nIt has a typename of "' + typename + '". Check you are initialising Myna with the\ncorrect UUID if you are calling initRemote', b), 
-                    g = b.experiments, c = null != (j = b.apiKey) ? j : h.error("myna.init", "no apiKey in deployment", b), 
-                    d = null != (k = b.apiRoot) ? k : "//api.mynaweb.com", i = util["extends"](b.settings, {
-                        apiKey: c,
-                        apiRoot: d
-                    }), e = a(g, i), e.sync().then(function() {
-                        return e;
+            }, createLocalInit = function(createClient) {
+                return function(deployment) {
+                    var apiKey, apiRoot, client, experiments, settings, _ref, _ref1;
+                    return null != hash.params.debug && (log.enabled = !0), log.debug("myna.initLocal", deployment), 
+                    "deployment" !== deployment.typename && log.error("myna.initLocal", 'Myna needs a deployment to initialise. The given JSON is not a deployment.\nIt has a typename of "' + typename + '". Check you are initialising Myna with the\ncorrect UUID if you are calling initRemote', deployment), 
+                    experiments = deployment.experiments, apiKey = null != (_ref = deployment.apiKey) ? _ref : log.error("myna.init", "no apiKey in deployment", deployment), 
+                    apiRoot = null != (_ref1 = deployment.apiRoot) ? _ref1 : "//api.mynaweb.com", settings = util["extends"](deployment.settings, {
+                        apiKey: apiKey,
+                        apiRoot: apiRoot
+                    }), client = createClient(experiments, settings), client.sync().then(function() {
+                        return client;
                     });
                 };
-            }, e = function(a) {
-                return function(b, c) {
-                    return null == c && (c = 0), h.debug("myna.initRemote", b, c), g.request(b, {}, c).then(a);
+            }, createRemoteInit = function(localInit) {
+                return function(url, timeout) {
+                    return null == timeout && (timeout = 0), log.debug("myna.initRemote", url, timeout), 
+                    jsonp.request(url, {}, timeout).then(localInit);
                 };
-            }, b.exports = {
-                create: c,
-                createLocalInit: d,
-                createRemoteInit: e
+            }, module.exports = {
+                create: create,
+                createLocalInit: createLocalInit,
+                createRemoteInit: createRemoteInit
             };
         }, {
             "./common/hash": "/Users/dave/dev/projects/myna-js/src/main/common/hash.coffee",
             "./common/jsonp": "/Users/dave/dev/projects/myna-js/src/main/common/jsonp.coffee",
             "./common/log": "/Users/dave/dev/projects/myna-js/src/main/common/log.coffee"
         } ],
-        "/Users/dave/dev/projects/myna-js/src/main/client/api.coffee": [ function(a, b) {
-            var c, d, e, f, g, h, i, j, k = function(a, b) {
+        "/Users/dave/dev/projects/myna-js/src/main/client/api.coffee": [ function(require, module) {
+            var ApiRecorder, Promise, SyncResult, jsonp, log, settings, storage, util, __bind = function(fn, me) {
                 return function() {
-                    return a.apply(b, arguments);
+                    return fn.apply(me, arguments);
                 };
-            }, l = [].slice;
-            d = a("es6-promise").Promise, f = a("../common/jsonp"), g = a("../common/log"), 
-            h = a("../common/settings"), i = a("../common/storage"), j = a("../common/util"), 
-            e = function() {
-                function a(a, b, c) {
-                    this.completed = null != a ? a : [], this.discarded = null != b ? b : [], this.requeued = null != c ? c : [], 
-                    this.successful = k(this.successful, this), this.requeue = k(this.requeue, this), 
-                    this.discard = k(this.discard, this), this.complete = k(this.complete, this);
+            }, __slice = [].slice;
+            Promise = require("es6-promise").Promise, jsonp = require("../common/jsonp"), log = require("../common/log"), 
+            settings = require("../common/settings"), storage = require("../common/storage"), 
+            util = require("../common/util"), SyncResult = function() {
+                function SyncResult(completed, discarded, requeued) {
+                    this.completed = null != completed ? completed : [], this.discarded = null != discarded ? discarded : [], 
+                    this.requeued = null != requeued ? requeued : [], this.successful = __bind(this.successful, this), 
+                    this.requeue = __bind(this.requeue, this), this.discard = __bind(this.discard, this), 
+                    this.complete = __bind(this.complete, this);
                 }
-                return a.prototype.complete = function(b) {
-                    return new a(this.completed.concat([ b ]), this.discarded, this.requeued);
-                }, a.prototype.discard = function(b) {
-                    return new a(this.completed, this.discarded.concat([ b ]), this.requeued);
-                }, a.prototype.requeue = function(b) {
-                    return new a(this.completed, this.discarded, this.requeued.concat([ b ]));
-                }, a.prototype.successful = function() {
+                return SyncResult.prototype.complete = function(completed) {
+                    return new SyncResult(this.completed.concat([ completed ]), this.discarded, this.requeued);
+                }, SyncResult.prototype.discard = function(discarded) {
+                    return new SyncResult(this.completed, this.discarded.concat([ discarded ]), this.requeued);
+                }, SyncResult.prototype.requeue = function(requeued) {
+                    return new SyncResult(this.completed, this.discarded, this.requeued.concat([ requeued ]));
+                }, SyncResult.prototype.successful = function() {
                     return 0 === this.discarded.length && 0 === this.requeued.length;
-                }, a;
-            }(), b.exports = c = function() {
-                function a(a, b, c) {
-                    this.apiKey = a, this.apiRoot = b, null == c && (c = {}), this._dequeue = k(this._dequeue, this), 
-                    this._enqueue = k(this._enqueue, this), this._queue = k(this._queue, this), this.clear = k(this.clear, this), 
-                    this.sync = k(this.sync, this), this.reward = k(this.reward, this), this.view = k(this.view, this), 
-                    this.apiKey || g.error("ApiRecorder.constructor", "missing apiKey"), this.apiRoot || g.error("ApiRecorder.constructor", "missing apiRoot"), 
-                    this.storageKey = h.get(c, "myna.web.storageKey", "myna"), this.timeout = h.get(c, "myna.web.timeout", 1e3), 
+                }, SyncResult;
+            }(), module.exports = ApiRecorder = function() {
+                function ApiRecorder(apiKey, apiRoot, options) {
+                    this.apiKey = apiKey, this.apiRoot = apiRoot, null == options && (options = {}), 
+                    this._dequeue = __bind(this._dequeue, this), this._enqueue = __bind(this._enqueue, this), 
+                    this._queue = __bind(this._queue, this), this.clear = __bind(this.clear, this), 
+                    this.sync = __bind(this.sync, this), this.reward = __bind(this.reward, this), this.view = __bind(this.view, this), 
+                    this.apiKey || log.error("ApiRecorder.constructor", "missing apiKey"), this.apiRoot || log.error("ApiRecorder.constructor", "missing apiRoot"), 
+                    this.storageKey = settings.get(options, "myna.web.storageKey", "myna"), this.timeout = settings.get(options, "myna.web.timeout", 1e3), 
                     this.inProgress = null;
                 }
-                return a.prototype.view = function(a, b) {
-                    var c;
-                    return c = {
+                return ApiRecorder.prototype.view = function(expt, variant) {
+                    var event;
+                    return event = {
                         typename: "view",
-                        experiment: a.uuid,
-                        variant: b.id,
-                        timestamp: j.dateToString(new Date())
-                    }, g.debug("ApiRecorder.view", c), this._enqueue(c);
-                }, a.prototype.reward = function(a, b, c) {
-                    var d;
-                    return d = {
+                        experiment: expt.uuid,
+                        variant: variant.id,
+                        timestamp: util.dateToString(new Date())
+                    }, log.debug("ApiRecorder.view", event), this._enqueue(event);
+                }, ApiRecorder.prototype.reward = function(expt, variant, amount) {
+                    var event;
+                    return event = {
                         typename: "reward",
-                        experiment: a.uuid,
-                        variant: b.id,
-                        amount: c,
-                        timestamp: j.dateToString(new Date())
-                    }, g.debug("ApiRecorder.reward", d), this._enqueue(d);
-                }, a.prototype.sync = function() {
-                    var a, b, c, h;
-                    return g.debug("ApiRecorder.sync", this._queue().length), h = function(a) {
-                        return function(b, d) {
-                            var h;
-                            return null == d && (d = new e()), g.debug("ApiRecorder.sync.syncOne", b, d), h = j.extend({}, b, {
-                                apikey: a.apiKey
-                            }), h = j.deleteKeys(h, "experiment"), f.request("" + a.apiRoot + "/v2/experiment/" + b.experiment + "/record", h, a.timeout).then(function(a) {
-                                return g.debug("ApiRecorder.sync.syncOne.then", a), c(d.complete(b));
-                            })["catch"](function(a) {
-                                return g.debug("ApiRecorder.sync.syncOne.catch", a), a.status && a.status >= 500 ? d.requeue(b) : d.discard(b);
+                        experiment: expt.uuid,
+                        variant: variant.id,
+                        amount: amount,
+                        timestamp: util.dateToString(new Date())
+                    }, log.debug("ApiRecorder.reward", event), this._enqueue(event);
+                }, ApiRecorder.prototype.sync = function() {
+                    var onComplete, onError, syncAll, syncOne;
+                    return log.debug("ApiRecorder.sync", this._queue().length), syncOne = function(_this) {
+                        return function(event, accum) {
+                            var params;
+                            return null == accum && (accum = new SyncResult()), log.debug("ApiRecorder.sync.syncOne", event, accum), 
+                            params = util.extend({}, event, {
+                                apikey: _this.apiKey
+                            }), params = util.deleteKeys(params, "experiment"), jsonp.request("" + _this.apiRoot + "/v2/experiment/" + event.experiment + "/record", params, _this.timeout).then(function(response) {
+                                return log.debug("ApiRecorder.sync.syncOne.then", response), syncAll(accum.complete(event));
+                            })["catch"](function(response) {
+                                return log.debug("ApiRecorder.sync.syncOne.catch", response), response.status && response.status >= 500 ? accum.requeue(event) : accum.discard(event);
                             });
                         };
-                    }(this), c = function(a) {
-                        return function(b) {
-                            var f;
-                            return null == b && (b = new e()), g.debug("ApiRecorder.sync.syncAll", b), f = a._dequeue(), 
-                            f ? h(f, b).then(c) : (a._enqueue.apply(a, b.requeued), d.resolve(b));
+                    }(this), syncAll = function(_this) {
+                        return function(accum) {
+                            var event;
+                            return null == accum && (accum = new SyncResult()), log.debug("ApiRecorder.sync.syncAll", accum), 
+                            event = _this._dequeue(), event ? syncOne(event, accum).then(syncAll) : (_this._enqueue.apply(_this, accum.requeued), 
+                            Promise.resolve(accum));
                         };
-                    }(this), a = function(a) {
-                        return function(b) {
-                            return g.debug("ApiRecorder.sync.onComplete", b), a.inProgress = null, b;
+                    }(this), onComplete = function(_this) {
+                        return function(result) {
+                            return log.debug("ApiRecorder.sync.onComplete", result), _this.inProgress = null, 
+                            result;
                         };
-                    }(this), b = function(a) {
-                        return function(b) {
-                            return g.debug("ApiRecorder.sync.onError", b), a.inProgress = null, d.reject(b);
+                    }(this), onError = function(_this) {
+                        return function(result) {
+                            return log.debug("ApiRecorder.sync.onError", result), _this.inProgress = null, Promise.reject(result);
                         };
-                    }(this), null == this.inProgress && (this.inProgress = c().then(a, b)), this.inProgress;
-                }, a.prototype.clear = function() {
-                    g.debug("ApiRecorder.clear"), i.remove(this.storageKey);
-                }, a.prototype._queue = function() {
-                    var a, b;
-                    return a = null != (b = i.get(this.storageKey)) ? b : [];
-                }, a.prototype._enqueue = function() {
-                    var a, b, c;
-                    return a = 1 <= arguments.length ? l.call(arguments, 0) : [], b = (c = this._queue()).concat.apply(c, a), 
-                    i.set(this.storageKey, b), b.length;
-                }, a.prototype._dequeue = function() {
-                    var a, b;
-                    return b = this._queue(), b.length > 0 ? (a = b.shift(), i.set(this.storageKey, b), 
-                    a) : null;
-                }, a;
+                    }(this), null == this.inProgress && (this.inProgress = syncAll().then(onComplete, onError)), 
+                    this.inProgress;
+                }, ApiRecorder.prototype.clear = function() {
+                    log.debug("ApiRecorder.clear"), storage.remove(this.storageKey);
+                }, ApiRecorder.prototype._queue = function() {
+                    var ans, _ref;
+                    return ans = null != (_ref = storage.get(this.storageKey)) ? _ref : [];
+                }, ApiRecorder.prototype._enqueue = function() {
+                    var events, queue, _ref;
+                    return events = 1 <= arguments.length ? __slice.call(arguments, 0) : [], queue = (_ref = this._queue()).concat.apply(_ref, events), 
+                    storage.set(this.storageKey, queue), queue.length;
+                }, ApiRecorder.prototype._dequeue = function() {
+                    var event, queue;
+                    return queue = this._queue(), queue.length > 0 ? (event = queue.shift(), storage.set(this.storageKey, queue), 
+                    event) : null;
+                }, ApiRecorder;
             }();
         }, {
             "../common/jsonp": "/Users/dave/dev/projects/myna-js/src/main/common/jsonp.coffee",
@@ -3474,177 +3612,188 @@
             "../common/util": "/Users/dave/dev/projects/myna-js/src/main/common/util.coffee",
             "es6-promise": "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/main.js"
         } ],
-        "/Users/dave/dev/projects/myna-js/src/main/client/basic.coffee": [ function(a, b) {
-            var c, d, e, f, g = function(a, b) {
+        "/Users/dave/dev/projects/myna-js/src/main/client/basic.coffee": [ function(require, module) {
+            var BasicClient, Promise, log, variant, __bind = function(fn, me) {
                 return function() {
-                    return a.apply(b, arguments);
+                    return fn.apply(me, arguments);
                 };
             };
-            d = a("es6-promise").Promise, e = a("../common/log"), f = a("./variant"), b.exports = c = function() {
-                function a() {
-                    this._lookup = g(this._lookup, this), this._random = g(this._random, this), this.reward = g(this.reward, this), 
-                    this.view = g(this.view, this), this.suggest = g(this.suggest, this);
+            Promise = require("es6-promise").Promise, log = require("../common/log"), variant = require("./variant"), 
+            module.exports = BasicClient = function() {
+                function BasicClient() {
+                    this._lookup = __bind(this._lookup, this), this._random = __bind(this._random, this), 
+                    this.reward = __bind(this.reward, this), this.view = __bind(this.view, this), this.suggest = __bind(this.suggest, this);
                 }
-                return a.prototype.suggest = function(a) {
-                    return this._random(a).then(function() {
-                        return function(b) {
-                            return e.debug("BasicClient.suggest", null != a ? a.id : void 0, null != b ? b.id : void 0), 
-                            b;
+                return BasicClient.prototype.suggest = function(expt) {
+                    return this._random(expt).then(function() {
+                        return function(variant) {
+                            return log.debug("BasicClient.suggest", null != expt ? expt.id : void 0, null != variant ? variant.id : void 0), 
+                            variant;
                         };
                     }(this));
-                }, a.prototype.view = function(a, b) {
-                    return this._lookup(a, b).then(function() {
-                        return function(b) {
-                            return e.debug("BasicClient.suggest", null != a ? a.id : void 0, null != b ? b.id : void 0), 
-                            b;
+                }, BasicClient.prototype.view = function(expt, variantOrId) {
+                    return this._lookup(expt, variantOrId).then(function() {
+                        return function(variant) {
+                            return log.debug("BasicClient.suggest", null != expt ? expt.id : void 0, null != variant ? variant.id : void 0), 
+                            variant;
                         };
                     }(this));
-                }, a.prototype.reward = function(a, b, c) {
-                    return null == c && (c = 1), e.debug("BasicClient.reward", null != a ? a.id : void 0, b, c), 
-                    this._lookup(a, b);
-                }, a.prototype._random = function(a) {
-                    var b;
-                    return b = f.random(a), b ? d.resolve(b) : d.reject(new Error("Could not choose random variant"));
-                }, a.prototype._lookup = function(a, b) {
-                    var c;
-                    return c = f.lookup(a, b), c ? d.resolve(c) : d.reject(new Error("Could not choose random variant"));
-                }, a;
+                }, BasicClient.prototype.reward = function(expt, variantOrId, amount) {
+                    return null == amount && (amount = 1), log.debug("BasicClient.reward", null != expt ? expt.id : void 0, variantOrId, amount), 
+                    this._lookup(expt, variantOrId);
+                }, BasicClient.prototype._random = function(expt) {
+                    var ans;
+                    return ans = variant.random(expt), ans ? Promise.resolve(ans) : Promise.reject(new Error("Could not choose random variant"));
+                }, BasicClient.prototype._lookup = function(expt, variantOrId) {
+                    var ans;
+                    return ans = variant.lookup(expt, variantOrId), ans ? Promise.resolve(ans) : Promise.reject(new Error("Could not choose random variant"));
+                }, BasicClient;
             }();
         }, {
             "../common/log": "/Users/dave/dev/projects/myna-js/src/main/common/log.coffee",
             "./variant": "/Users/dave/dev/projects/myna-js/src/main/client/variant.coffee",
             "es6-promise": "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/main.js"
         } ],
-        "/Users/dave/dev/projects/myna-js/src/main/client/cached.coffee": [ function(a, b) {
-            var c, d, e, f, g, h = function(a, b) {
+        "/Users/dave/dev/projects/myna-js/src/main/client/cached.coffee": [ function(require, module) {
+            var BasicClient, CachedClient, Promise, log, variant, __bind = function(fn, me) {
                 return function() {
-                    return a.apply(b, arguments);
+                    return fn.apply(me, arguments);
                 };
-            }, i = {}.hasOwnProperty, j = function(a, b) {
-                function c() {
-                    this.constructor = a;
+            }, __hasProp = {}.hasOwnProperty, __extends = function(child, parent) {
+                function ctor() {
+                    this.constructor = child;
                 }
-                for (var d in b) i.call(b, d) && (a[d] = b[d]);
-                return c.prototype = b.prototype, a.prototype = new c(), a.__super__ = b.prototype, 
-                a;
+                for (var key in parent) __hasProp.call(parent, key) && (child[key] = parent[key]);
+                return ctor.prototype = parent.prototype, child.prototype = new ctor(), child.__super__ = parent.prototype, 
+                child;
             };
-            e = a("es6-promise").Promise, f = a("../common/log"), c = a("./basic"), g = a("./variant"), 
-            b.exports = d = function(a) {
-                function b() {
-                    return this.clear = h(this.clear, this), this.reward = h(this.reward, this), this.view = h(this.view, this), 
-                    this.suggest = h(this.suggest, this), b.__super__.constructor.apply(this, arguments);
+            Promise = require("es6-promise").Promise, log = require("../common/log"), BasicClient = require("./basic"), 
+            variant = require("./variant"), module.exports = CachedClient = function(_super) {
+                function CachedClient() {
+                    return this.clear = __bind(this.clear, this), this.reward = __bind(this.reward, this), 
+                    this.view = __bind(this.view, this), this.suggest = __bind(this.suggest, this), 
+                    CachedClient.__super__.constructor.apply(this, arguments);
                 }
-                return j(b, a), b.prototype.suggest = function(a) {
-                    return f.debug("CachedClient.suggest", a), b.__super__.suggest.call(this, a).then(function() {
-                        return function(b) {
-                            return f.debug("CachedClient.suggest", "variant", b), g.save(a, "lastView", b), 
-                            b;
+                return __extends(CachedClient, _super), CachedClient.prototype.suggest = function(expt) {
+                    return log.debug("CachedClient.suggest", expt), CachedClient.__super__.suggest.call(this, expt).then(function() {
+                        return function(vrnt) {
+                            return log.debug("CachedClient.suggest", "variant", vrnt), variant.save(expt, "lastView", vrnt), 
+                            vrnt;
                         };
                     }(this));
-                }, b.prototype.view = function(a, c) {
-                    return f.debug("CachedClient.view", a, c), b.__super__.view.call(this, a, c).then(function() {
-                        return function(b) {
-                            return f.debug("CachedClient.view", "variant", b), g.save(a, "lastView", b), b;
+                }, CachedClient.prototype.view = function(expt, variantOrId) {
+                    return log.debug("CachedClient.view", expt, variantOrId), CachedClient.__super__.view.call(this, expt, variantOrId).then(function() {
+                        return function(vrnt) {
+                            return log.debug("CachedClient.view", "variant", vrnt), variant.save(expt, "lastView", vrnt), 
+                            vrnt;
                         };
                     }(this));
-                }, b.prototype.reward = function(a, c) {
-                    var d;
-                    return null == c && (c = 1), f.debug("CachedClient.reward", a, c), d = g.load(a, "lastView"), 
-                    f.debug("lastView", d), d ? b.__super__.reward.call(this, a, d, c).then(function() {
-                        return function(b) {
-                            return f.debug("CachedClient.reward", "variant", b), g.remove(a, "lastView"), b;
+                }, CachedClient.prototype.reward = function(expt, amount) {
+                    var lastView;
+                    return null == amount && (amount = 1), log.debug("CachedClient.reward", expt, amount), 
+                    lastView = variant.load(expt, "lastView"), log.debug("lastView", lastView), lastView ? CachedClient.__super__.reward.call(this, expt, lastView, amount).then(function() {
+                        return function(vrnt) {
+                            return log.debug("CachedClient.reward", "variant", vrnt), variant.remove(expt, "lastView"), 
+                            vrnt;
                         };
-                    }(this)) : (f.debug("suffering epic fail"), e.reject(new Error("No last view for experiment " + a.id + " (" + a.uuid + ")")));
-                }, b.prototype.clear = function(a) {
-                    return f.debug("CachedClient.clear", a), g.remove(a, "lastView"), e.resolve(null);
-                }, b;
-            }(c);
+                    }(this)) : (log.debug("suffering epic fail"), Promise.reject(new Error("No last view for experiment " + expt.id + " (" + expt.uuid + ")")));
+                }, CachedClient.prototype.clear = function(expt) {
+                    return log.debug("CachedClient.clear", expt), variant.remove(expt, "lastView"), 
+                    Promise.resolve(null);
+                }, CachedClient;
+            }(BasicClient);
         }, {
             "../common/log": "/Users/dave/dev/projects/myna-js/src/main/common/log.coffee",
             "./basic": "/Users/dave/dev/projects/myna-js/src/main/client/basic.coffee",
             "./variant": "/Users/dave/dev/projects/myna-js/src/main/client/variant.coffee",
             "es6-promise": "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/main.js"
         } ],
-        "/Users/dave/dev/projects/myna-js/src/main/client/default.coffee": [ function(a, b) {
-            var c, d, e, f, g, h, i, j, k = function(a, b) {
+        "/Users/dave/dev/projects/myna-js/src/main/client/default.coffee": [ function(require, module) {
+            var ApiRecorder, CachedClient, DefaultClient, GaRecorder, Promise, StickyCache, log, settings, __bind = function(fn, me) {
                 return function() {
-                    return a.apply(b, arguments);
+                    return fn.apply(me, arguments);
                 };
-            }, l = {}.hasOwnProperty, m = function(a, b) {
-                function c() {
-                    this.constructor = a;
+            }, __hasProp = {}.hasOwnProperty, __extends = function(child, parent) {
+                function ctor() {
+                    this.constructor = child;
                 }
-                for (var d in b) l.call(b, d) && (a[d] = b[d]);
-                return c.prototype = b.prototype, a.prototype = new c(), a.__super__ = b.prototype, 
-                a;
+                for (var key in parent) __hasProp.call(parent, key) && (child[key] = parent[key]);
+                return ctor.prototype = parent.prototype, child.prototype = new ctor(), child.__super__ = parent.prototype, 
+                child;
             };
-            g = a("es6-promise").Promise, i = a("../common/log"), j = a("../common/settings"), 
-            d = a("./cached"), h = a("./sticky"), c = a("./api"), f = a("./ga"), b.exports = e = function(a) {
-                function b(a, b) {
-                    var d, e, g, l, m, n;
-                    for (null == a && (a = []), null == b && (b = {}), this._withStickyReward = k(this._withStickyReward, this), 
-                    this._withStickyView = k(this._withStickyView, this), this._withExperiment = k(this._withExperiment, this), 
-                    this.clear = k(this.clear, this), this.reward = k(this.reward, this), this.view = k(this.view, this), 
-                    this.suggest = k(this.suggest, this), i.debug("DefaultClient.constructor", b), this.apiKey = null != (l = b.apiKey) ? l : i.error("Client.constructor", "no apiKey specified", b), 
-                    this.apiRoot = null != (m = b.apiRoot) ? m : "//api.mynaweb.com", this.settings = j.create(null != (n = null != b ? b.settings : void 0) ? n : {}), 
-                    this.sticky = new h(), this.record = new c(this.apiKey, this.apiRoot, this.settings), 
-                    this.google = new f(this.settings), this.autoSync = j.get(this.settings, "myna.web.autoSync", !0), 
-                    this.experiments = {}, e = 0, g = a.length; g > e; e++) d = a[e], this.experiments[d.id] = d;
+            Promise = require("es6-promise").Promise, log = require("../common/log"), settings = require("../common/settings"), 
+            CachedClient = require("./cached"), StickyCache = require("./sticky"), ApiRecorder = require("./api"), 
+            GaRecorder = require("./ga"), module.exports = DefaultClient = function(_super) {
+                function DefaultClient(experiments, options) {
+                    var expt, _i, _len, _ref, _ref1, _ref2;
+                    for (null == experiments && (experiments = []), null == options && (options = {}), 
+                    this._withStickyReward = __bind(this._withStickyReward, this), this._withStickyView = __bind(this._withStickyView, this), 
+                    this._withExperiment = __bind(this._withExperiment, this), this.clear = __bind(this.clear, this), 
+                    this.reward = __bind(this.reward, this), this.view = __bind(this.view, this), this.suggest = __bind(this.suggest, this), 
+                    log.debug("DefaultClient.constructor", options), this.apiKey = null != (_ref = options.apiKey) ? _ref : log.error("Client.constructor", "no apiKey specified", options), 
+                    this.apiRoot = null != (_ref1 = options.apiRoot) ? _ref1 : "//api.mynaweb.com", 
+                    this.settings = settings.create(null != (_ref2 = null != options ? options.settings : void 0) ? _ref2 : {}), 
+                    this.sticky = new StickyCache(), this.record = new ApiRecorder(this.apiKey, this.apiRoot, this.settings), 
+                    this.google = new GaRecorder(this.settings), this.autoSync = settings.get(this.settings, "myna.web.autoSync", !0), 
+                    this.experiments = {}, _i = 0, _len = experiments.length; _len > _i; _i++) expt = experiments[_i], 
+                    this.experiments[expt.id] = expt;
                 }
-                return m(b, a), b.prototype.suggest = function(a) {
-                    return i.debug("DefaultClient.suggest", a), this._withExperiment(a).then(function(a) {
-                        return function(c) {
-                            return a._withStickyView(c)["catch"](function() {
-                                return b.__super__.suggest.call(a, c).then(function(b) {
-                                    return a.sticky.saveView(c, b), a.google.view(c, b), a.record.view(c, b), a.autoSync && a.record.sync(), 
-                                    b;
+                return __extends(DefaultClient, _super), DefaultClient.prototype.suggest = function(exptOrId) {
+                    return log.debug("DefaultClient.suggest", exptOrId), this._withExperiment(exptOrId).then(function(_this) {
+                        return function(expt) {
+                            return _this._withStickyView(expt)["catch"](function() {
+                                return DefaultClient.__super__.suggest.call(_this, expt).then(function(variant) {
+                                    return _this.sticky.saveView(expt, variant), _this.google.view(expt, variant), _this.record.view(expt, variant), 
+                                    _this.autoSync && _this.record.sync(), variant;
                                 });
                             });
                         };
                     }(this));
-                }, b.prototype.view = function(a, c) {
-                    return i.debug("DefaultClient.view", a, c), this._withExperiment(a).then(function(a) {
-                        return function(d) {
-                            return a._withStickyView(d)["catch"](function() {
-                                return b.__super__.view.call(a, d, c).then(function(b) {
-                                    return a.sticky.saveView(d, b), a.google.view(d, b), a.record.view(d, b), a.autoSync && a.record.sync(), 
-                                    b;
+                }, DefaultClient.prototype.view = function(exptOrId, variantOrId) {
+                    return log.debug("DefaultClient.view", exptOrId, variantOrId), this._withExperiment(exptOrId).then(function(_this) {
+                        return function(expt) {
+                            return _this._withStickyView(expt)["catch"](function() {
+                                return DefaultClient.__super__.view.call(_this, expt, variantOrId).then(function(variant) {
+                                    return _this.sticky.saveView(expt, variant), _this.google.view(expt, variant), _this.record.view(expt, variant), 
+                                    _this.autoSync && _this.record.sync(), variant;
                                 });
                             });
                         };
                     }(this));
-                }, b.prototype.reward = function(a, c) {
-                    return null == c && (c = 1), i.debug("DefaultClient.reward", a, c), this._withExperiment(a).then(function(a) {
-                        return function(d) {
-                            return a._withStickyReward(d)["catch"](function() {
-                                return b.__super__.reward.call(a, d, c).then(function(b) {
-                                    return a.sticky.saveReward(d, b), a.google.reward(d, b, c), a.record.reward(d, b, c), 
-                                    a.autoSync ? a.record.sync().then(function() {
-                                        return b;
-                                    }) : b;
+                }, DefaultClient.prototype.reward = function(exptOrId, amount) {
+                    return null == amount && (amount = 1), log.debug("DefaultClient.reward", exptOrId, amount), 
+                    this._withExperiment(exptOrId).then(function(_this) {
+                        return function(expt) {
+                            return _this._withStickyReward(expt)["catch"](function() {
+                                return DefaultClient.__super__.reward.call(_this, expt, amount).then(function(variant) {
+                                    return _this.sticky.saveReward(expt, variant), _this.google.reward(expt, variant, amount), 
+                                    _this.record.reward(expt, variant, amount), _this.autoSync ? _this.record.sync().then(function() {
+                                        return variant;
+                                    }) : variant;
                                 });
                             });
                         };
                     }(this));
-                }, b.prototype.clear = function(a) {
-                    return i.debug("DefaultClient.clear", a), this._withExperiment(a).then(function(a) {
-                        return function(c) {
-                            return b.__super__.clear.call(a, c).then(function() {
-                                return a.sticky.clear(c), g.resolve(null);
+                }, DefaultClient.prototype.clear = function(exptOrId) {
+                    return log.debug("DefaultClient.clear", exptOrId), this._withExperiment(exptOrId).then(function(_this) {
+                        return function(expt) {
+                            return DefaultClient.__super__.clear.call(_this, expt).then(function() {
+                                return _this.sticky.clear(expt), Promise.resolve(null);
                             });
                         };
                     }(this));
-                }, b.prototype._withExperiment = function(a) {
-                    var b;
-                    return b = "string" == typeof a ? this.experiments[a] : a, b ? g.resolve(b) : g.reject(new Error("Experiment not found: " + a));
-                }, b.prototype._withStickyView = function(a) {
-                    var b;
-                    return b = this.sticky.loadView(a), b ? g.resolve(b) : g.reject(new Error("Sticky view not found: " + a));
-                }, b.prototype._withStickyReward = function(a) {
-                    var b;
-                    return b = this.sticky.loadReward(a), b ? g.resolve(b) : g.reject(new Error("Sticky reward not found: " + a));
-                }, b;
-            }(d);
+                }, DefaultClient.prototype._withExperiment = function(exptOrId) {
+                    var expt;
+                    return expt = "string" == typeof exptOrId ? this.experiments[exptOrId] : exptOrId, 
+                    expt ? Promise.resolve(expt) : Promise.reject(new Error("Experiment not found: " + exptOrId));
+                }, DefaultClient.prototype._withStickyView = function(expt) {
+                    var variant;
+                    return variant = this.sticky.loadView(expt), variant ? Promise.resolve(variant) : Promise.reject(new Error("Sticky view not found: " + expt));
+                }, DefaultClient.prototype._withStickyReward = function(expt) {
+                    var variant;
+                    return variant = this.sticky.loadReward(expt), variant ? Promise.resolve(variant) : Promise.reject(new Error("Sticky reward not found: " + expt));
+                }, DefaultClient;
+            }(CachedClient);
         }, {
             "../common/log": "/Users/dave/dev/projects/myna-js/src/main/common/log.coffee",
             "../common/settings": "/Users/dave/dev/projects/myna-js/src/main/common/settings/index.coffee",
@@ -3654,116 +3803,119 @@
             "./sticky": "/Users/dave/dev/projects/myna-js/src/main/client/sticky.coffee",
             "es6-promise": "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/main.js"
         } ],
-        "/Users/dave/dev/projects/myna-js/src/main/client/ga.coffee": [ function(a, b) {
-            var c, d, e, f = function(a, b) {
+        "/Users/dave/dev/projects/myna-js/src/main/client/ga.coffee": [ function(require, module) {
+            var GaRecorder, log, settings, __bind = function(fn, me) {
                 return function() {
-                    return a.apply(b, arguments);
+                    return fn.apply(me, arguments);
                 };
             };
-            d = a("../common/log"), e = a("../common/settings"), b.exports = c = function() {
-                function a(a) {
-                    this.settings = a, this._rewardMultiplier = f(this._rewardMultiplier, this), this._eventName = f(this._eventName, this), 
-                    this._enabled = f(this._enabled, this), this._rewardEvent = f(this._rewardEvent, this), 
-                    this._viewEvent = f(this._viewEvent, this), this.reward = f(this.reward, this), 
-                    this.view = f(this.view, this);
+            log = require("../common/log"), settings = require("../common/settings"), module.exports = GaRecorder = function() {
+                function GaRecorder(settings) {
+                    this.settings = settings, this._rewardMultiplier = __bind(this._rewardMultiplier, this), 
+                    this._eventName = __bind(this._eventName, this), this._enabled = __bind(this._enabled, this), 
+                    this._rewardEvent = __bind(this._rewardEvent, this), this._viewEvent = __bind(this._viewEvent, this), 
+                    this.reward = __bind(this.reward, this), this.view = __bind(this.view, this);
                 }
-                return a.prototype.view = function(a, b) {
-                    var c;
-                    d.debug("GoogleAnalytics.view", a, b), this._enabled(a) && null != (c = window._gaq) && c.push(this._viewEvent(a, b));
-                }, a.prototype.reward = function(a, b, c) {
-                    var e;
-                    d.debug("GoogleAnalytics.reward", a, b), this._enabled(a) && null != (e = window._gaq) && e.push(this._rewardEvent(a, b, c));
-                }, a.prototype._viewEvent = function(a, b) {
-                    return [ "_trackEvent", "myna", this._eventName(a, "view"), b.id, null, !1 ];
-                }, a.prototype._rewardEvent = function(a, b, c) {
-                    var d;
-                    return d = this._rewardMultiplier(a), [ "_trackEvent", "myna", this._eventName(a, "reward"), b.id, Math.round(d * c), !0 ];
-                }, a.prototype._enabled = function(a) {
-                    return e.get(a.settings, "myna.web.googleAnalytics.enabled", !0);
-                }, a.prototype._eventName = function(a, b) {
-                    var c;
-                    return null != (c = e.get(a.settings, "myna.web.googleAnalytics." + b + "Event")) ? c : "" + a.id + "-" + b;
-                }, a.prototype._rewardMultiplier = function(a) {
-                    return e.get(a.settings, "myna.web.googleAnalytics.rewardMultiplier", 100);
-                }, a;
+                return GaRecorder.prototype.view = function(expt, variant) {
+                    var _ref;
+                    log.debug("GoogleAnalytics.view", expt, variant), this._enabled(expt) && null != (_ref = window._gaq) && _ref.push(this._viewEvent(expt, variant));
+                }, GaRecorder.prototype.reward = function(expt, variant, amount) {
+                    var _ref;
+                    log.debug("GoogleAnalytics.reward", expt, variant), this._enabled(expt) && null != (_ref = window._gaq) && _ref.push(this._rewardEvent(expt, variant, amount));
+                }, GaRecorder.prototype._viewEvent = function(expt, variant) {
+                    return [ "_trackEvent", "myna", this._eventName(expt, "view"), variant.id, null, !1 ];
+                }, GaRecorder.prototype._rewardEvent = function(expt, variant, amount) {
+                    var multiplier;
+                    return multiplier = this._rewardMultiplier(expt), [ "_trackEvent", "myna", this._eventName(expt, "reward"), variant.id, Math.round(multiplier * amount), !0 ];
+                }, GaRecorder.prototype._enabled = function(expt) {
+                    return settings.get(expt.settings, "myna.web.googleAnalytics.enabled", !0);
+                }, GaRecorder.prototype._eventName = function(expt, event) {
+                    var _ref;
+                    return null != (_ref = settings.get(expt.settings, "myna.web.googleAnalytics." + event + "Event")) ? _ref : "" + expt.id + "-" + event;
+                }, GaRecorder.prototype._rewardMultiplier = function(expt) {
+                    return settings.get(expt.settings, "myna.web.googleAnalytics.rewardMultiplier", 100);
+                }, GaRecorder;
             }();
         }, {
             "../common/log": "/Users/dave/dev/projects/myna-js/src/main/common/log.coffee",
             "../common/settings": "/Users/dave/dev/projects/myna-js/src/main/common/settings/index.coffee"
         } ],
-        "/Users/dave/dev/projects/myna-js/src/main/client/myna-ui.coffee": [ function(a, b) {
-            var c, d, e, f = function(a, b) {
+        "/Users/dave/dev/projects/myna-js/src/main/client/myna-ui.coffee": [ function(require, module) {
+            var DefaultClient, MynaUiClient, ui, __bind = function(fn, me) {
                 return function() {
-                    return a.apply(b, arguments);
+                    return fn.apply(me, arguments);
                 };
-            }, g = {}.hasOwnProperty, h = function(a, b) {
-                function c() {
-                    this.constructor = a;
+            }, __hasProp = {}.hasOwnProperty, __extends = function(child, parent) {
+                function ctor() {
+                    this.constructor = child;
                 }
-                for (var d in b) g.call(b, d) && (a[d] = b[d]);
-                return c.prototype = b.prototype, a.prototype = new c(), a.__super__ = b.prototype, 
-                a;
+                for (var key in parent) __hasProp.call(parent, key) && (child[key] = parent[key]);
+                return ctor.prototype = parent.prototype, child.prototype = new ctor(), child.__super__ = parent.prototype, 
+                child;
             };
-            c = a("./default"), e = a("../engine/myna-ui"), b.exports = d = function(a) {
-                function b(a, c) {
-                    null == a && (a = []), null == c && (c = {}), this.view = f(this.view, this), this.suggest = f(this.suggest, this), 
-                    b.__super__.constructor.call(this, a, c), this._undoFuncs = {}, this._changesKey = "myna.web.changes";
+            DefaultClient = require("./default"), ui = require("../engine/myna-ui"), module.exports = MynaUiClient = function(_super) {
+                function MynaUiClient(experiments, settings) {
+                    null == experiments && (experiments = []), null == settings && (settings = {}), 
+                    this.view = __bind(this.view, this), this.suggest = __bind(this.suggest, this), 
+                    MynaUiClient.__super__.constructor.call(this, experiments, settings), this._undoFuncs = {}, 
+                    this._changesKey = "myna.web.changes";
                 }
-                return h(b, a), b.prototype.suggest = function(a) {
-                    return b.__super__.suggest.call(this, expt).then(function(b) {
-                        return this._apply(a, b);
+                return __extends(MynaUiClient, _super), MynaUiClient.prototype.suggest = function(exptId) {
+                    return MynaUiClient.__super__.suggest.call(this, expt).then(function(variant) {
+                        return this._apply(exptId, variant);
                     });
-                }, b.prototype.view = function(a, c) {
-                    return b.__super__.view.call(this, expt, c).then(function(b) {
-                        return this._apply(a, b);
+                }, MynaUiClient.prototype.view = function(exptId, variantOrId) {
+                    return MynaUiClient.__super__.view.call(this, expt, variantOrId).then(function(variant) {
+                        return this._apply(exptId, variant);
                     });
-                }, b.prototype._apply = function(a, b) {
-                    var c, d;
-                    return c = settings.get(b.settings, this._changesKey, []), "function" == typeof (d = this._undoFuncs)[a] && d[a](), 
-                    this._undoFuncs[a] = e.apply(c, function(c) {
+                }, MynaUiClient.prototype._apply = function(exptId, variant) {
+                    var changes, _base;
+                    return changes = settings.get(variant.settings, this._changesKey, []), "function" == typeof (_base = this._undoFuncs)[exptId] && _base[exptId](), 
+                    this._undoFuncs[exptId] = ui.apply(changes, function(_this) {
                         return function() {
-                            return c.reward(a, b);
+                            return _this.reward(exptId, variant);
                         };
-                    }(this)), b;
-                }, b;
-            }(c);
+                    }(this)), variant;
+                }, MynaUiClient;
+            }(DefaultClient);
         }, {
             "../engine/myna-ui": "/Users/dave/dev/projects/myna-js/src/main/engine/myna-ui.coffee",
             "./default": "/Users/dave/dev/projects/myna-js/src/main/client/default.coffee"
         } ],
-        "/Users/dave/dev/projects/myna-js/src/main/client/sticky.coffee": [ function(a, b) {
-            var c, d, e, f, g, h = function(a, b) {
+        "/Users/dave/dev/projects/myna-js/src/main/client/sticky.coffee": [ function(require, module) {
+            var Promise, StickyCache, log, settings, variant, __bind = function(fn, me) {
                 return function() {
-                    return a.apply(b, arguments);
+                    return fn.apply(me, arguments);
                 };
             };
-            c = a("es6-promise").Promise, e = a("../common/log"), f = a("../common/settings"), 
-            g = a("./variant"), b.exports = d = function() {
-                function a(a) {
-                    this.stickyKey = null != a ? a : "myna.web.sticky", this._isSticky = h(this._isSticky, this), 
-                    this.clear = h(this.clear, this), this.saveReward = h(this.saveReward, this), this.loadReward = h(this.loadReward, this), 
-                    this.saveView = h(this.saveView, this), this.loadView = h(this.loadView, this);
+            Promise = require("es6-promise").Promise, log = require("../common/log"), settings = require("../common/settings"), 
+            variant = require("./variant"), module.exports = StickyCache = function() {
+                function StickyCache(stickyKey) {
+                    this.stickyKey = null != stickyKey ? stickyKey : "myna.web.sticky", this._isSticky = __bind(this._isSticky, this), 
+                    this.clear = __bind(this.clear, this), this.saveReward = __bind(this.saveReward, this), 
+                    this.loadReward = __bind(this.loadReward, this), this.saveView = __bind(this.saveView, this), 
+                    this.loadView = __bind(this.loadView, this);
                 }
-                return a.prototype.loadView = function(a) {
-                    var b;
-                    return e.debug("StickyCache.loadView", a), b = this._isSticky(a) ? g.load(a, "stickyView") : null, 
-                    e.debug("StickyCache.loadView", null != a ? a.id : void 0, null != b ? b.id : void 0), 
-                    b;
-                }, a.prototype.saveView = function(a, b) {
-                    e.debug("StickyCache.saveView", null != a ? a.id : void 0, null != b ? b.id : void 0), 
-                    this._isSticky(a) && g.save(a, "stickyView", b);
-                }, a.prototype.loadReward = function(a) {
-                    var b;
-                    return b = this._isSticky(a) ? g.load(a, "stickyReward") : null, e.debug("StickyCache.loadReward", null != a ? a.id : void 0, null != b ? b.id : void 0), 
-                    b;
-                }, a.prototype.saveReward = function(a, b) {
-                    e.debug("StickyCache.saveReward", null != a ? a.id : void 0, null != b ? b.id : void 0), 
-                    this._isSticky(a) && g.save(a, "stickyReward", b);
-                }, a.prototype.clear = function(a) {
-                    e.debug("StickyCache.clear", a), g.remove(a, "stickyView"), g.remove(a, "stickyReward");
-                }, a.prototype._isSticky = function(a) {
-                    return !!f.get(a.settings, this.stickyKey, !1);
-                }, a;
+                return StickyCache.prototype.loadView = function(expt) {
+                    var ans;
+                    return log.debug("StickyCache.loadView", expt), ans = this._isSticky(expt) ? variant.load(expt, "stickyView") : null, 
+                    log.debug("StickyCache.loadView", null != expt ? expt.id : void 0, null != ans ? ans.id : void 0), 
+                    ans;
+                }, StickyCache.prototype.saveView = function(expt, v) {
+                    log.debug("StickyCache.saveView", null != expt ? expt.id : void 0, null != v ? v.id : void 0), 
+                    this._isSticky(expt) && variant.save(expt, "stickyView", v);
+                }, StickyCache.prototype.loadReward = function(expt) {
+                    var ans;
+                    return ans = this._isSticky(expt) ? variant.load(expt, "stickyReward") : null, log.debug("StickyCache.loadReward", null != expt ? expt.id : void 0, null != ans ? ans.id : void 0), 
+                    ans;
+                }, StickyCache.prototype.saveReward = function(expt, v) {
+                    log.debug("StickyCache.saveReward", null != expt ? expt.id : void 0, null != v ? v.id : void 0), 
+                    this._isSticky(expt) && variant.save(expt, "stickyReward", v);
+                }, StickyCache.prototype.clear = function(expt) {
+                    log.debug("StickyCache.clear", expt), variant.remove(expt, "stickyView"), variant.remove(expt, "stickyReward");
+                }, StickyCache.prototype._isSticky = function(expt) {
+                    return !!settings.get(expt.settings, this.stickyKey, !1);
+                }, StickyCache;
             }();
         }, {
             "../common/log": "/Users/dave/dev/projects/myna-js/src/main/common/log.coffee",
@@ -3771,108 +3923,113 @@
             "./variant": "/Users/dave/dev/projects/myna-js/src/main/client/variant.coffee",
             "es6-promise": "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/main.js"
         } ],
-        "/Users/dave/dev/projects/myna-js/src/main/client/variant.coffee": [ function(a, b) {
-            var c, d, e, f, g, h, i, j, k;
-            c = a("es6-promise").Promise, e = a("../common/log"), j = a("../common/storage"), 
-            i = function(a, b, c) {
-                j.set("" + a.uuid + "_" + b, c.id);
-            }, d = function(a, b) {
-                var c, d;
-                return c = null != (d = j.get("" + a.uuid + "_" + b)) ? d : null, e.debug("variant.load", "id", c), 
-                c ? f(a, c) : null;
-            }, h = function(a, b) {
-                j.remove("" + a.uuid + "_" + b);
-            }, f = function(a, b) {
-                var c, d, e, f, g;
-                for (c = b.id ? b.id : b, g = a.variants, e = 0, f = g.length; f > e; e++) if (d = g[e], 
-                d.id === c) return d;
+        "/Users/dave/dev/projects/myna-js/src/main/client/variant.coffee": [ function(require, module) {
+            var Promise, load, log, lookup, random, remove, save, storage, _totalWeight;
+            Promise = require("es6-promise").Promise, log = require("../common/log"), storage = require("../common/storage"), 
+            save = function(expt, storageKey, variant) {
+                storage.set("" + expt.uuid + "_" + storageKey, variant.id);
+            }, load = function(expt, storageKey) {
+                var id, _ref;
+                return id = null != (_ref = storage.get("" + expt.uuid + "_" + storageKey)) ? _ref : null, 
+                log.debug("variant.load", "id", id), id ? lookup(expt, id) : null;
+            }, remove = function(expt, storageKey) {
+                storage.remove("" + expt.uuid + "_" + storageKey);
+            }, lookup = function(expt, variantOrId) {
+                var id, variant, _i, _len, _ref;
+                for (id = variantOrId.id ? variantOrId.id : variantOrId, _ref = expt.variants, _i = 0, 
+                _len = _ref.length; _len > _i; _i++) if (variant = _ref[_i], variant.id === id) return variant;
                 return null;
-            }, g = function(a) {
-                var b, c, d, e;
-                c = k(a), g = Math.random() * c, e = a.variants;
-                for (b in e) if (d = e[b], c -= d.weight, g >= c) return d;
+            }, random = function(expt) {
+                var id, total, variant, _ref;
+                total = _totalWeight(expt), random = Math.random() * total, _ref = expt.variants;
+                for (id in _ref) if (variant = _ref[id], total -= variant.weight, random >= total) return variant;
                 return null;
-            }, k = function(a) {
-                var b, c, d, e, f;
-                for (b = 0, f = a.variants, d = 0, e = f.length; e > d; d++) c = f[d], b += c.weight;
-                return b;
-            }, b.exports = {
-                save: i,
-                load: d,
-                remove: h,
-                lookup: f,
-                random: g,
-                _totalWeight: k
+            }, _totalWeight = function(expt) {
+                var ans, variant, _i, _len, _ref;
+                for (ans = 0, _ref = expt.variants, _i = 0, _len = _ref.length; _len > _i; _i++) variant = _ref[_i], 
+                ans += variant.weight;
+                return ans;
+            }, module.exports = {
+                save: save,
+                load: load,
+                remove: remove,
+                lookup: lookup,
+                random: random,
+                _totalWeight: _totalWeight
             };
         }, {
             "../common/log": "/Users/dave/dev/projects/myna-js/src/main/common/log.coffee",
             "../common/storage": "/Users/dave/dev/projects/myna-js/src/main/common/storage/index.coffee",
             "es6-promise": "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/main.js"
         } ],
-        "/Users/dave/dev/projects/myna-js/src/main/common/hash.coffee": [ function(a, b) {
-            var c, d, e;
-            c = a("./log"), e = function(a) {
-                var b, d, e, f, g, h, i, j;
-                for (a = a ? "#" === a[0] ? a.substring(1) : a : "", b = {}, i = a.split("&"), g = 0, 
-                h = i.length; h > g; g++) e = i[g], "" !== e && (j = e.split("="), d = j[0], f = j[1], 
-                b[decodeURIComponent(d)] = decodeURIComponent(null != f ? f : d));
-                return c.debug("hash.parse", b), b;
-            }, d = e(window.location.hash), b.exports = {
-                parse: e,
-                params: d
+        "/Users/dave/dev/projects/myna-js/src/main/common/hash.coffee": [ function(require, module) {
+            var log, params, parse;
+            log = require("./log"), parse = function(hash) {
+                var ans, lhs, part, rhs, _i, _len, _ref, _ref1;
+                for (hash = hash ? "#" === hash[0] ? hash.substring(1) : hash : "", ans = {}, _ref = hash.split("&"), 
+                _i = 0, _len = _ref.length; _len > _i; _i++) part = _ref[_i], "" !== part && (_ref1 = part.split("="), 
+                lhs = _ref1[0], rhs = _ref1[1], ans[decodeURIComponent(lhs)] = decodeURIComponent(null != rhs ? rhs : lhs));
+                return log.debug("hash.parse", ans), ans;
+            }, params = parse(window.location.hash), module.exports = {
+                parse: parse,
+                params: params
             };
         }, {
             "./log": "/Users/dave/dev/projects/myna-js/src/main/common/log.coffee"
         } ],
-        "/Users/dave/dev/projects/myna-js/src/main/common/jsonp.coffee": [ function(a, b) {
-            var c, d, e;
-            c = a("es6-promise").Promise, e = a("./log"), b.exports = d = {}, window.__mynaCallbacks = {}, 
-            d.request = function(a, b, f) {
-                return null == b && (b = {}), null == f && (f = 0), e.debug("jsonp.request", a, b, f), 
-                new c(function(c, g) {
-                    var h, i, j, k, l;
-                    k = !1, j = function() {
-                        e.debug("jsonp.request.onTimeout", h, k, f), k || (k = !0, d._removeCallback(h), 
-                        g(d._createTimeoutError(h)));
-                    }, i = function(a) {
-                        e.debug("jsonp.request.onComplete", h, k, a), k || (k = !0, window.clearTimeout(l), 
-                        d._removeCallback(h), "problem" === a.typename ? g(a) : c(a));
-                    }, l = f ? window.setTimeout(j, f) : null, h = d._createCallback(a, b, i);
+        "/Users/dave/dev/projects/myna-js/src/main/common/jsonp.coffee": [ function(require, module) {
+            var Promise, jsonp, log;
+            Promise = require("es6-promise").Promise, log = require("./log"), module.exports = jsonp = {}, 
+            window.__mynaCallbacks = {}, jsonp.request = function(url, params, timeout) {
+                return null == params && (params = {}), null == timeout && (timeout = 0), log.debug("jsonp.request", url, params, timeout), 
+                new Promise(function(resolve, reject) {
+                    var callbackId, onComplete, onTimeout, resolved, timer;
+                    resolved = !1, onTimeout = function() {
+                        log.debug("jsonp.request.onTimeout", callbackId, resolved, timeout), resolved || (resolved = !0, 
+                        jsonp._removeCallback(callbackId), reject(jsonp._createTimeoutError(callbackId)));
+                    }, onComplete = function(response) {
+                        log.debug("jsonp.request.onComplete", callbackId, resolved, response), resolved || (resolved = !0, 
+                        window.clearTimeout(timer), jsonp._removeCallback(callbackId), "problem" === response.typename ? reject(response) : resolve(response));
+                    }, timer = timeout ? window.setTimeout(onTimeout, timeout) : null, callbackId = jsonp._createCallback(url, params, onComplete);
                 });
-            }, d._createCallback = function(a, b, c) {
-                var e, f, g, h;
-                return f = "" + Math.floor(1e4 * Math.random()), h = new Date().getTime(), e = "c" + h + "_" + f, 
-                window.__mynaCallbacks[e] = c, a = d._createUrl(a, b, e), g = d._createScriptElem(a, e), 
-                document.getElementsByTagName("head")[0].appendChild(g), e;
-            }, d._removeCallback = function(a) {
-                var b, c, d;
-                d = document.getElementById(a), c = null != d ? d.readyState : void 0, !window.__mynaCallbacks[a] || c && "complete" !== c && "loaded" !== c || (d.onload = d.onreadystatechange = null, 
-                d.parentNode.removeChild(d));
+            }, jsonp._createCallback = function(url, params, callback) {
+                var callbackId, randSuffix, scriptElem, timeSuffix;
+                return randSuffix = "" + Math.floor(1e4 * Math.random()), timeSuffix = new Date().getTime(), 
+                callbackId = "c" + timeSuffix + "_" + randSuffix, window.__mynaCallbacks[callbackId] = callback, 
+                url = jsonp._createUrl(url, params, callbackId), scriptElem = jsonp._createScriptElem(url, callbackId), 
+                document.getElementsByTagName("head")[0].appendChild(scriptElem), callbackId;
+            }, jsonp._removeCallback = function(callbackId) {
+                var exn, readyState, scriptElem;
+                scriptElem = document.getElementById(callbackId), readyState = null != scriptElem ? scriptElem.readyState : void 0, 
+                !window.__mynaCallbacks[callbackId] || readyState && "complete" !== readyState && "loaded" !== readyState || (scriptElem.onload = scriptElem.onreadystatechange = null, 
+                scriptElem.parentNode.removeChild(scriptElem));
                 try {
-                    window.__mynaCallbacks[a] = null, delete window.__mynaCallbacks[a];
-                } catch (e) {
-                    b = e;
+                    window.__mynaCallbacks[callbackId] = null, delete window.__mynaCallbacks[callbackId];
+                } catch (_error) {
+                    exn = _error;
                 }
-            }, d._createUrl = function(a, b, c) {
-                var d, f, g;
-                null == b && (b = {}), d = a, d += a.indexOf("?") < 0 ? "?" : "&";
-                for (f in b) g = b[f], d += "" + f + "=" + g + "&";
-                return d += "callback=__mynaCallbacks." + c, e.debug("jsonp._createUrl", d), d;
-            }, d._createScriptElem = function(a, b) {
-                var c;
-                return c = document.createElement("script"), c.setAttribute("id", b), c.setAttribute("type", "text/javascript"), 
-                c.setAttribute("async", "true"), c.setAttribute("src", a), c.setAttribute("class", "myna-jsonp"), 
-                c.setAttribute("data-callback", b), c.onload = c.onreadystatechange = function() {
-                    d._removeCallback(b);
-                }, c;
-            }, d._createTimeoutError = function(a) {
+            }, jsonp._createUrl = function(url, params, callbackId) {
+                var ans, key, value;
+                null == params && (params = {}), ans = url, ans += url.indexOf("?") < 0 ? "?" : "&";
+                for (key in params) value = params[key], ans += "" + key + "=" + value + "&";
+                return ans += "callback=__mynaCallbacks." + callbackId, log.debug("jsonp._createUrl", ans), 
+                ans;
+            }, jsonp._createScriptElem = function(url, callbackId) {
+                var scriptElem;
+                return scriptElem = document.createElement("script"), scriptElem.setAttribute("id", callbackId), 
+                scriptElem.setAttribute("type", "text/javascript"), scriptElem.setAttribute("async", "true"), 
+                scriptElem.setAttribute("src", url), scriptElem.setAttribute("class", "myna-jsonp"), 
+                scriptElem.setAttribute("data-callback", callbackId), scriptElem.onload = scriptElem.onreadystatechange = function() {
+                    jsonp._removeCallback(callbackId);
+                }, scriptElem;
+            }, jsonp._createTimeoutError = function(callbackId) {
                 return {
                     typename: "problem",
                     status: 500,
                     messages: [ {
                         typename: "timeout",
                         message: "request timed out after #{timeout}ms",
-                        callback: a
+                        callback: callbackId
                     } ]
                 };
             };
@@ -3880,408 +4037,423 @@
             "./log": "/Users/dave/dev/projects/myna-js/src/main/common/log.coffee",
             "es6-promise": "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/main.js"
         } ],
-        "/Users/dave/dev/projects/myna-js/src/main/common/log.coffee": [ function(a, b) {
-            var c, d, e, f = [].slice;
-            d = !1, c = function() {
-                var a, b;
-                a = 1 <= arguments.length ? f.call(arguments, 0) : [], d && null != (b = window.console) && b.log(a);
-            }, e = function() {
-                var a, b;
-                throw a = 1 <= arguments.length ? f.call(arguments, 0) : [], d && null != (b = window.console) && b.error(a), 
-                a;
-            }, b.exports = {
-                enabled: d,
-                debug: c,
-                error: e
+        "/Users/dave/dev/projects/myna-js/src/main/common/log.coffee": [ function(require, module) {
+            var debug, enabled, error, __slice = [].slice;
+            enabled = !1, debug = function() {
+                var args, _ref;
+                args = 1 <= arguments.length ? __slice.call(arguments, 0) : [], enabled && null != (_ref = window.console) && _ref.log(args);
+            }, error = function() {
+                var args, _ref;
+                throw args = 1 <= arguments.length ? __slice.call(arguments, 0) : [], enabled && null != (_ref = window.console) && _ref.error(args), 
+                args;
+            }, module.exports = {
+                enabled: enabled,
+                debug: debug,
+                error: error
             };
         }, {} ],
-        "/Users/dave/dev/projects/myna-js/src/main/common/settings/index.coffee": [ function(a, b) {
-            var c, d, e, f, g, h, i, j, k, l;
-            j = a("../util"), c = a("./path"), d = function(a) {
-                return k({}, a);
-            }, f = function(a, b, d) {
-                var e;
-                return null == d && (d = void 0), null != (e = new c(b).get(a)) ? e : d;
-            }, h = function(a) {
+        "/Users/dave/dev/projects/myna-js/src/main/common/settings/index.coffee": [ function(require, module) {
+            var Path, create, flatten, get, paths, set, unset, util, _setAll, _setOne;
+            util = require("../util"), Path = require("./path"), create = function(updates) {
+                return _setAll({}, updates);
+            }, get = function(data, path, orElse) {
+                var _ref;
+                return null == orElse && (orElse = void 0), null != (_ref = new Path(path).get(data)) ? _ref : orElse;
+            }, set = function(data) {
                 if (arguments.length < 2) throw [ "settings.set", "not enough arguments", arguments ];
-                return "object" == typeof arguments[1] ? k(a, arguments[1]) : l(a, arguments[1], arguments[2]);
-            }, k = function(a, b) {
-                var c, d;
-                for (c in b) d = b[c], a = l(a, c, d);
-                return a;
-            }, l = function(a, b, d) {
-                return new c(b).set(a, d);
-            }, i = function(a, b) {
-                return new c(b).unset(a);
-            }, e = function() {
-                var a, b, c;
-                return a = [], b = function(a) {
-                    return "." === a[0] ? a.substring(1) : a;
-                }, c = function(d, e) {
-                    var f, g, h, i, k, l, m;
-                    if (null == e && (e = ""), j.isArray(d)) {
-                        for (l = [], h = i = 0, k = d.length; k > i; h = ++i) f = d[h], l.push(c(h, e + "[" + f + "]"));
-                        return l;
+                return "object" == typeof arguments[1] ? _setAll(data, arguments[1]) : _setOne(data, arguments[1], arguments[2]);
+            }, _setAll = function(data, updates) {
+                var path, value;
+                for (path in updates) value = updates[path], data = _setOne(data, path, value);
+                return data;
+            }, _setOne = function(data, path, value) {
+                return new Path(path).set(data, value);
+            }, unset = function(data, path) {
+                return new Path(path).unset(data);
+            }, flatten = function() {
+                var ans, normalize, visit;
+                return ans = [], normalize = function(path) {
+                    return "." === path[0] ? path.substring(1) : path;
+                }, visit = function(value, path) {
+                    var i, k, v, _i, _len, _results, _results1;
+                    if (null == path && (path = ""), util.isArray(value)) {
+                        for (_results = [], v = _i = 0, _len = value.length; _len > _i; v = ++_i) i = value[v], 
+                        _results.push(visit(v, path + "[" + i + "]"));
+                        return _results;
                     }
-                    if (j.isObject(d)) {
-                        m = [];
-                        for (g in d) h = d[g], m.push(c(h, e + "." + g));
-                        return m;
+                    if (util.isObject(value)) {
+                        _results1 = [];
+                        for (k in value) v = value[k], _results1.push(visit(v, path + "." + k));
+                        return _results1;
                     }
-                    return a.push([ b(e), d ]);
-                }, c(this.data), a;
-            }, g = function(a) {
-                return _.map(e(a), function(a) {
-                    return a[0];
+                    return ans.push([ normalize(path), value ]);
+                }, visit(this.data), ans;
+            }, paths = function(data) {
+                return _.map(flatten(data), function(pair) {
+                    return pair[0];
                 }), {
-                    toJSON: function(a) {
-                        return function(b) {
-                            return null == b && (b = {}), a.data;
+                    toJSON: function(_this) {
+                        return function(options) {
+                            return null == options && (options = {}), _this.data;
                         };
                     }(this)
                 };
-            }, b.exports = {
-                Path: c,
-                create: d,
-                get: f,
-                set: h,
-                unset: i,
-                flatten: e,
-                paths: g
+            }, module.exports = {
+                Path: Path,
+                create: create,
+                get: get,
+                set: set,
+                unset: unset,
+                flatten: flatten,
+                paths: paths
             };
         }, {
             "../util": "/Users/dave/dev/projects/myna-js/src/main/common/util.coffee",
             "./path": "/Users/dave/dev/projects/myna-js/src/main/common/settings/path.coffee"
         } ],
-        "/Users/dave/dev/projects/myna-js/src/main/common/settings/path.coffee": [ function(a, b) {
-            var c, d, e = function(a, b) {
+        "/Users/dave/dev/projects/myna-js/src/main/common/settings/path.coffee": [ function(require, module) {
+            var Path, util, __bind = function(fn, me) {
                 return function() {
-                    return a.apply(b, arguments);
+                    return fn.apply(me, arguments);
                 };
-            }, f = [].slice;
-            d = a("../util"), b.exports = c = function() {
-                function a(b) {
-                    this.toString = e(this.toString, this), this.drop = e(this.drop, this), this.take = e(this.take, this), 
-                    this.isPrefixOf = e(this.isPrefixOf, this), this.prefixes = e(this.prefixes, this), 
-                    this.unset = e(this.unset, this), this.set = e(this.set, this), this.get = e(this.get, this), 
-                    this.path = e(this.path, this), this.quote = e(this.quote, this), this.nodes = "string" == typeof b ? a.parse(b) : b;
+            }, __slice = [].slice;
+            util = require("../util"), module.exports = Path = function() {
+                function Path(input) {
+                    this.toString = __bind(this.toString, this), this.drop = __bind(this.drop, this), 
+                    this.take = __bind(this.take, this), this.isPrefixOf = __bind(this.isPrefixOf, this), 
+                    this.prefixes = __bind(this.prefixes, this), this.unset = __bind(this.unset, this), 
+                    this.set = __bind(this.set, this), this.get = __bind(this.get, this), this.path = __bind(this.path, this), 
+                    this.quote = __bind(this.quote, this), this.nodes = "string" == typeof input ? Path.parse(input) : input;
                 }
-                return a.identifierRegex = /^[a-z_$][a-z0-9_$]*/i, a.integerRegex = /^[0-9]+/, a.completeIdentifierRegex = /^[a-z_$][a-z0-9_$]*$/i, 
-                a.permissiveIdentifierRegex = /^[^[.]+/, a.isValid = function(b) {
-                    var c;
+                return Path.identifierRegex = /^[a-z_$][a-z0-9_$]*/i, Path.integerRegex = /^[0-9]+/, 
+                Path.completeIdentifierRegex = /^[a-z_$][a-z0-9_$]*$/i, Path.permissiveIdentifierRegex = /^[^[.]+/, 
+                Path.isValid = function(path) {
+                    var exn;
                     try {
-                        return a.parse(b), !0;
-                    } catch (d) {
-                        return c = d, !1;
+                        return Path.parse(path), !0;
+                    } catch (_error) {
+                        return exn = _error, !1;
                     }
-                }, a.normalize = function(b) {
-                    var c;
+                }, Path.normalize = function(path) {
+                    var exn;
                     try {
-                        return new a(b).toString();
-                    } catch (d) {
-                        return c = d, b;
+                        return new Path(path).toString();
+                    } catch (_error) {
+                        return exn = _error, path;
                     }
-                }, a.parse = function(b) {
-                    var c, e, f, g, h, i, j, k, l;
-                    return g = b, h = function(a) {
-                        if (g.length < a) throw "bad settings path: " + b;
-                        g = g.substring(a);
-                    }, j = function(a) {
-                        var c;
-                        if (g.length < a) throw "bad settings path: " + b;
-                        return c = g.substring(0, a), g = g.substring(a), c;
-                    }, k = function(a) {
-                        return g = g.substring(a.length), a;
-                    }, c = function() {
-                        var c;
-                        if (c = g.match(a.permissiveIdentifierRegex)) return k(c[0]);
-                        throw "bad settings path: " + b;
-                    }, f = function() {
-                        var c;
-                        if (c = g.match(a.integerRegex)) return parseInt(k(c[0]));
-                        throw "bad settings path: " + b;
-                    }, i = function(a) {
-                        var b, c;
-                        for (h(1), b = "", c = !1; !c; ) g[0] === a ? c = !0 : "\\" === g[0] ? (h(1), b += j(1)) : b += j(1);
-                        return h(1), b;
-                    }, e = function() {
-                        var a;
-                        return h(1), a = "'" === g[0] ? i("'") : '"' === g[0] ? i('"') : f(), h(1), a;
-                    }, l = function() {
-                        var a;
-                        for (a = []; g.length > 0; ) "." === g[0] ? (h(1), a.push(c())) : a.push("[" === g[0] ? e() : c());
-                        return a;
-                    }, g = d.trim(g), "" === g ? [] : "." === g[0] || "[" === g[0] ? l() : (g = "." + g, 
-                    l());
-                }, a.prototype.quote = function(a) {
-                    return a.replace(/['\"\\]/g, function(a) {
-                        return "\\" + a;
+                }, Path.parse = function(originalPath) {
+                    var identifier, indexField, number, path, skip, string, take, takeString, topLevel;
+                    return path = originalPath, skip = function(num) {
+                        if (path.length < num) throw "bad settings path: " + originalPath;
+                        path = path.substring(num);
+                    }, take = function(num) {
+                        var ans;
+                        if (path.length < num) throw "bad settings path: " + originalPath;
+                        return ans = path.substring(0, num), path = path.substring(num), ans;
+                    }, takeString = function(str) {
+                        return path = path.substring(str.length), str;
+                    }, identifier = function() {
+                        var match;
+                        if (match = path.match(Path.permissiveIdentifierRegex)) return takeString(match[0]);
+                        throw "bad settings path: " + originalPath;
+                    }, number = function() {
+                        var match;
+                        if (match = path.match(Path.integerRegex)) return parseInt(takeString(match[0]));
+                        throw "bad settings path: " + originalPath;
+                    }, string = function(quote) {
+                        var ans, terminated;
+                        for (skip(1), ans = "", terminated = !1; !terminated; ) path[0] === quote ? terminated = !0 : "\\" === path[0] ? (skip(1), 
+                        ans += take(1)) : ans += take(1);
+                        return skip(1), ans;
+                    }, indexField = function() {
+                        var ans;
+                        return skip(1), ans = "'" === path[0] ? string("'") : '"' === path[0] ? string('"') : number(), 
+                        skip(1), ans;
+                    }, topLevel = function() {
+                        var ans;
+                        for (ans = []; path.length > 0; ) "." === path[0] ? (skip(1), ans.push(identifier())) : ans.push("[" === path[0] ? indexField() : identifier());
+                        return ans;
+                    }, path = util.trim(path), "" === path ? [] : "." === path[0] || "[" === path[0] ? topLevel() : (path = "." + path, 
+                    topLevel());
+                }, Path.prototype.quote = function(str) {
+                    return str.replace(/['\"\\]/g, function(quote) {
+                        return "\\" + quote;
                     });
-                }, a.prototype.path = function(b) {
-                    var c, d, e, f;
-                    for (null == b && (b = this.nodes), c = "", e = 0, f = b.length; f > e; e++) d = b[e], 
-                    c += "number" == typeof d ? "[" + d + "]" : a.completeIdentifierRegex.test(d) ? "." + d : '["' + this.quote(d) + '"]';
-                    return "." === c[0] ? c.substring(1) : c;
-                }, a.prototype.get = function(a) {
-                    var b, c, d, e;
-                    for (e = this.nodes, c = 0, d = e.length; d > c; c++) b = e[c], a = null != a ? a[b] : void 0;
-                    return a;
-                }, a.prototype.set = function(a, b) {
-                    var c, d, e, g, h, i, j, k;
-                    if (null != b) {
-                        if (0 === this.nodes.length) return b;
-                        for (g = a, k = this.nodes, c = 2 <= k.length ? f.call(k, 0, h = k.length - 1) : (h = 0, 
-                        []), d = k[h++], i = 0, j = c.length; j > i; i++) e = c[i], "object" != typeof g[e] && (g[e] = {}), 
-                        g = g[e];
-                        return g[d] = b, a;
+                }, Path.prototype.path = function(nodes) {
+                    var ans, node, _i, _len;
+                    for (null == nodes && (nodes = this.nodes), ans = "", _i = 0, _len = nodes.length; _len > _i; _i++) node = nodes[_i], 
+                    ans += "number" == typeof node ? "[" + node + "]" : Path.completeIdentifierRegex.test(node) ? "." + node : '["' + this.quote(node) + '"]';
+                    return "." === ans[0] ? ans.substring(1) : ans;
+                }, Path.prototype.get = function(data) {
+                    var node, _i, _len, _ref;
+                    for (_ref = this.nodes, _i = 0, _len = _ref.length; _len > _i; _i++) node = _ref[_i], 
+                    data = null != data ? data[node] : void 0;
+                    return data;
+                }, Path.prototype.set = function(data, value) {
+                    var first, last, node, obj, _i, _j, _len, _ref;
+                    if (null != value) {
+                        if (0 === this.nodes.length) return value;
+                        for (obj = data, _ref = this.nodes, first = 2 <= _ref.length ? __slice.call(_ref, 0, _i = _ref.length - 1) : (_i = 0, 
+                        []), last = _ref[_i++], _j = 0, _len = first.length; _len > _j; _j++) node = first[_j], 
+                        "object" != typeof obj[node] && (obj[node] = {}), obj = obj[node];
+                        return obj[last] = value, data;
                     }
-                    return this.unset(a);
-                }, a.prototype.unset = function(a) {
-                    var b, c, d, e, g, h, i, j;
+                    return this.unset(data);
+                }, Path.prototype.unset = function(data) {
+                    var first, last, node, obj, _i, _j, _len, _ref;
                     if (0 === this.nodes.length) return void 0;
-                    for (e = a, j = this.nodes, b = 2 <= j.length ? f.call(j, 0, g = j.length - 1) : (g = 0, 
-                    []), c = j[g++], h = 0, i = b.length; i > h; h++) {
-                        if (d = b[h], null == e[d]) return a;
-                        e = e[d];
+                    for (obj = data, _ref = this.nodes, first = 2 <= _ref.length ? __slice.call(_ref, 0, _i = _ref.length - 1) : (_i = 0, 
+                    []), last = _ref[_i++], _j = 0, _len = first.length; _len > _j; _j++) {
+                        if (node = first[_j], null == obj[node]) return data;
+                        obj = obj[node];
                     }
-                    return delete e[c], a;
-                }, a.prototype.prefixes = function() {
-                    var a, b, c, d, e;
-                    for (c = this.nodes, a = [], b = d = 1, e = c.length; e >= 1 ? e >= d : d >= e; b = e >= 1 ? ++d : --d) a.push(this.path(c.slice(0, b)));
-                    return a;
-                }, a.prototype.isPrefixOf = function(a) {
-                    var b, c, d, e, f;
-                    if (b = this.nodes, c = a.nodes, b.length > c.length) return !1;
-                    for (d = e = 0, f = b.length; f >= 0 ? f > e : e > f; d = f >= 0 ? ++e : --e) if (b[d] !== c[d]) return !1;
+                    return delete obj[last], data;
+                }, Path.prototype.prefixes = function() {
+                    var ans, n, nodes, _i, _ref;
+                    for (nodes = this.nodes, ans = [], n = _i = 1, _ref = nodes.length; _ref >= 1 ? _ref >= _i : _i >= _ref; n = _ref >= 1 ? ++_i : --_i) ans.push(this.path(nodes.slice(0, n)));
+                    return ans;
+                }, Path.prototype.isPrefixOf = function(path) {
+                    var a, b, num, _i, _ref;
+                    if (a = this.nodes, b = path.nodes, a.length > b.length) return !1;
+                    for (num = _i = 0, _ref = a.length; _ref >= 0 ? _ref > _i : _i > _ref; num = _ref >= 0 ? ++_i : --_i) if (a[num] !== b[num]) return !1;
                     return !0;
-                }, a.prototype.take = function(b) {
-                    return new a(_.take(this.nodes, b));
-                }, a.prototype.drop = function(b) {
-                    return new a(_.drop(this.nodes, b));
-                }, a.prototype.toString = function() {
+                }, Path.prototype.take = function(num) {
+                    return new Path(_.take(this.nodes, num));
+                }, Path.prototype.drop = function(num) {
+                    return new Path(_.drop(this.nodes, num));
+                }, Path.prototype.toString = function() {
                     return this.path();
-                }, a;
+                }, Path;
             }();
         }, {
             "../util": "/Users/dave/dev/projects/myna-js/src/main/common/util.coffee"
         } ],
-        "/Users/dave/dev/projects/myna-js/src/main/common/storage/cookie.coffee": [ function(a, b) {
-            var c, d, e, f, g;
-            d = function(a) {
-                return encodeURIComponent(JSON.stringify(a));
-            }, c = function(a) {
-                return JSON.parse(0 === a.indexOf('"') ? decodeURIComponent(a.slice(1, -1).replace(/\\"/g, '"').replace(/\\\\/g, "\\")) : decodeURIComponent(a));
-            }, g = function(a, b, c) {
-                var e, f, g, h;
-                null == c && (c = 365), h = "myna-" + a + "=" + d(b), f = c ? (e = new Date(), e.setTime(e.getTime() + 24 * c * 60 * 60 * 1e3), 
-                "; expires=" + e.toGMTString()) : "", g = "; path=/", document.cookie = "" + h + f + g;
-            }, e = function(a) {
-                var b, d, e, f, g, h, i, j;
-                for (g = "myna-" + a + "=", f = function(a) {
-                    var b;
-                    return b = a.indexOf(g), b >= 0 && a.substring(0, b).match("^\\s*$");
-                }, d = function(a) {
-                    var b;
-                    return b = a.indexOf(g), a.substring(b + g.length, a.length);
-                }, e = document.cookie.split(";"), i = 0, j = e.length; j > i; i++) if (b = e[i], 
-                f(b) && null != (h = d(b))) return c(h);
+        "/Users/dave/dev/projects/myna-js/src/main/common/storage/cookie.coffee": [ function(require, module) {
+            var decodeCookieValue, encodeCookieValue, get, remove, set;
+            encodeCookieValue = function(obj) {
+                return encodeURIComponent(JSON.stringify(obj));
+            }, decodeCookieValue = function(str) {
+                return JSON.parse(0 === str.indexOf('"') ? decodeURIComponent(str.slice(1, -1).replace(/\\"/g, '"').replace(/\\\\/g, "\\")) : decodeURIComponent(str));
+            }, set = function(name, obj, days) {
+                var date, expires, path, value;
+                null == days && (days = 365), value = "myna-" + name + "=" + encodeCookieValue(obj), 
+                expires = days ? (date = new Date(), date.setTime(date.getTime() + 24 * days * 60 * 60 * 1e3), 
+                "; expires=" + date.toGMTString()) : "", path = "; path=/", document.cookie = "" + value + expires + path;
+            }, get = function(name) {
+                var cookie, cookieValue, cookies, isNameEQCookie, nameEQ, str, _i, _len;
+                for (nameEQ = "myna-" + name + "=", isNameEQCookie = function(cookie) {
+                    var i;
+                    return i = cookie.indexOf(nameEQ), i >= 0 && cookie.substring(0, i).match("^\\s*$");
+                }, cookieValue = function(cookie) {
+                    var i;
+                    return i = cookie.indexOf(nameEQ), cookie.substring(i + nameEQ.length, cookie.length);
+                }, cookies = document.cookie.split(";"), _i = 0, _len = cookies.length; _len > _i; _i++) if (cookie = cookies[_i], 
+                isNameEQCookie(cookie) && null != (str = cookieValue(cookie))) return decodeCookieValue(str);
                 return null;
-            }, f = function(a) {
-                g(a, "", -1);
-            }, b.exports = {
-                get: e,
-                set: g,
-                remove: f
+            }, remove = function(name) {
+                set(name, "", -1);
+            }, module.exports = {
+                get: get,
+                set: set,
+                remove: remove
             };
         }, {} ],
-        "/Users/dave/dev/projects/myna-js/src/main/common/storage/index.coffee": [ function(a, b) {
-            var c, d, e, f, g, h;
-            h = {}, c = a("./cookie"), e = a("./local"), d = function() {
-                return function(a) {
-                    return localStorage.supported && localStorage.enabled ? localStorage.get(a) : c.get(a);
+        "/Users/dave/dev/projects/myna-js/src/main/common/storage/index.coffee": [ function(require, module) {
+            var cookie, get, local, remove, set, storage;
+            storage = {}, cookie = require("./cookie"), local = require("./local"), get = function() {
+                return function(key) {
+                    return localStorage.supported && localStorage.enabled ? localStorage.get(key) : cookie.get(key);
                 };
-            }(this), g = function() {
-                return function(a, b) {
-                    localStorage.supported && localStorage.enabled ? localStorage.set(a, b) : c.set(a, b);
+            }(this), set = function() {
+                return function(key, value) {
+                    localStorage.supported && localStorage.enabled ? localStorage.set(key, value) : cookie.set(key, value);
                 };
-            }(this), f = function() {
-                return function(a) {
-                    localStorage.supported && localStorage.enabled ? localStorage.remove(a) : c.remove(a);
+            }(this), remove = function() {
+                return function(key) {
+                    localStorage.supported && localStorage.enabled ? localStorage.remove(key) : cookie.remove(key);
                 };
-            }(this), b.exports = {
-                get: d,
-                set: g,
-                remove: f
+            }(this), module.exports = {
+                get: get,
+                set: set,
+                remove: remove
             };
         }, {
             "./cookie": "/Users/dave/dev/projects/myna-js/src/main/common/storage/cookie.coffee",
             "./local": "/Users/dave/dev/projects/myna-js/src/main/common/storage/local.coffee"
         } ],
-        "/Users/dave/dev/projects/myna-js/src/main/common/storage/local.coffee": [ function(a, b) {
-            var c, d, e, f, g, h;
-            c = !1, h = function() {
+        "/Users/dave/dev/projects/myna-js/src/main/common/storage/local.coffee": [ function(require, module) {
+            var enabled, exn, get, remove, set, supported;
+            enabled = !1, supported = function() {
                 try {
                     return localStorage.setItem("modernizer", "modernizer"), localStorage.removeItem("modernizer"), 
                     !0;
-                } catch (a) {
-                    return d = a, !1;
+                } catch (_error) {
+                    return exn = _error, !1;
                 }
-            }(), e = function(a) {
-                var b;
-                if (b = window.localStorage.getItem("myna-" + a), null == b) return null;
+            }(), get = function(key) {
+                var str;
+                if (str = window.localStorage.getItem("myna-" + key), null == str) return null;
                 try {
-                    return JSON.parse(b);
-                } catch (c) {
-                    return d = c, null;
+                    return JSON.parse(str);
+                } catch (_error) {
+                    return exn = _error, null;
                 }
-            }, g = function(a, b) {
-                null != b ? window.localStorage.setItem("myna-" + a, JSON.stringify(b)) : window.localStorage.removeItem("myna-" + a);
-            }, f = function(a) {
-                window.localStorage.removeItem("myna-" + a);
-            }, b.exports = {
-                enabled: c,
-                supported: h,
-                get: e,
-                set: g,
-                remove: f
+            }, set = function(key, obj) {
+                null != obj ? window.localStorage.setItem("myna-" + key, JSON.stringify(obj)) : window.localStorage.removeItem("myna-" + key);
+            }, remove = function(key) {
+                window.localStorage.removeItem("myna-" + key);
+            }, module.exports = {
+                enabled: enabled,
+                supported: supported,
+                get: get,
+                set: set,
+                remove: remove
             };
         }, {} ],
-        "/Users/dave/dev/projects/myna-js/src/main/common/util.coffee": [ function(a, b) {
-            var c, d, e, f, g, h, i, j, k, l = [].slice;
-            k = function(a) {
-                return null === a ? "" : a.replace(/^\s+|\s+$/g, "");
-            }, f = Array.isArray || function(a) {
-                return "[object Array]" === Object.prototype.toString.call(a);
-            }, h = function(a) {
-                return a === Object(a);
-            }, g = function(a) {
-                var b, c;
-                if (h(a)) {
-                    b = Object.prototype.hasOwnProperty;
-                    for (c in a) if (b.call(a, c)) return !1;
+        "/Users/dave/dev/projects/myna-js/src/main/common/util.coffee": [ function(require, module) {
+            var dateToString, deleteKeys, extend, isArray, isEmptyObject, isObject, problem, redirect, trim, __slice = [].slice;
+            trim = function(str) {
+                return null === str ? "" : str.replace(/^\s+|\s+$/g, "");
+            }, isArray = Array.isArray || function(obj) {
+                return "[object Array]" === Object.prototype.toString.call(obj);
+            }, isObject = function(obj) {
+                return obj === Object(obj);
+            }, isEmptyObject = function(obj) {
+                var hasOwnProperty, key;
+                if (isObject(obj)) {
+                    hasOwnProperty = Object.prototype.hasOwnProperty;
+                    for (key in obj) if (hasOwnProperty.call(obj, key)) return !1;
                     return !0;
                 }
                 return !1;
-            }, e = function() {
-                var a, b, c, d, e, f, g;
-                for (a = arguments[0], c = 2 <= arguments.length ? l.call(arguments, 1) : [], f = 0, 
-                g = c.length; g > f; f++) {
-                    d = c[f];
-                    for (b in d) e = d[b], a[b] = e;
+            }, extend = function() {
+                var des, key, sources, src, value, _i, _len;
+                for (des = arguments[0], sources = 2 <= arguments.length ? __slice.call(arguments, 1) : [], 
+                _i = 0, _len = sources.length; _len > _i; _i++) {
+                    src = sources[_i];
+                    for (key in src) value = src[key], des[key] = value;
                 }
-                return a;
-            }, d = function() {
-                var a, b, c, d, f, g;
-                for (d = arguments[0], c = 2 <= arguments.length ? l.call(arguments, 1) : [], a = e({}, d), 
-                f = 0, g = c.length; g > f; f++) b = c[f], delete a[b];
-                return a;
-            }, c = function(a) {
-                var b, c, d, e, f, g, h, i;
-                return Date.prototype.toISOString ? a.toISOString() : (g = function(a, b) {
-                    var c;
-                    for (c = "" + a; c.length < b; ) c = "0" + c;
-                    return c;
-                }, i = g(a.getUTCFullYear(), 4), f = g(a.getUTCMonth() + 1, 2), b = g(a.getUTCDate(), 2), 
-                c = g(a.getUTCHours(), 2), e = g(a.getUTCMinutes(), 2), h = g(a.getUTCSeconds(), 2), 
-                d = g(a.getUTCMilliseconds(), 2), "" + i + "-" + f + "-" + b + "T" + c + ":" + e + ":" + h + "." + d + "Z");
-            }, i = function(a) {
-                return new Error(a);
-            }, j = function(a) {
-                return window.location.replace(a);
-            }, b.exports = {
-                trim: k,
-                isArray: f,
-                isObject: h,
-                isEmptyObject: g,
-                extend: e,
-                deleteKeys: d,
-                dateToString: c,
-                problem: i,
-                redirect: j
+                return des;
+            }, deleteKeys = function() {
+                var ans, key, keys, obj, _i, _len;
+                for (obj = arguments[0], keys = 2 <= arguments.length ? __slice.call(arguments, 1) : [], 
+                ans = extend({}, obj), _i = 0, _len = keys.length; _len > _i; _i++) key = keys[_i], 
+                delete ans[key];
+                return ans;
+            }, dateToString = function(date) {
+                var day, hour, milli, minute, month, pad, second, year;
+                return Date.prototype.toISOString ? date.toISOString() : (pad = function(num, len) {
+                    var str;
+                    for (str = "" + num; str.length < len; ) str = "0" + str;
+                    return str;
+                }, year = pad(date.getUTCFullYear(), 4), month = pad(date.getUTCMonth() + 1, 2), 
+                day = pad(date.getUTCDate(), 2), hour = pad(date.getUTCHours(), 2), minute = pad(date.getUTCMinutes(), 2), 
+                second = pad(date.getUTCSeconds(), 2), milli = pad(date.getUTCMilliseconds(), 2), 
+                "" + year + "-" + month + "-" + day + "T" + hour + ":" + minute + ":" + second + "." + milli + "Z");
+            }, problem = function(msg) {
+                return new Error(msg);
+            }, redirect = function(url) {
+                return window.location.replace(url);
+            }, module.exports = {
+                trim: trim,
+                isArray: isArray,
+                isObject: isObject,
+                isEmptyObject: isEmptyObject,
+                extend: extend,
+                deleteKeys: deleteKeys,
+                dateToString: dateToString,
+                problem: problem,
+                redirect: redirect
             };
         }, {} ],
-        "/Users/dave/dev/projects/myna-js/src/main/engine/myna-ui.coffee": [ function(a, b) {
-            var c, d, e, f, g;
-            c = a("jquery"), d = function(a, b) {
-                var c, d, e;
-                for (null == b && (b = window.location), d = 0, e = a.length; e > d; d++) if (c = a[d], 
-                g(b, c.location)) return !0;
+        "/Users/dave/dev/projects/myna-js/src/main/engine/myna-ui.coffee": [ function(require, module) {
+            var $, applicable, apply, _applyOne, _locationMatches;
+            $ = require("jquery"), applicable = function(changes, loc) {
+                var change, _i, _len;
+                for (null == loc && (loc = window.location), _i = 0, _len = changes.length; _len > _i; _i++) if (change = changes[_i], 
+                _locationMatches(loc, change.location)) return !0;
                 return !1;
-            }, e = function(a, b, c, d) {
-                var e, h, i, j;
-                for (null == c && (c = window.document), null == d && (d = window.location), h = [], 
-                i = 0, j = a.length; j > i; i++) e = a[i], g(d, e.location) && h.unshift(f(e, c));
+            }, apply = function(changes, goalHandler, doc, loc) {
+                var change, undo, _i, _len;
+                for (null == doc && (doc = window.document), null == loc && (loc = window.location), 
+                undo = [], _i = 0, _len = changes.length; _len > _i; _i++) change = changes[_i], 
+                _locationMatches(loc, change.location) && undo.unshift(_applyOne(change, doc));
                 return function() {
-                    var a, b, c;
-                    for (b = 0, c = h.length; c > b; b++) (a = h[b])();
+                    var func, _j, _len1;
+                    for (_j = 0, _len1 = undo.length; _len1 > _j; _j++) (func = undo[_j])();
                 };
-            }, f = function(a, b) {
-                var d, e;
-                switch (null == b && (b = window.document), a.typename) {
+            }, _applyOne = function(change, doc) {
+                var original, selection;
+                switch (null == doc && (doc = window.document), change.typename) {
                   case "hide":
-                    return e = c(b).find(a.selector), e.hide(), function() {
-                        return e.show();
+                    return selection = $(doc).find(change.selector), selection.hide(), function() {
+                        return selection.show();
                     };
 
                   case "text":
-                    return e = c(b).find(a.selector), d = e.text(), e.text(a.text), function() {
-                        return e.text(d);
+                    return selection = $(doc).find(change.selector), original = selection.text(), selection.text(change.text), 
+                    function() {
+                        return selection.text(original);
                     };
 
                   case "html":
-                    return e = c(b).find(a.selector), d = e.html(), e.html(a.html), function() {
-                        return e.html(d);
+                    return selection = $(doc).find(change.selector), original = selection.html(), selection.html(change.html), 
+                    function() {
+                        return selection.html(original);
                     };
 
                   case "css":
-                    return e = c(b).find(a.selector), d = e.css(), e.css(a.css), function() {
-                        return e.css(d);
+                    return selection = $(doc).find(change.selector), original = selection.css(), selection.css(change.css), 
+                    function() {
+                        return selection.css(original);
                     };
 
                   case "attr":
-                    return e = c(b).find(a.selector), d = e.attr(a.name), e.attr(a.name, a.value), function() {
-                        return e.attr(a.name, d);
+                    return selection = $(doc).find(change.selector), original = selection.attr(change.name), 
+                    selection.attr(change.name, change.value), function() {
+                        return selection.attr(change.name, original);
                     };
 
                   case "eventgoal":
-                    return c(b).on(a.event, a.selector, goalHandler), function() {
-                        return c(b).off(a.event, a.selector, goalHandler);
+                    return $(doc).on(change.event, change.selector, goalHandler), function() {
+                        return $(doc).off(change.event, change.selector, goalHandler);
                     };
 
                   case "loadgoal":
-                    return c(window).on("load", goalHandler), function() {
-                        return c(window).off("load", goalHandler);
+                    return $(window).on("load", goalHandler), function() {
+                        return $(window).off("load", goalHandler);
                     };
 
                   default:
                     throw new Error("Invalid change type: " + options);
                 }
-            }, g = function(a, b) {
-                return !((b.scheme ? a.scheme !== b.scheme : 0) || (b.hostname ? a.hostname !== b.hostname : 0) || (b.port ? a.port !== b.port : 0) || (b.pathname ? a.pathname !== b.pathname : 0));
-            }, b.exports = {
-                applicable: d,
-                apply: e
+            }, _locationMatches = function(location, pattern) {
+                return !((pattern.scheme ? location.scheme !== pattern.scheme : 0) || (pattern.hostname ? location.hostname !== pattern.hostname : 0) || (pattern.port ? location.port !== pattern.port : 0) || (pattern.pathname ? location.pathname !== pattern.pathname : 0));
+            }, module.exports = {
+                applicable: applicable,
+                apply: apply
             };
         }, {
             jquery: "/Users/dave/dev/projects/myna-js/node_modules/jquery/dist/jquery.js"
         } ],
-        "/Users/dave/dev/projects/myna-js/src/main/myna-auto.coffee": [ function(a, b) {
-            var c, d, e, f, g, h, i, j, k, l;
-            e = a("./common/hash"), c = a("./client/myna-ui"), d = a("./bootstrap"), f = function(a) {
-                return k() ? j() : h(a);
-            }, g = function(a, b) {
-                return null == b && (b = 0), k() ? j() : i(a, b);
-            }, l = d.create(function(a, b) {
-                return new c(a, b);
-            }), h = l._initLocal, i = l._initRemote, k = function() {
-                return !!e.params.mynaui;
-            }, j = function() {
-                var a;
-                return a = document.createElement(script), a.setAttribute("src", "myna-ui.js"), 
-                document.appendChild(a);
-            }, b.exports = {
-                initLocal: f,
-                initRemote: g
+        "/Users/dave/dev/projects/myna-js/src/main/myna-auto.coffee": [ function(require, module) {
+            var MynaUiClient, boot, hash, initLocal, initRemote, _initLocal, _initRemote, _loadMynaUi, _mynaUiRequested, _ref;
+            hash = require("./common/hash"), MynaUiClient = require("./client/myna-ui"), boot = require("./bootstrap"), 
+            initLocal = function(deployment) {
+                return _mynaUiRequested() ? _loadMynaUi() : _initLocal(deployment);
+            }, initRemote = function(url, timeout) {
+                return null == timeout && (timeout = 0), _mynaUiRequested() ? _loadMynaUi() : _initRemote(url, timeout);
+            }, _ref = boot.create(function(experiment, settings) {
+                return new MynaUiClient(experiment, settings);
+            }), _initLocal = _ref.initLocal, _initRemote = _ref.initRemote, _mynaUiRequested = function() {
+                return !!hash.params.mynaui;
+            }, _loadMynaUi = function() {
+                var scriptElem;
+                return scriptElem = document.createElement(script), scriptElem.setAttribute("src", "myna-ui.js"), 
+                document.appendChild(scriptElem);
+            }, module.exports = {
+                initLocal: initLocal,
+                initRemote: initRemote
             };
         }, {
             "./bootstrap": "/Users/dave/dev/projects/myna-js/src/main/bootstrap.coffee",

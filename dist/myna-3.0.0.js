@@ -2,228 +2,232 @@
  * http://mynaweb.com
  * Copyright (c) 2014 Myna Limited; Licensed BSD 2-Clause
  */
-!function(a) {
-    if ("object" == typeof exports && "undefined" != typeof module) module.exports = a(); else if ("function" == typeof define && define.amd) define([], a); else {
-        var b;
-        "undefined" != typeof window ? b = window : "undefined" != typeof global ? b = global : "undefined" != typeof self && (b = self), 
-        b.Myna = a();
+!function(e) {
+    if ("object" == typeof exports && "undefined" != typeof module) module.exports = e(); else if ("function" == typeof define && define.amd) define([], e); else {
+        var f;
+        "undefined" != typeof window ? f = window : "undefined" != typeof global ? f = global : "undefined" != typeof self && (f = self), 
+        f.Myna = e();
     }
 }(function() {
-    return function a(b, c, d) {
-        function e(g, h) {
-            if (!c[g]) {
-                if (!b[g]) {
-                    var i = "function" == typeof require && require;
-                    if (!h && i) return i(g, !0);
-                    if (f) return f(g, !0);
-                    var j = new Error("Cannot find module '" + g + "'");
-                    throw j.code = "MODULE_NOT_FOUND", j;
+    return function e(t, n, r) {
+        function s(o, u) {
+            if (!n[o]) {
+                if (!t[o]) {
+                    var a = "function" == typeof require && require;
+                    if (!u && a) return a(o, !0);
+                    if (i) return i(o, !0);
+                    var f = new Error("Cannot find module '" + o + "'");
+                    throw f.code = "MODULE_NOT_FOUND", f;
                 }
-                var k = c[g] = {
+                var l = n[o] = {
                     exports: {}
                 };
-                b[g][0].call(k.exports, function(a) {
-                    var c = b[g][1][a];
-                    return e(c ? c : a);
-                }, k, k.exports, a, b, c, d);
+                t[o][0].call(l.exports, function(e) {
+                    var n = t[o][1][e];
+                    return s(n ? n : e);
+                }, l, l.exports, e, t, n, r);
             }
-            return c[g].exports;
+            return n[o].exports;
         }
-        for (var f = "function" == typeof require && require, g = 0; g < d.length; g++) e(d[g]);
-        return e;
+        for (var i = "function" == typeof require && require, o = 0; o < r.length; o++) s(r[o]);
+        return s;
     }({
-        "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/main.js": [ function(a, b, c) {
+        "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/main.js": [ function(require, module, exports) {
             "use strict";
-            var d = a("./promise/promise").Promise, e = a("./promise/polyfill").polyfill;
-            c.Promise = d, c.polyfill = e;
+            var Promise = require("./promise/promise").Promise, polyfill = require("./promise/polyfill").polyfill;
+            exports.Promise = Promise, exports.polyfill = polyfill;
         }, {
             "./promise/polyfill": "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/promise/polyfill.js",
             "./promise/promise": "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/promise/promise.js"
         } ],
-        "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/promise/all.js": [ function(a, b, c) {
+        "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/promise/all.js": [ function(require, module, exports) {
             "use strict";
-            function d(a) {
-                var b = this;
-                if (!e(a)) throw new TypeError("You must pass an array to all.");
-                return new b(function(b, c) {
-                    function d(a) {
-                        return function(b) {
-                            e(a, b);
+            function all(promises) {
+                var Promise = this;
+                if (!isArray(promises)) throw new TypeError("You must pass an array to all.");
+                return new Promise(function(resolve, reject) {
+                    function resolver(index) {
+                        return function(value) {
+                            resolveAll(index, value);
                         };
                     }
-                    function e(a, c) {
-                        h[a] = c, 0 === --i && b(h);
+                    function resolveAll(index, value) {
+                        results[index] = value, 0 === --remaining && resolve(results);
                     }
-                    var g, h = [], i = a.length;
-                    0 === i && b([]);
-                    for (var j = 0; j < a.length; j++) g = a[j], g && f(g.then) ? g.then(d(j), c) : e(j, g);
+                    var promise, results = [], remaining = promises.length;
+                    0 === remaining && resolve([]);
+                    for (var i = 0; i < promises.length; i++) promise = promises[i], promise && isFunction(promise.then) ? promise.then(resolver(i), reject) : resolveAll(i, promise);
                 });
             }
-            var e = a("./utils").isArray, f = a("./utils").isFunction;
-            c.all = d;
+            var isArray = require("./utils").isArray, isFunction = require("./utils").isFunction;
+            exports.all = all;
         }, {
             "./utils": "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/promise/utils.js"
         } ],
-        "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/promise/asap.js": [ function(a, b, c) {
-            (function(a, b) {
+        "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/promise/asap.js": [ function(require, module, exports) {
+            (function(process, global) {
                 "use strict";
-                function d() {
+                function useNextTick() {
                     return function() {
-                        a.nextTick(g);
+                        process.nextTick(flush);
                     };
                 }
-                function e() {
-                    var a = 0, b = new k(g), c = document.createTextNode("");
-                    return b.observe(c, {
+                function useMutationObserver() {
+                    var iterations = 0, observer = new BrowserMutationObserver(flush), node = document.createTextNode("");
+                    return observer.observe(node, {
                         characterData: !0
                     }), function() {
-                        c.data = a = ++a % 2;
+                        node.data = iterations = ++iterations % 2;
                     };
                 }
-                function f() {
+                function useSetTimeout() {
                     return function() {
-                        l.setTimeout(g, 1);
+                        local.setTimeout(flush, 1);
                     };
                 }
-                function g() {
-                    for (var a = 0; a < m.length; a++) {
-                        var b = m[a], c = b[0], d = b[1];
-                        c(d);
+                function flush() {
+                    for (var i = 0; i < queue.length; i++) {
+                        var tuple = queue[i], callback = tuple[0], arg = tuple[1];
+                        callback(arg);
                     }
-                    m = [];
+                    queue = [];
                 }
-                function h(a, b) {
-                    var c = m.push([ a, b ]);
-                    1 === c && i();
+                function asap(callback, arg) {
+                    var length = queue.push([ callback, arg ]);
+                    1 === length && scheduleFlush();
                 }
-                var i, j = "undefined" != typeof window ? window : {}, k = j.MutationObserver || j.WebKitMutationObserver, l = "undefined" != typeof b ? b : void 0 === this ? window : this, m = [];
-                i = "undefined" != typeof a && "[object process]" === {}.toString.call(a) ? d() : k ? e() : f(), 
-                c.asap = h;
-            }).call(this, a("_process"), "undefined" != typeof global ? global : "undefined" != typeof self ? self : "undefined" != typeof window ? window : {});
+                var scheduleFlush, browserGlobal = "undefined" != typeof window ? window : {}, BrowserMutationObserver = browserGlobal.MutationObserver || browserGlobal.WebKitMutationObserver, local = "undefined" != typeof global ? global : void 0 === this ? window : this, queue = [];
+                scheduleFlush = "undefined" != typeof process && "[object process]" === {}.toString.call(process) ? useNextTick() : BrowserMutationObserver ? useMutationObserver() : useSetTimeout(), 
+                exports.asap = asap;
+            }).call(this, require("_process"), "undefined" != typeof global ? global : "undefined" != typeof self ? self : "undefined" != typeof window ? window : {});
         }, {
             _process: "/Users/dave/dev/projects/myna-js/node_modules/grunt-browserify/node_modules/browserify/node_modules/process/browser.js"
         } ],
-        "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/promise/config.js": [ function(a, b, c) {
+        "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/promise/config.js": [ function(require, module, exports) {
             "use strict";
-            function d(a, b) {
-                return 2 !== arguments.length ? e[a] : void (e[a] = b);
+            function configure(name, value) {
+                return 2 !== arguments.length ? config[name] : void (config[name] = value);
             }
-            var e = {
+            var config = {
                 instrument: !1
             };
-            c.config = e, c.configure = d;
+            exports.config = config, exports.configure = configure;
         }, {} ],
-        "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/promise/polyfill.js": [ function(a, b, c) {
-            (function(b) {
+        "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/promise/polyfill.js": [ function(require, module, exports) {
+            (function(global) {
                 "use strict";
-                function d() {
-                    var a;
-                    a = "undefined" != typeof b ? b : "undefined" != typeof window && window.document ? window : self;
-                    var c = "Promise" in a && "resolve" in a.Promise && "reject" in a.Promise && "all" in a.Promise && "race" in a.Promise && function() {
-                        var b;
-                        return new a.Promise(function(a) {
-                            b = a;
-                        }), f(b);
+                function polyfill() {
+                    var local;
+                    local = "undefined" != typeof global ? global : "undefined" != typeof window && window.document ? window : self;
+                    var es6PromiseSupport = "Promise" in local && "resolve" in local.Promise && "reject" in local.Promise && "all" in local.Promise && "race" in local.Promise && function() {
+                        var resolve;
+                        return new local.Promise(function(r) {
+                            resolve = r;
+                        }), isFunction(resolve);
                     }();
-                    c || (a.Promise = e);
+                    es6PromiseSupport || (local.Promise = RSVPPromise);
                 }
-                var e = a("./promise").Promise, f = a("./utils").isFunction;
-                c.polyfill = d;
+                var RSVPPromise = require("./promise").Promise, isFunction = require("./utils").isFunction;
+                exports.polyfill = polyfill;
             }).call(this, "undefined" != typeof global ? global : "undefined" != typeof self ? self : "undefined" != typeof window ? window : {});
         }, {
             "./promise": "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/promise/promise.js",
             "./utils": "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/promise/utils.js"
         } ],
-        "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/promise/promise.js": [ function(a, b, c) {
+        "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/promise/promise.js": [ function(require, module, exports) {
             "use strict";
-            function d(a) {
-                if (!q(a)) throw new TypeError("You must pass a resolver function as the first argument to the promise constructor");
-                if (!(this instanceof d)) throw new TypeError("Failed to construct 'Promise': Please use the 'new' operator, this object constructor cannot be called as a function.");
-                this._subscribers = [], e(a, this);
+            function Promise(resolver) {
+                if (!isFunction(resolver)) throw new TypeError("You must pass a resolver function as the first argument to the promise constructor");
+                if (!(this instanceof Promise)) throw new TypeError("Failed to construct 'Promise': Please use the 'new' operator, this object constructor cannot be called as a function.");
+                this._subscribers = [], invokeResolver(resolver, this);
             }
-            function e(a, b) {
-                function c(a) {
-                    j(b, a);
+            function invokeResolver(resolver, promise) {
+                function resolvePromise(value) {
+                    resolve(promise, value);
                 }
-                function d(a) {
-                    l(b, a);
+                function rejectPromise(reason) {
+                    reject(promise, reason);
                 }
                 try {
-                    a(c, d);
+                    resolver(resolvePromise, rejectPromise);
                 } catch (e) {
-                    d(e);
+                    rejectPromise(e);
                 }
             }
-            function f(a, b, c, d) {
-                var e, f, g, h, k = q(c);
-                if (k) try {
-                    e = c(d), g = !0;
-                } catch (m) {
-                    h = !0, f = m;
-                } else e = d, g = !0;
-                i(b, e) || (k && g ? j(b, e) : h ? l(b, f) : a === y ? j(b, e) : a === z && l(b, e));
+            function invokeCallback(settled, promise, callback, detail) {
+                var value, error, succeeded, failed, hasCallback = isFunction(callback);
+                if (hasCallback) try {
+                    value = callback(detail), succeeded = !0;
+                } catch (e) {
+                    failed = !0, error = e;
+                } else value = detail, succeeded = !0;
+                handleThenable(promise, value) || (hasCallback && succeeded ? resolve(promise, value) : failed ? reject(promise, error) : settled === FULFILLED ? resolve(promise, value) : settled === REJECTED && reject(promise, value));
             }
-            function g(a, b, c, d) {
-                var e = a._subscribers, f = e.length;
-                e[f] = b, e[f + y] = c, e[f + z] = d;
+            function subscribe(parent, child, onFulfillment, onRejection) {
+                var subscribers = parent._subscribers, length = subscribers.length;
+                subscribers[length] = child, subscribers[length + FULFILLED] = onFulfillment, subscribers[length + REJECTED] = onRejection;
             }
-            function h(a, b) {
-                for (var c, d, e = a._subscribers, g = a._detail, h = 0; h < e.length; h += 3) c = e[h], 
-                d = e[h + b], f(b, c, d, g);
-                a._subscribers = null;
+            function publish(promise, settled) {
+                for (var child, callback, subscribers = promise._subscribers, detail = promise._detail, i = 0; i < subscribers.length; i += 3) child = subscribers[i], 
+                callback = subscribers[i + settled], invokeCallback(settled, child, callback, detail);
+                promise._subscribers = null;
             }
-            function i(a, b) {
-                var c, d = null;
+            function handleThenable(promise, value) {
+                var resolved, then = null;
                 try {
-                    if (a === b) throw new TypeError("A promises callback cannot return that same promise.");
-                    if (p(b) && (d = b.then, q(d))) return d.call(b, function(d) {
-                        return c ? !0 : (c = !0, void (b !== d ? j(a, d) : k(a, d)));
-                    }, function(b) {
-                        return c ? !0 : (c = !0, void l(a, b));
+                    if (promise === value) throw new TypeError("A promises callback cannot return that same promise.");
+                    if (objectOrFunction(value) && (then = value.then, isFunction(then))) return then.call(value, function(val) {
+                        return resolved ? !0 : (resolved = !0, void (value !== val ? resolve(promise, val) : fulfill(promise, val)));
+                    }, function(val) {
+                        return resolved ? !0 : (resolved = !0, void reject(promise, val));
                     }), !0;
-                } catch (e) {
-                    return c ? !0 : (l(a, e), !0);
+                } catch (error) {
+                    return resolved ? !0 : (reject(promise, error), !0);
                 }
                 return !1;
             }
-            function j(a, b) {
-                a === b ? k(a, b) : i(a, b) || k(a, b);
+            function resolve(promise, value) {
+                promise === value ? fulfill(promise, value) : handleThenable(promise, value) || fulfill(promise, value);
             }
-            function k(a, b) {
-                a._state === w && (a._state = x, a._detail = b, o.async(m, a));
+            function fulfill(promise, value) {
+                promise._state === PENDING && (promise._state = SEALED, promise._detail = value, 
+                config.async(publishFulfillment, promise));
             }
-            function l(a, b) {
-                a._state === w && (a._state = x, a._detail = b, o.async(n, a));
+            function reject(promise, reason) {
+                promise._state === PENDING && (promise._state = SEALED, promise._detail = reason, 
+                config.async(publishRejection, promise));
             }
-            function m(a) {
-                h(a, a._state = y);
+            function publishFulfillment(promise) {
+                publish(promise, promise._state = FULFILLED);
             }
-            function n(a) {
-                h(a, a._state = z);
+            function publishRejection(promise) {
+                publish(promise, promise._state = REJECTED);
             }
-            var o = a("./config").config, p = (a("./config").configure, a("./utils").objectOrFunction), q = a("./utils").isFunction, r = (a("./utils").now, 
-            a("./all").all), s = a("./race").race, t = a("./resolve").resolve, u = a("./reject").reject, v = a("./asap").asap;
-            o.async = v;
-            var w = void 0, x = 0, y = 1, z = 2;
-            d.prototype = {
-                constructor: d,
+            var config = require("./config").config, objectOrFunction = (require("./config").configure, 
+            require("./utils").objectOrFunction), isFunction = require("./utils").isFunction, all = (require("./utils").now, 
+            require("./all").all), race = require("./race").race, staticResolve = require("./resolve").resolve, staticReject = require("./reject").reject, asap = require("./asap").asap;
+            config.async = asap;
+            var PENDING = void 0, SEALED = 0, FULFILLED = 1, REJECTED = 2;
+            Promise.prototype = {
+                constructor: Promise,
                 _state: void 0,
                 _detail: void 0,
                 _subscribers: void 0,
-                then: function(a, b) {
-                    var c = this, d = new this.constructor(function() {});
+                then: function(onFulfillment, onRejection) {
+                    var promise = this, thenPromise = new this.constructor(function() {});
                     if (this._state) {
-                        var e = arguments;
-                        o.async(function() {
-                            f(c._state, d, e[c._state - 1], c._detail);
+                        var callbacks = arguments;
+                        config.async(function() {
+                            invokeCallback(promise._state, thenPromise, callbacks[promise._state - 1], promise._detail);
                         });
-                    } else g(this, d, a, b);
-                    return d;
+                    } else subscribe(this, thenPromise, onFulfillment, onRejection);
+                    return thenPromise;
                 },
-                "catch": function(a) {
-                    return this.then(null, a);
+                "catch": function(onRejection) {
+                    return this.then(null, onRejection);
                 }
-            }, d.all = r, d.race = s, d.resolve = t, d.reject = u, c.Promise = d;
+            }, Promise.all = all, Promise.race = race, Promise.resolve = staticResolve, Promise.reject = staticReject, 
+            exports.Promise = Promise;
         }, {
             "./all": "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/promise/all.js",
             "./asap": "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/promise/asap.js",
@@ -233,217 +237,228 @@
             "./resolve": "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/promise/resolve.js",
             "./utils": "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/promise/utils.js"
         } ],
-        "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/promise/race.js": [ function(a, b, c) {
+        "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/promise/race.js": [ function(require, module, exports) {
             "use strict";
-            function d(a) {
-                var b = this;
-                if (!e(a)) throw new TypeError("You must pass an array to race.");
-                return new b(function(b, c) {
-                    for (var d, e = 0; e < a.length; e++) d = a[e], d && "function" == typeof d.then ? d.then(b, c) : b(d);
+            function race(promises) {
+                var Promise = this;
+                if (!isArray(promises)) throw new TypeError("You must pass an array to race.");
+                return new Promise(function(resolve, reject) {
+                    for (var promise, i = 0; i < promises.length; i++) promise = promises[i], promise && "function" == typeof promise.then ? promise.then(resolve, reject) : resolve(promise);
                 });
             }
-            var e = a("./utils").isArray;
-            c.race = d;
+            var isArray = require("./utils").isArray;
+            exports.race = race;
         }, {
             "./utils": "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/promise/utils.js"
         } ],
-        "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/promise/reject.js": [ function(a, b, c) {
+        "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/promise/reject.js": [ function(require, module, exports) {
             "use strict";
-            function d(a) {
-                var b = this;
-                return new b(function(b, c) {
-                    c(a);
+            function reject(reason) {
+                var Promise = this;
+                return new Promise(function(resolve, reject) {
+                    reject(reason);
                 });
             }
-            c.reject = d;
+            exports.reject = reject;
         }, {} ],
-        "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/promise/resolve.js": [ function(a, b, c) {
+        "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/promise/resolve.js": [ function(require, module, exports) {
             "use strict";
-            function d(a) {
-                if (a && "object" == typeof a && a.constructor === this) return a;
-                var b = this;
-                return new b(function(b) {
-                    b(a);
+            function resolve(value) {
+                if (value && "object" == typeof value && value.constructor === this) return value;
+                var Promise = this;
+                return new Promise(function(resolve) {
+                    resolve(value);
                 });
             }
-            c.resolve = d;
+            exports.resolve = resolve;
         }, {} ],
-        "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/promise/utils.js": [ function(a, b, c) {
+        "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/promise/utils.js": [ function(require, module, exports) {
             "use strict";
-            function d(a) {
-                return e(a) || "object" == typeof a && null !== a;
+            function objectOrFunction(x) {
+                return isFunction(x) || "object" == typeof x && null !== x;
             }
-            function e(a) {
-                return "function" == typeof a;
+            function isFunction(x) {
+                return "function" == typeof x;
             }
-            function f(a) {
-                return "[object Array]" === Object.prototype.toString.call(a);
+            function isArray(x) {
+                return "[object Array]" === Object.prototype.toString.call(x);
             }
-            var g = Date.now || function() {
+            var now = Date.now || function() {
                 return new Date().getTime();
             };
-            c.objectOrFunction = d, c.isFunction = e, c.isArray = f, c.now = g;
+            exports.objectOrFunction = objectOrFunction, exports.isFunction = isFunction, exports.isArray = isArray, 
+            exports.now = now;
         }, {} ],
-        "/Users/dave/dev/projects/myna-js/node_modules/grunt-browserify/node_modules/browserify/node_modules/process/browser.js": [ function(a, b) {
-            function c() {}
-            var d = b.exports = {};
-            d.nextTick = function() {
-                var a = "undefined" != typeof window && window.setImmediate, b = "undefined" != typeof window && window.postMessage && window.addEventListener;
-                if (a) return function(a) {
-                    return window.setImmediate(a);
+        "/Users/dave/dev/projects/myna-js/node_modules/grunt-browserify/node_modules/browserify/node_modules/process/browser.js": [ function(require, module) {
+            function noop() {}
+            var process = module.exports = {};
+            process.nextTick = function() {
+                var canSetImmediate = "undefined" != typeof window && window.setImmediate, canPost = "undefined" != typeof window && window.postMessage && window.addEventListener;
+                if (canSetImmediate) return function(f) {
+                    return window.setImmediate(f);
                 };
-                if (b) {
-                    var c = [];
-                    return window.addEventListener("message", function(a) {
-                        var b = a.source;
-                        if ((b === window || null === b) && "process-tick" === a.data && (a.stopPropagation(), 
-                        c.length > 0)) {
-                            var d = c.shift();
-                            d();
+                if (canPost) {
+                    var queue = [];
+                    return window.addEventListener("message", function(ev) {
+                        var source = ev.source;
+                        if ((source === window || null === source) && "process-tick" === ev.data && (ev.stopPropagation(), 
+                        queue.length > 0)) {
+                            var fn = queue.shift();
+                            fn();
                         }
-                    }, !0), function(a) {
-                        c.push(a), window.postMessage("process-tick", "*");
+                    }, !0), function(fn) {
+                        queue.push(fn), window.postMessage("process-tick", "*");
                     };
                 }
-                return function(a) {
-                    setTimeout(a, 0);
+                return function(fn) {
+                    setTimeout(fn, 0);
                 };
-            }(), d.title = "browser", d.browser = !0, d.env = {}, d.argv = [], d.on = c, d.addListener = c, 
-            d.once = c, d.off = c, d.removeListener = c, d.removeAllListeners = c, d.emit = c, 
-            d.binding = function() {
+            }(), process.title = "browser", process.browser = !0, process.env = {}, process.argv = [], 
+            process.on = noop, process.addListener = noop, process.once = noop, process.off = noop, 
+            process.removeListener = noop, process.removeAllListeners = noop, process.emit = noop, 
+            process.binding = function() {
                 throw new Error("process.binding is not supported");
-            }, d.cwd = function() {
+            }, process.cwd = function() {
                 return "/";
-            }, d.chdir = function() {
+            }, process.chdir = function() {
                 throw new Error("process.chdir is not supported");
             };
         }, {} ],
-        "/Users/dave/dev/projects/myna-js/src/main/bootstrap.coffee": [ function(a, b) {
-            var c, d, e, f, g, h;
-            h = a("./common/log"), f = a("./common/hash"), g = a("./common/jsonp"), c = function(a) {
-                var b, c;
-                return b = d(a), c = e(b), {
-                    initLocal: b,
-                    initRemote: c
+        "/Users/dave/dev/projects/myna-js/src/main/bootstrap.coffee": [ function(require, module) {
+            var create, createLocalInit, createRemoteInit, hash, jsonp, log;
+            log = require("./common/log"), hash = require("./common/hash"), jsonp = require("./common/jsonp"), 
+            create = function(createClient) {
+                var initLocal, initRemote;
+                return initLocal = createLocalInit(createClient), initRemote = createRemoteInit(initLocal), 
+                {
+                    initLocal: initLocal,
+                    initRemote: initRemote
                 };
-            }, d = function(a) {
-                return function(b) {
-                    var c, d, e, g, i, j, k;
-                    return null != f.params.debug && (h.enabled = !0), h.debug("myna.initLocal", b), 
-                    "deployment" !== b.typename && h.error("myna.initLocal", 'Myna needs a deployment to initialise. The given JSON is not a deployment.\nIt has a typename of "' + typename + '". Check you are initialising Myna with the\ncorrect UUID if you are calling initRemote', b), 
-                    g = b.experiments, c = null != (j = b.apiKey) ? j : h.error("myna.init", "no apiKey in deployment", b), 
-                    d = null != (k = b.apiRoot) ? k : "//api.mynaweb.com", i = util["extends"](b.settings, {
-                        apiKey: c,
-                        apiRoot: d
-                    }), e = a(g, i), e.sync().then(function() {
-                        return e;
+            }, createLocalInit = function(createClient) {
+                return function(deployment) {
+                    var apiKey, apiRoot, client, experiments, settings, _ref, _ref1;
+                    return null != hash.params.debug && (log.enabled = !0), log.debug("myna.initLocal", deployment), 
+                    "deployment" !== deployment.typename && log.error("myna.initLocal", 'Myna needs a deployment to initialise. The given JSON is not a deployment.\nIt has a typename of "' + typename + '". Check you are initialising Myna with the\ncorrect UUID if you are calling initRemote', deployment), 
+                    experiments = deployment.experiments, apiKey = null != (_ref = deployment.apiKey) ? _ref : log.error("myna.init", "no apiKey in deployment", deployment), 
+                    apiRoot = null != (_ref1 = deployment.apiRoot) ? _ref1 : "//api.mynaweb.com", settings = util["extends"](deployment.settings, {
+                        apiKey: apiKey,
+                        apiRoot: apiRoot
+                    }), client = createClient(experiments, settings), client.sync().then(function() {
+                        return client;
                     });
                 };
-            }, e = function(a) {
-                return function(b, c) {
-                    return null == c && (c = 0), h.debug("myna.initRemote", b, c), g.request(b, {}, c).then(a);
+            }, createRemoteInit = function(localInit) {
+                return function(url, timeout) {
+                    return null == timeout && (timeout = 0), log.debug("myna.initRemote", url, timeout), 
+                    jsonp.request(url, {}, timeout).then(localInit);
                 };
-            }, b.exports = {
-                create: c,
-                createLocalInit: d,
-                createRemoteInit: e
+            }, module.exports = {
+                create: create,
+                createLocalInit: createLocalInit,
+                createRemoteInit: createRemoteInit
             };
         }, {
             "./common/hash": "/Users/dave/dev/projects/myna-js/src/main/common/hash.coffee",
             "./common/jsonp": "/Users/dave/dev/projects/myna-js/src/main/common/jsonp.coffee",
             "./common/log": "/Users/dave/dev/projects/myna-js/src/main/common/log.coffee"
         } ],
-        "/Users/dave/dev/projects/myna-js/src/main/client/api.coffee": [ function(a, b) {
-            var c, d, e, f, g, h, i, j, k = function(a, b) {
+        "/Users/dave/dev/projects/myna-js/src/main/client/api.coffee": [ function(require, module) {
+            var ApiRecorder, Promise, SyncResult, jsonp, log, settings, storage, util, __bind = function(fn, me) {
                 return function() {
-                    return a.apply(b, arguments);
+                    return fn.apply(me, arguments);
                 };
-            }, l = [].slice;
-            d = a("es6-promise").Promise, f = a("../common/jsonp"), g = a("../common/log"), 
-            h = a("../common/settings"), i = a("../common/storage"), j = a("../common/util"), 
-            e = function() {
-                function a(a, b, c) {
-                    this.completed = null != a ? a : [], this.discarded = null != b ? b : [], this.requeued = null != c ? c : [], 
-                    this.successful = k(this.successful, this), this.requeue = k(this.requeue, this), 
-                    this.discard = k(this.discard, this), this.complete = k(this.complete, this);
+            }, __slice = [].slice;
+            Promise = require("es6-promise").Promise, jsonp = require("../common/jsonp"), log = require("../common/log"), 
+            settings = require("../common/settings"), storage = require("../common/storage"), 
+            util = require("../common/util"), SyncResult = function() {
+                function SyncResult(completed, discarded, requeued) {
+                    this.completed = null != completed ? completed : [], this.discarded = null != discarded ? discarded : [], 
+                    this.requeued = null != requeued ? requeued : [], this.successful = __bind(this.successful, this), 
+                    this.requeue = __bind(this.requeue, this), this.discard = __bind(this.discard, this), 
+                    this.complete = __bind(this.complete, this);
                 }
-                return a.prototype.complete = function(b) {
-                    return new a(this.completed.concat([ b ]), this.discarded, this.requeued);
-                }, a.prototype.discard = function(b) {
-                    return new a(this.completed, this.discarded.concat([ b ]), this.requeued);
-                }, a.prototype.requeue = function(b) {
-                    return new a(this.completed, this.discarded, this.requeued.concat([ b ]));
-                }, a.prototype.successful = function() {
+                return SyncResult.prototype.complete = function(completed) {
+                    return new SyncResult(this.completed.concat([ completed ]), this.discarded, this.requeued);
+                }, SyncResult.prototype.discard = function(discarded) {
+                    return new SyncResult(this.completed, this.discarded.concat([ discarded ]), this.requeued);
+                }, SyncResult.prototype.requeue = function(requeued) {
+                    return new SyncResult(this.completed, this.discarded, this.requeued.concat([ requeued ]));
+                }, SyncResult.prototype.successful = function() {
                     return 0 === this.discarded.length && 0 === this.requeued.length;
-                }, a;
-            }(), b.exports = c = function() {
-                function a(a, b, c) {
-                    this.apiKey = a, this.apiRoot = b, null == c && (c = {}), this._dequeue = k(this._dequeue, this), 
-                    this._enqueue = k(this._enqueue, this), this._queue = k(this._queue, this), this.clear = k(this.clear, this), 
-                    this.sync = k(this.sync, this), this.reward = k(this.reward, this), this.view = k(this.view, this), 
-                    this.apiKey || g.error("ApiRecorder.constructor", "missing apiKey"), this.apiRoot || g.error("ApiRecorder.constructor", "missing apiRoot"), 
-                    this.storageKey = h.get(c, "myna.web.storageKey", "myna"), this.timeout = h.get(c, "myna.web.timeout", 1e3), 
+                }, SyncResult;
+            }(), module.exports = ApiRecorder = function() {
+                function ApiRecorder(apiKey, apiRoot, options) {
+                    this.apiKey = apiKey, this.apiRoot = apiRoot, null == options && (options = {}), 
+                    this._dequeue = __bind(this._dequeue, this), this._enqueue = __bind(this._enqueue, this), 
+                    this._queue = __bind(this._queue, this), this.clear = __bind(this.clear, this), 
+                    this.sync = __bind(this.sync, this), this.reward = __bind(this.reward, this), this.view = __bind(this.view, this), 
+                    this.apiKey || log.error("ApiRecorder.constructor", "missing apiKey"), this.apiRoot || log.error("ApiRecorder.constructor", "missing apiRoot"), 
+                    this.storageKey = settings.get(options, "myna.web.storageKey", "myna"), this.timeout = settings.get(options, "myna.web.timeout", 1e3), 
                     this.inProgress = null;
                 }
-                return a.prototype.view = function(a, b) {
-                    var c;
-                    return c = {
+                return ApiRecorder.prototype.view = function(expt, variant) {
+                    var event;
+                    return event = {
                         typename: "view",
-                        experiment: a.uuid,
-                        variant: b.id,
-                        timestamp: j.dateToString(new Date())
-                    }, g.debug("ApiRecorder.view", c), this._enqueue(c);
-                }, a.prototype.reward = function(a, b, c) {
-                    var d;
-                    return d = {
+                        experiment: expt.uuid,
+                        variant: variant.id,
+                        timestamp: util.dateToString(new Date())
+                    }, log.debug("ApiRecorder.view", event), this._enqueue(event);
+                }, ApiRecorder.prototype.reward = function(expt, variant, amount) {
+                    var event;
+                    return event = {
                         typename: "reward",
-                        experiment: a.uuid,
-                        variant: b.id,
-                        amount: c,
-                        timestamp: j.dateToString(new Date())
-                    }, g.debug("ApiRecorder.reward", d), this._enqueue(d);
-                }, a.prototype.sync = function() {
-                    var a, b, c, h;
-                    return g.debug("ApiRecorder.sync", this._queue().length), h = function(a) {
-                        return function(b, d) {
-                            var h;
-                            return null == d && (d = new e()), g.debug("ApiRecorder.sync.syncOne", b, d), h = j.extend({}, b, {
-                                apikey: a.apiKey
-                            }), h = j.deleteKeys(h, "experiment"), f.request("" + a.apiRoot + "/v2/experiment/" + b.experiment + "/record", h, a.timeout).then(function(a) {
-                                return g.debug("ApiRecorder.sync.syncOne.then", a), c(d.complete(b));
-                            })["catch"](function(a) {
-                                return g.debug("ApiRecorder.sync.syncOne.catch", a), a.status && a.status >= 500 ? d.requeue(b) : d.discard(b);
+                        experiment: expt.uuid,
+                        variant: variant.id,
+                        amount: amount,
+                        timestamp: util.dateToString(new Date())
+                    }, log.debug("ApiRecorder.reward", event), this._enqueue(event);
+                }, ApiRecorder.prototype.sync = function() {
+                    var onComplete, onError, syncAll, syncOne;
+                    return log.debug("ApiRecorder.sync", this._queue().length), syncOne = function(_this) {
+                        return function(event, accum) {
+                            var params;
+                            return null == accum && (accum = new SyncResult()), log.debug("ApiRecorder.sync.syncOne", event, accum), 
+                            params = util.extend({}, event, {
+                                apikey: _this.apiKey
+                            }), params = util.deleteKeys(params, "experiment"), jsonp.request("" + _this.apiRoot + "/v2/experiment/" + event.experiment + "/record", params, _this.timeout).then(function(response) {
+                                return log.debug("ApiRecorder.sync.syncOne.then", response), syncAll(accum.complete(event));
+                            })["catch"](function(response) {
+                                return log.debug("ApiRecorder.sync.syncOne.catch", response), response.status && response.status >= 500 ? accum.requeue(event) : accum.discard(event);
                             });
                         };
-                    }(this), c = function(a) {
-                        return function(b) {
-                            var f;
-                            return null == b && (b = new e()), g.debug("ApiRecorder.sync.syncAll", b), f = a._dequeue(), 
-                            f ? h(f, b).then(c) : (a._enqueue.apply(a, b.requeued), d.resolve(b));
+                    }(this), syncAll = function(_this) {
+                        return function(accum) {
+                            var event;
+                            return null == accum && (accum = new SyncResult()), log.debug("ApiRecorder.sync.syncAll", accum), 
+                            event = _this._dequeue(), event ? syncOne(event, accum).then(syncAll) : (_this._enqueue.apply(_this, accum.requeued), 
+                            Promise.resolve(accum));
                         };
-                    }(this), a = function(a) {
-                        return function(b) {
-                            return g.debug("ApiRecorder.sync.onComplete", b), a.inProgress = null, b;
+                    }(this), onComplete = function(_this) {
+                        return function(result) {
+                            return log.debug("ApiRecorder.sync.onComplete", result), _this.inProgress = null, 
+                            result;
                         };
-                    }(this), b = function(a) {
-                        return function(b) {
-                            return g.debug("ApiRecorder.sync.onError", b), a.inProgress = null, d.reject(b);
+                    }(this), onError = function(_this) {
+                        return function(result) {
+                            return log.debug("ApiRecorder.sync.onError", result), _this.inProgress = null, Promise.reject(result);
                         };
-                    }(this), null == this.inProgress && (this.inProgress = c().then(a, b)), this.inProgress;
-                }, a.prototype.clear = function() {
-                    g.debug("ApiRecorder.clear"), i.remove(this.storageKey);
-                }, a.prototype._queue = function() {
-                    var a, b;
-                    return a = null != (b = i.get(this.storageKey)) ? b : [];
-                }, a.prototype._enqueue = function() {
-                    var a, b, c;
-                    return a = 1 <= arguments.length ? l.call(arguments, 0) : [], b = (c = this._queue()).concat.apply(c, a), 
-                    i.set(this.storageKey, b), b.length;
-                }, a.prototype._dequeue = function() {
-                    var a, b;
-                    return b = this._queue(), b.length > 0 ? (a = b.shift(), i.set(this.storageKey, b), 
-                    a) : null;
-                }, a;
+                    }(this), null == this.inProgress && (this.inProgress = syncAll().then(onComplete, onError)), 
+                    this.inProgress;
+                }, ApiRecorder.prototype.clear = function() {
+                    log.debug("ApiRecorder.clear"), storage.remove(this.storageKey);
+                }, ApiRecorder.prototype._queue = function() {
+                    var ans, _ref;
+                    return ans = null != (_ref = storage.get(this.storageKey)) ? _ref : [];
+                }, ApiRecorder.prototype._enqueue = function() {
+                    var events, queue, _ref;
+                    return events = 1 <= arguments.length ? __slice.call(arguments, 0) : [], queue = (_ref = this._queue()).concat.apply(_ref, events), 
+                    storage.set(this.storageKey, queue), queue.length;
+                }, ApiRecorder.prototype._dequeue = function() {
+                    var event, queue;
+                    return queue = this._queue(), queue.length > 0 ? (event = queue.shift(), storage.set(this.storageKey, queue), 
+                    event) : null;
+                }, ApiRecorder;
             }();
         }, {
             "../common/jsonp": "/Users/dave/dev/projects/myna-js/src/main/common/jsonp.coffee",
@@ -453,177 +468,188 @@
             "../common/util": "/Users/dave/dev/projects/myna-js/src/main/common/util.coffee",
             "es6-promise": "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/main.js"
         } ],
-        "/Users/dave/dev/projects/myna-js/src/main/client/basic.coffee": [ function(a, b) {
-            var c, d, e, f, g = function(a, b) {
+        "/Users/dave/dev/projects/myna-js/src/main/client/basic.coffee": [ function(require, module) {
+            var BasicClient, Promise, log, variant, __bind = function(fn, me) {
                 return function() {
-                    return a.apply(b, arguments);
+                    return fn.apply(me, arguments);
                 };
             };
-            d = a("es6-promise").Promise, e = a("../common/log"), f = a("./variant"), b.exports = c = function() {
-                function a() {
-                    this._lookup = g(this._lookup, this), this._random = g(this._random, this), this.reward = g(this.reward, this), 
-                    this.view = g(this.view, this), this.suggest = g(this.suggest, this);
+            Promise = require("es6-promise").Promise, log = require("../common/log"), variant = require("./variant"), 
+            module.exports = BasicClient = function() {
+                function BasicClient() {
+                    this._lookup = __bind(this._lookup, this), this._random = __bind(this._random, this), 
+                    this.reward = __bind(this.reward, this), this.view = __bind(this.view, this), this.suggest = __bind(this.suggest, this);
                 }
-                return a.prototype.suggest = function(a) {
-                    return this._random(a).then(function() {
-                        return function(b) {
-                            return e.debug("BasicClient.suggest", null != a ? a.id : void 0, null != b ? b.id : void 0), 
-                            b;
+                return BasicClient.prototype.suggest = function(expt) {
+                    return this._random(expt).then(function() {
+                        return function(variant) {
+                            return log.debug("BasicClient.suggest", null != expt ? expt.id : void 0, null != variant ? variant.id : void 0), 
+                            variant;
                         };
                     }(this));
-                }, a.prototype.view = function(a, b) {
-                    return this._lookup(a, b).then(function() {
-                        return function(b) {
-                            return e.debug("BasicClient.suggest", null != a ? a.id : void 0, null != b ? b.id : void 0), 
-                            b;
+                }, BasicClient.prototype.view = function(expt, variantOrId) {
+                    return this._lookup(expt, variantOrId).then(function() {
+                        return function(variant) {
+                            return log.debug("BasicClient.suggest", null != expt ? expt.id : void 0, null != variant ? variant.id : void 0), 
+                            variant;
                         };
                     }(this));
-                }, a.prototype.reward = function(a, b, c) {
-                    return null == c && (c = 1), e.debug("BasicClient.reward", null != a ? a.id : void 0, b, c), 
-                    this._lookup(a, b);
-                }, a.prototype._random = function(a) {
-                    var b;
-                    return b = f.random(a), b ? d.resolve(b) : d.reject(new Error("Could not choose random variant"));
-                }, a.prototype._lookup = function(a, b) {
-                    var c;
-                    return c = f.lookup(a, b), c ? d.resolve(c) : d.reject(new Error("Could not choose random variant"));
-                }, a;
+                }, BasicClient.prototype.reward = function(expt, variantOrId, amount) {
+                    return null == amount && (amount = 1), log.debug("BasicClient.reward", null != expt ? expt.id : void 0, variantOrId, amount), 
+                    this._lookup(expt, variantOrId);
+                }, BasicClient.prototype._random = function(expt) {
+                    var ans;
+                    return ans = variant.random(expt), ans ? Promise.resolve(ans) : Promise.reject(new Error("Could not choose random variant"));
+                }, BasicClient.prototype._lookup = function(expt, variantOrId) {
+                    var ans;
+                    return ans = variant.lookup(expt, variantOrId), ans ? Promise.resolve(ans) : Promise.reject(new Error("Could not choose random variant"));
+                }, BasicClient;
             }();
         }, {
             "../common/log": "/Users/dave/dev/projects/myna-js/src/main/common/log.coffee",
             "./variant": "/Users/dave/dev/projects/myna-js/src/main/client/variant.coffee",
             "es6-promise": "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/main.js"
         } ],
-        "/Users/dave/dev/projects/myna-js/src/main/client/cached.coffee": [ function(a, b) {
-            var c, d, e, f, g, h = function(a, b) {
+        "/Users/dave/dev/projects/myna-js/src/main/client/cached.coffee": [ function(require, module) {
+            var BasicClient, CachedClient, Promise, log, variant, __bind = function(fn, me) {
                 return function() {
-                    return a.apply(b, arguments);
+                    return fn.apply(me, arguments);
                 };
-            }, i = {}.hasOwnProperty, j = function(a, b) {
-                function c() {
-                    this.constructor = a;
+            }, __hasProp = {}.hasOwnProperty, __extends = function(child, parent) {
+                function ctor() {
+                    this.constructor = child;
                 }
-                for (var d in b) i.call(b, d) && (a[d] = b[d]);
-                return c.prototype = b.prototype, a.prototype = new c(), a.__super__ = b.prototype, 
-                a;
+                for (var key in parent) __hasProp.call(parent, key) && (child[key] = parent[key]);
+                return ctor.prototype = parent.prototype, child.prototype = new ctor(), child.__super__ = parent.prototype, 
+                child;
             };
-            e = a("es6-promise").Promise, f = a("../common/log"), c = a("./basic"), g = a("./variant"), 
-            b.exports = d = function(a) {
-                function b() {
-                    return this.clear = h(this.clear, this), this.reward = h(this.reward, this), this.view = h(this.view, this), 
-                    this.suggest = h(this.suggest, this), b.__super__.constructor.apply(this, arguments);
+            Promise = require("es6-promise").Promise, log = require("../common/log"), BasicClient = require("./basic"), 
+            variant = require("./variant"), module.exports = CachedClient = function(_super) {
+                function CachedClient() {
+                    return this.clear = __bind(this.clear, this), this.reward = __bind(this.reward, this), 
+                    this.view = __bind(this.view, this), this.suggest = __bind(this.suggest, this), 
+                    CachedClient.__super__.constructor.apply(this, arguments);
                 }
-                return j(b, a), b.prototype.suggest = function(a) {
-                    return f.debug("CachedClient.suggest", a), b.__super__.suggest.call(this, a).then(function() {
-                        return function(b) {
-                            return f.debug("CachedClient.suggest", "variant", b), g.save(a, "lastView", b), 
-                            b;
+                return __extends(CachedClient, _super), CachedClient.prototype.suggest = function(expt) {
+                    return log.debug("CachedClient.suggest", expt), CachedClient.__super__.suggest.call(this, expt).then(function() {
+                        return function(vrnt) {
+                            return log.debug("CachedClient.suggest", "variant", vrnt), variant.save(expt, "lastView", vrnt), 
+                            vrnt;
                         };
                     }(this));
-                }, b.prototype.view = function(a, c) {
-                    return f.debug("CachedClient.view", a, c), b.__super__.view.call(this, a, c).then(function() {
-                        return function(b) {
-                            return f.debug("CachedClient.view", "variant", b), g.save(a, "lastView", b), b;
+                }, CachedClient.prototype.view = function(expt, variantOrId) {
+                    return log.debug("CachedClient.view", expt, variantOrId), CachedClient.__super__.view.call(this, expt, variantOrId).then(function() {
+                        return function(vrnt) {
+                            return log.debug("CachedClient.view", "variant", vrnt), variant.save(expt, "lastView", vrnt), 
+                            vrnt;
                         };
                     }(this));
-                }, b.prototype.reward = function(a, c) {
-                    var d;
-                    return null == c && (c = 1), f.debug("CachedClient.reward", a, c), d = g.load(a, "lastView"), 
-                    f.debug("lastView", d), d ? b.__super__.reward.call(this, a, d, c).then(function() {
-                        return function(b) {
-                            return f.debug("CachedClient.reward", "variant", b), g.remove(a, "lastView"), b;
+                }, CachedClient.prototype.reward = function(expt, amount) {
+                    var lastView;
+                    return null == amount && (amount = 1), log.debug("CachedClient.reward", expt, amount), 
+                    lastView = variant.load(expt, "lastView"), log.debug("lastView", lastView), lastView ? CachedClient.__super__.reward.call(this, expt, lastView, amount).then(function() {
+                        return function(vrnt) {
+                            return log.debug("CachedClient.reward", "variant", vrnt), variant.remove(expt, "lastView"), 
+                            vrnt;
                         };
-                    }(this)) : (f.debug("suffering epic fail"), e.reject(new Error("No last view for experiment " + a.id + " (" + a.uuid + ")")));
-                }, b.prototype.clear = function(a) {
-                    return f.debug("CachedClient.clear", a), g.remove(a, "lastView"), e.resolve(null);
-                }, b;
-            }(c);
+                    }(this)) : (log.debug("suffering epic fail"), Promise.reject(new Error("No last view for experiment " + expt.id + " (" + expt.uuid + ")")));
+                }, CachedClient.prototype.clear = function(expt) {
+                    return log.debug("CachedClient.clear", expt), variant.remove(expt, "lastView"), 
+                    Promise.resolve(null);
+                }, CachedClient;
+            }(BasicClient);
         }, {
             "../common/log": "/Users/dave/dev/projects/myna-js/src/main/common/log.coffee",
             "./basic": "/Users/dave/dev/projects/myna-js/src/main/client/basic.coffee",
             "./variant": "/Users/dave/dev/projects/myna-js/src/main/client/variant.coffee",
             "es6-promise": "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/main.js"
         } ],
-        "/Users/dave/dev/projects/myna-js/src/main/client/default.coffee": [ function(a, b) {
-            var c, d, e, f, g, h, i, j, k = function(a, b) {
+        "/Users/dave/dev/projects/myna-js/src/main/client/default.coffee": [ function(require, module) {
+            var ApiRecorder, CachedClient, DefaultClient, GaRecorder, Promise, StickyCache, log, settings, __bind = function(fn, me) {
                 return function() {
-                    return a.apply(b, arguments);
+                    return fn.apply(me, arguments);
                 };
-            }, l = {}.hasOwnProperty, m = function(a, b) {
-                function c() {
-                    this.constructor = a;
+            }, __hasProp = {}.hasOwnProperty, __extends = function(child, parent) {
+                function ctor() {
+                    this.constructor = child;
                 }
-                for (var d in b) l.call(b, d) && (a[d] = b[d]);
-                return c.prototype = b.prototype, a.prototype = new c(), a.__super__ = b.prototype, 
-                a;
+                for (var key in parent) __hasProp.call(parent, key) && (child[key] = parent[key]);
+                return ctor.prototype = parent.prototype, child.prototype = new ctor(), child.__super__ = parent.prototype, 
+                child;
             };
-            g = a("es6-promise").Promise, i = a("../common/log"), j = a("../common/settings"), 
-            d = a("./cached"), h = a("./sticky"), c = a("./api"), f = a("./ga"), b.exports = e = function(a) {
-                function b(a, b) {
-                    var d, e, g, l, m, n;
-                    for (null == a && (a = []), null == b && (b = {}), this._withStickyReward = k(this._withStickyReward, this), 
-                    this._withStickyView = k(this._withStickyView, this), this._withExperiment = k(this._withExperiment, this), 
-                    this.clear = k(this.clear, this), this.reward = k(this.reward, this), this.view = k(this.view, this), 
-                    this.suggest = k(this.suggest, this), i.debug("DefaultClient.constructor", b), this.apiKey = null != (l = b.apiKey) ? l : i.error("Client.constructor", "no apiKey specified", b), 
-                    this.apiRoot = null != (m = b.apiRoot) ? m : "//api.mynaweb.com", this.settings = j.create(null != (n = null != b ? b.settings : void 0) ? n : {}), 
-                    this.sticky = new h(), this.record = new c(this.apiKey, this.apiRoot, this.settings), 
-                    this.google = new f(this.settings), this.autoSync = j.get(this.settings, "myna.web.autoSync", !0), 
-                    this.experiments = {}, e = 0, g = a.length; g > e; e++) d = a[e], this.experiments[d.id] = d;
+            Promise = require("es6-promise").Promise, log = require("../common/log"), settings = require("../common/settings"), 
+            CachedClient = require("./cached"), StickyCache = require("./sticky"), ApiRecorder = require("./api"), 
+            GaRecorder = require("./ga"), module.exports = DefaultClient = function(_super) {
+                function DefaultClient(experiments, options) {
+                    var expt, _i, _len, _ref, _ref1, _ref2;
+                    for (null == experiments && (experiments = []), null == options && (options = {}), 
+                    this._withStickyReward = __bind(this._withStickyReward, this), this._withStickyView = __bind(this._withStickyView, this), 
+                    this._withExperiment = __bind(this._withExperiment, this), this.clear = __bind(this.clear, this), 
+                    this.reward = __bind(this.reward, this), this.view = __bind(this.view, this), this.suggest = __bind(this.suggest, this), 
+                    log.debug("DefaultClient.constructor", options), this.apiKey = null != (_ref = options.apiKey) ? _ref : log.error("Client.constructor", "no apiKey specified", options), 
+                    this.apiRoot = null != (_ref1 = options.apiRoot) ? _ref1 : "//api.mynaweb.com", 
+                    this.settings = settings.create(null != (_ref2 = null != options ? options.settings : void 0) ? _ref2 : {}), 
+                    this.sticky = new StickyCache(), this.record = new ApiRecorder(this.apiKey, this.apiRoot, this.settings), 
+                    this.google = new GaRecorder(this.settings), this.autoSync = settings.get(this.settings, "myna.web.autoSync", !0), 
+                    this.experiments = {}, _i = 0, _len = experiments.length; _len > _i; _i++) expt = experiments[_i], 
+                    this.experiments[expt.id] = expt;
                 }
-                return m(b, a), b.prototype.suggest = function(a) {
-                    return i.debug("DefaultClient.suggest", a), this._withExperiment(a).then(function(a) {
-                        return function(c) {
-                            return a._withStickyView(c)["catch"](function() {
-                                return b.__super__.suggest.call(a, c).then(function(b) {
-                                    return a.sticky.saveView(c, b), a.google.view(c, b), a.record.view(c, b), a.autoSync && a.record.sync(), 
-                                    b;
+                return __extends(DefaultClient, _super), DefaultClient.prototype.suggest = function(exptOrId) {
+                    return log.debug("DefaultClient.suggest", exptOrId), this._withExperiment(exptOrId).then(function(_this) {
+                        return function(expt) {
+                            return _this._withStickyView(expt)["catch"](function() {
+                                return DefaultClient.__super__.suggest.call(_this, expt).then(function(variant) {
+                                    return _this.sticky.saveView(expt, variant), _this.google.view(expt, variant), _this.record.view(expt, variant), 
+                                    _this.autoSync && _this.record.sync(), variant;
                                 });
                             });
                         };
                     }(this));
-                }, b.prototype.view = function(a, c) {
-                    return i.debug("DefaultClient.view", a, c), this._withExperiment(a).then(function(a) {
-                        return function(d) {
-                            return a._withStickyView(d)["catch"](function() {
-                                return b.__super__.view.call(a, d, c).then(function(b) {
-                                    return a.sticky.saveView(d, b), a.google.view(d, b), a.record.view(d, b), a.autoSync && a.record.sync(), 
-                                    b;
+                }, DefaultClient.prototype.view = function(exptOrId, variantOrId) {
+                    return log.debug("DefaultClient.view", exptOrId, variantOrId), this._withExperiment(exptOrId).then(function(_this) {
+                        return function(expt) {
+                            return _this._withStickyView(expt)["catch"](function() {
+                                return DefaultClient.__super__.view.call(_this, expt, variantOrId).then(function(variant) {
+                                    return _this.sticky.saveView(expt, variant), _this.google.view(expt, variant), _this.record.view(expt, variant), 
+                                    _this.autoSync && _this.record.sync(), variant;
                                 });
                             });
                         };
                     }(this));
-                }, b.prototype.reward = function(a, c) {
-                    return null == c && (c = 1), i.debug("DefaultClient.reward", a, c), this._withExperiment(a).then(function(a) {
-                        return function(d) {
-                            return a._withStickyReward(d)["catch"](function() {
-                                return b.__super__.reward.call(a, d, c).then(function(b) {
-                                    return a.sticky.saveReward(d, b), a.google.reward(d, b, c), a.record.reward(d, b, c), 
-                                    a.autoSync ? a.record.sync().then(function() {
-                                        return b;
-                                    }) : b;
+                }, DefaultClient.prototype.reward = function(exptOrId, amount) {
+                    return null == amount && (amount = 1), log.debug("DefaultClient.reward", exptOrId, amount), 
+                    this._withExperiment(exptOrId).then(function(_this) {
+                        return function(expt) {
+                            return _this._withStickyReward(expt)["catch"](function() {
+                                return DefaultClient.__super__.reward.call(_this, expt, amount).then(function(variant) {
+                                    return _this.sticky.saveReward(expt, variant), _this.google.reward(expt, variant, amount), 
+                                    _this.record.reward(expt, variant, amount), _this.autoSync ? _this.record.sync().then(function() {
+                                        return variant;
+                                    }) : variant;
                                 });
                             });
                         };
                     }(this));
-                }, b.prototype.clear = function(a) {
-                    return i.debug("DefaultClient.clear", a), this._withExperiment(a).then(function(a) {
-                        return function(c) {
-                            return b.__super__.clear.call(a, c).then(function() {
-                                return a.sticky.clear(c), g.resolve(null);
+                }, DefaultClient.prototype.clear = function(exptOrId) {
+                    return log.debug("DefaultClient.clear", exptOrId), this._withExperiment(exptOrId).then(function(_this) {
+                        return function(expt) {
+                            return DefaultClient.__super__.clear.call(_this, expt).then(function() {
+                                return _this.sticky.clear(expt), Promise.resolve(null);
                             });
                         };
                     }(this));
-                }, b.prototype._withExperiment = function(a) {
-                    var b;
-                    return b = "string" == typeof a ? this.experiments[a] : a, b ? g.resolve(b) : g.reject(new Error("Experiment not found: " + a));
-                }, b.prototype._withStickyView = function(a) {
-                    var b;
-                    return b = this.sticky.loadView(a), b ? g.resolve(b) : g.reject(new Error("Sticky view not found: " + a));
-                }, b.prototype._withStickyReward = function(a) {
-                    var b;
-                    return b = this.sticky.loadReward(a), b ? g.resolve(b) : g.reject(new Error("Sticky reward not found: " + a));
-                }, b;
-            }(d);
+                }, DefaultClient.prototype._withExperiment = function(exptOrId) {
+                    var expt;
+                    return expt = "string" == typeof exptOrId ? this.experiments[exptOrId] : exptOrId, 
+                    expt ? Promise.resolve(expt) : Promise.reject(new Error("Experiment not found: " + exptOrId));
+                }, DefaultClient.prototype._withStickyView = function(expt) {
+                    var variant;
+                    return variant = this.sticky.loadView(expt), variant ? Promise.resolve(variant) : Promise.reject(new Error("Sticky view not found: " + expt));
+                }, DefaultClient.prototype._withStickyReward = function(expt) {
+                    var variant;
+                    return variant = this.sticky.loadReward(expt), variant ? Promise.resolve(variant) : Promise.reject(new Error("Sticky reward not found: " + expt));
+                }, DefaultClient;
+            }(CachedClient);
         }, {
             "../common/log": "/Users/dave/dev/projects/myna-js/src/main/common/log.coffee",
             "../common/settings": "/Users/dave/dev/projects/myna-js/src/main/common/settings/index.coffee",
@@ -633,76 +659,77 @@
             "./sticky": "/Users/dave/dev/projects/myna-js/src/main/client/sticky.coffee",
             "es6-promise": "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/main.js"
         } ],
-        "/Users/dave/dev/projects/myna-js/src/main/client/ga.coffee": [ function(a, b) {
-            var c, d, e, f = function(a, b) {
+        "/Users/dave/dev/projects/myna-js/src/main/client/ga.coffee": [ function(require, module) {
+            var GaRecorder, log, settings, __bind = function(fn, me) {
                 return function() {
-                    return a.apply(b, arguments);
+                    return fn.apply(me, arguments);
                 };
             };
-            d = a("../common/log"), e = a("../common/settings"), b.exports = c = function() {
-                function a(a) {
-                    this.settings = a, this._rewardMultiplier = f(this._rewardMultiplier, this), this._eventName = f(this._eventName, this), 
-                    this._enabled = f(this._enabled, this), this._rewardEvent = f(this._rewardEvent, this), 
-                    this._viewEvent = f(this._viewEvent, this), this.reward = f(this.reward, this), 
-                    this.view = f(this.view, this);
+            log = require("../common/log"), settings = require("../common/settings"), module.exports = GaRecorder = function() {
+                function GaRecorder(settings) {
+                    this.settings = settings, this._rewardMultiplier = __bind(this._rewardMultiplier, this), 
+                    this._eventName = __bind(this._eventName, this), this._enabled = __bind(this._enabled, this), 
+                    this._rewardEvent = __bind(this._rewardEvent, this), this._viewEvent = __bind(this._viewEvent, this), 
+                    this.reward = __bind(this.reward, this), this.view = __bind(this.view, this);
                 }
-                return a.prototype.view = function(a, b) {
-                    var c;
-                    d.debug("GoogleAnalytics.view", a, b), this._enabled(a) && null != (c = window._gaq) && c.push(this._viewEvent(a, b));
-                }, a.prototype.reward = function(a, b, c) {
-                    var e;
-                    d.debug("GoogleAnalytics.reward", a, b), this._enabled(a) && null != (e = window._gaq) && e.push(this._rewardEvent(a, b, c));
-                }, a.prototype._viewEvent = function(a, b) {
-                    return [ "_trackEvent", "myna", this._eventName(a, "view"), b.id, null, !1 ];
-                }, a.prototype._rewardEvent = function(a, b, c) {
-                    var d;
-                    return d = this._rewardMultiplier(a), [ "_trackEvent", "myna", this._eventName(a, "reward"), b.id, Math.round(d * c), !0 ];
-                }, a.prototype._enabled = function(a) {
-                    return e.get(a.settings, "myna.web.googleAnalytics.enabled", !0);
-                }, a.prototype._eventName = function(a, b) {
-                    var c;
-                    return null != (c = e.get(a.settings, "myna.web.googleAnalytics." + b + "Event")) ? c : "" + a.id + "-" + b;
-                }, a.prototype._rewardMultiplier = function(a) {
-                    return e.get(a.settings, "myna.web.googleAnalytics.rewardMultiplier", 100);
-                }, a;
+                return GaRecorder.prototype.view = function(expt, variant) {
+                    var _ref;
+                    log.debug("GoogleAnalytics.view", expt, variant), this._enabled(expt) && null != (_ref = window._gaq) && _ref.push(this._viewEvent(expt, variant));
+                }, GaRecorder.prototype.reward = function(expt, variant, amount) {
+                    var _ref;
+                    log.debug("GoogleAnalytics.reward", expt, variant), this._enabled(expt) && null != (_ref = window._gaq) && _ref.push(this._rewardEvent(expt, variant, amount));
+                }, GaRecorder.prototype._viewEvent = function(expt, variant) {
+                    return [ "_trackEvent", "myna", this._eventName(expt, "view"), variant.id, null, !1 ];
+                }, GaRecorder.prototype._rewardEvent = function(expt, variant, amount) {
+                    var multiplier;
+                    return multiplier = this._rewardMultiplier(expt), [ "_trackEvent", "myna", this._eventName(expt, "reward"), variant.id, Math.round(multiplier * amount), !0 ];
+                }, GaRecorder.prototype._enabled = function(expt) {
+                    return settings.get(expt.settings, "myna.web.googleAnalytics.enabled", !0);
+                }, GaRecorder.prototype._eventName = function(expt, event) {
+                    var _ref;
+                    return null != (_ref = settings.get(expt.settings, "myna.web.googleAnalytics." + event + "Event")) ? _ref : "" + expt.id + "-" + event;
+                }, GaRecorder.prototype._rewardMultiplier = function(expt) {
+                    return settings.get(expt.settings, "myna.web.googleAnalytics.rewardMultiplier", 100);
+                }, GaRecorder;
             }();
         }, {
             "../common/log": "/Users/dave/dev/projects/myna-js/src/main/common/log.coffee",
             "../common/settings": "/Users/dave/dev/projects/myna-js/src/main/common/settings/index.coffee"
         } ],
-        "/Users/dave/dev/projects/myna-js/src/main/client/sticky.coffee": [ function(a, b) {
-            var c, d, e, f, g, h = function(a, b) {
+        "/Users/dave/dev/projects/myna-js/src/main/client/sticky.coffee": [ function(require, module) {
+            var Promise, StickyCache, log, settings, variant, __bind = function(fn, me) {
                 return function() {
-                    return a.apply(b, arguments);
+                    return fn.apply(me, arguments);
                 };
             };
-            c = a("es6-promise").Promise, e = a("../common/log"), f = a("../common/settings"), 
-            g = a("./variant"), b.exports = d = function() {
-                function a(a) {
-                    this.stickyKey = null != a ? a : "myna.web.sticky", this._isSticky = h(this._isSticky, this), 
-                    this.clear = h(this.clear, this), this.saveReward = h(this.saveReward, this), this.loadReward = h(this.loadReward, this), 
-                    this.saveView = h(this.saveView, this), this.loadView = h(this.loadView, this);
+            Promise = require("es6-promise").Promise, log = require("../common/log"), settings = require("../common/settings"), 
+            variant = require("./variant"), module.exports = StickyCache = function() {
+                function StickyCache(stickyKey) {
+                    this.stickyKey = null != stickyKey ? stickyKey : "myna.web.sticky", this._isSticky = __bind(this._isSticky, this), 
+                    this.clear = __bind(this.clear, this), this.saveReward = __bind(this.saveReward, this), 
+                    this.loadReward = __bind(this.loadReward, this), this.saveView = __bind(this.saveView, this), 
+                    this.loadView = __bind(this.loadView, this);
                 }
-                return a.prototype.loadView = function(a) {
-                    var b;
-                    return e.debug("StickyCache.loadView", a), b = this._isSticky(a) ? g.load(a, "stickyView") : null, 
-                    e.debug("StickyCache.loadView", null != a ? a.id : void 0, null != b ? b.id : void 0), 
-                    b;
-                }, a.prototype.saveView = function(a, b) {
-                    e.debug("StickyCache.saveView", null != a ? a.id : void 0, null != b ? b.id : void 0), 
-                    this._isSticky(a) && g.save(a, "stickyView", b);
-                }, a.prototype.loadReward = function(a) {
-                    var b;
-                    return b = this._isSticky(a) ? g.load(a, "stickyReward") : null, e.debug("StickyCache.loadReward", null != a ? a.id : void 0, null != b ? b.id : void 0), 
-                    b;
-                }, a.prototype.saveReward = function(a, b) {
-                    e.debug("StickyCache.saveReward", null != a ? a.id : void 0, null != b ? b.id : void 0), 
-                    this._isSticky(a) && g.save(a, "stickyReward", b);
-                }, a.prototype.clear = function(a) {
-                    e.debug("StickyCache.clear", a), g.remove(a, "stickyView"), g.remove(a, "stickyReward");
-                }, a.prototype._isSticky = function(a) {
-                    return !!f.get(a.settings, this.stickyKey, !1);
-                }, a;
+                return StickyCache.prototype.loadView = function(expt) {
+                    var ans;
+                    return log.debug("StickyCache.loadView", expt), ans = this._isSticky(expt) ? variant.load(expt, "stickyView") : null, 
+                    log.debug("StickyCache.loadView", null != expt ? expt.id : void 0, null != ans ? ans.id : void 0), 
+                    ans;
+                }, StickyCache.prototype.saveView = function(expt, v) {
+                    log.debug("StickyCache.saveView", null != expt ? expt.id : void 0, null != v ? v.id : void 0), 
+                    this._isSticky(expt) && variant.save(expt, "stickyView", v);
+                }, StickyCache.prototype.loadReward = function(expt) {
+                    var ans;
+                    return ans = this._isSticky(expt) ? variant.load(expt, "stickyReward") : null, log.debug("StickyCache.loadReward", null != expt ? expt.id : void 0, null != ans ? ans.id : void 0), 
+                    ans;
+                }, StickyCache.prototype.saveReward = function(expt, v) {
+                    log.debug("StickyCache.saveReward", null != expt ? expt.id : void 0, null != v ? v.id : void 0), 
+                    this._isSticky(expt) && variant.save(expt, "stickyReward", v);
+                }, StickyCache.prototype.clear = function(expt) {
+                    log.debug("StickyCache.clear", expt), variant.remove(expt, "stickyView"), variant.remove(expt, "stickyReward");
+                }, StickyCache.prototype._isSticky = function(expt) {
+                    return !!settings.get(expt.settings, this.stickyKey, !1);
+                }, StickyCache;
             }();
         }, {
             "../common/log": "/Users/dave/dev/projects/myna-js/src/main/common/log.coffee",
@@ -710,108 +737,113 @@
             "./variant": "/Users/dave/dev/projects/myna-js/src/main/client/variant.coffee",
             "es6-promise": "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/main.js"
         } ],
-        "/Users/dave/dev/projects/myna-js/src/main/client/variant.coffee": [ function(a, b) {
-            var c, d, e, f, g, h, i, j, k;
-            c = a("es6-promise").Promise, e = a("../common/log"), j = a("../common/storage"), 
-            i = function(a, b, c) {
-                j.set("" + a.uuid + "_" + b, c.id);
-            }, d = function(a, b) {
-                var c, d;
-                return c = null != (d = j.get("" + a.uuid + "_" + b)) ? d : null, e.debug("variant.load", "id", c), 
-                c ? f(a, c) : null;
-            }, h = function(a, b) {
-                j.remove("" + a.uuid + "_" + b);
-            }, f = function(a, b) {
-                var c, d, e, f, g;
-                for (c = b.id ? b.id : b, g = a.variants, e = 0, f = g.length; f > e; e++) if (d = g[e], 
-                d.id === c) return d;
+        "/Users/dave/dev/projects/myna-js/src/main/client/variant.coffee": [ function(require, module) {
+            var Promise, load, log, lookup, random, remove, save, storage, _totalWeight;
+            Promise = require("es6-promise").Promise, log = require("../common/log"), storage = require("../common/storage"), 
+            save = function(expt, storageKey, variant) {
+                storage.set("" + expt.uuid + "_" + storageKey, variant.id);
+            }, load = function(expt, storageKey) {
+                var id, _ref;
+                return id = null != (_ref = storage.get("" + expt.uuid + "_" + storageKey)) ? _ref : null, 
+                log.debug("variant.load", "id", id), id ? lookup(expt, id) : null;
+            }, remove = function(expt, storageKey) {
+                storage.remove("" + expt.uuid + "_" + storageKey);
+            }, lookup = function(expt, variantOrId) {
+                var id, variant, _i, _len, _ref;
+                for (id = variantOrId.id ? variantOrId.id : variantOrId, _ref = expt.variants, _i = 0, 
+                _len = _ref.length; _len > _i; _i++) if (variant = _ref[_i], variant.id === id) return variant;
                 return null;
-            }, g = function(a) {
-                var b, c, d, e;
-                c = k(a), g = Math.random() * c, e = a.variants;
-                for (b in e) if (d = e[b], c -= d.weight, g >= c) return d;
+            }, random = function(expt) {
+                var id, total, variant, _ref;
+                total = _totalWeight(expt), random = Math.random() * total, _ref = expt.variants;
+                for (id in _ref) if (variant = _ref[id], total -= variant.weight, random >= total) return variant;
                 return null;
-            }, k = function(a) {
-                var b, c, d, e, f;
-                for (b = 0, f = a.variants, d = 0, e = f.length; e > d; d++) c = f[d], b += c.weight;
-                return b;
-            }, b.exports = {
-                save: i,
-                load: d,
-                remove: h,
-                lookup: f,
-                random: g,
-                _totalWeight: k
+            }, _totalWeight = function(expt) {
+                var ans, variant, _i, _len, _ref;
+                for (ans = 0, _ref = expt.variants, _i = 0, _len = _ref.length; _len > _i; _i++) variant = _ref[_i], 
+                ans += variant.weight;
+                return ans;
+            }, module.exports = {
+                save: save,
+                load: load,
+                remove: remove,
+                lookup: lookup,
+                random: random,
+                _totalWeight: _totalWeight
             };
         }, {
             "../common/log": "/Users/dave/dev/projects/myna-js/src/main/common/log.coffee",
             "../common/storage": "/Users/dave/dev/projects/myna-js/src/main/common/storage/index.coffee",
             "es6-promise": "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/main.js"
         } ],
-        "/Users/dave/dev/projects/myna-js/src/main/common/hash.coffee": [ function(a, b) {
-            var c, d, e;
-            c = a("./log"), e = function(a) {
-                var b, d, e, f, g, h, i, j;
-                for (a = a ? "#" === a[0] ? a.substring(1) : a : "", b = {}, i = a.split("&"), g = 0, 
-                h = i.length; h > g; g++) e = i[g], "" !== e && (j = e.split("="), d = j[0], f = j[1], 
-                b[decodeURIComponent(d)] = decodeURIComponent(null != f ? f : d));
-                return c.debug("hash.parse", b), b;
-            }, d = e(window.location.hash), b.exports = {
-                parse: e,
-                params: d
+        "/Users/dave/dev/projects/myna-js/src/main/common/hash.coffee": [ function(require, module) {
+            var log, params, parse;
+            log = require("./log"), parse = function(hash) {
+                var ans, lhs, part, rhs, _i, _len, _ref, _ref1;
+                for (hash = hash ? "#" === hash[0] ? hash.substring(1) : hash : "", ans = {}, _ref = hash.split("&"), 
+                _i = 0, _len = _ref.length; _len > _i; _i++) part = _ref[_i], "" !== part && (_ref1 = part.split("="), 
+                lhs = _ref1[0], rhs = _ref1[1], ans[decodeURIComponent(lhs)] = decodeURIComponent(null != rhs ? rhs : lhs));
+                return log.debug("hash.parse", ans), ans;
+            }, params = parse(window.location.hash), module.exports = {
+                parse: parse,
+                params: params
             };
         }, {
             "./log": "/Users/dave/dev/projects/myna-js/src/main/common/log.coffee"
         } ],
-        "/Users/dave/dev/projects/myna-js/src/main/common/jsonp.coffee": [ function(a, b) {
-            var c, d, e;
-            c = a("es6-promise").Promise, e = a("./log"), b.exports = d = {}, window.__mynaCallbacks = {}, 
-            d.request = function(a, b, f) {
-                return null == b && (b = {}), null == f && (f = 0), e.debug("jsonp.request", a, b, f), 
-                new c(function(c, g) {
-                    var h, i, j, k, l;
-                    k = !1, j = function() {
-                        e.debug("jsonp.request.onTimeout", h, k, f), k || (k = !0, d._removeCallback(h), 
-                        g(d._createTimeoutError(h)));
-                    }, i = function(a) {
-                        e.debug("jsonp.request.onComplete", h, k, a), k || (k = !0, window.clearTimeout(l), 
-                        d._removeCallback(h), "problem" === a.typename ? g(a) : c(a));
-                    }, l = f ? window.setTimeout(j, f) : null, h = d._createCallback(a, b, i);
+        "/Users/dave/dev/projects/myna-js/src/main/common/jsonp.coffee": [ function(require, module) {
+            var Promise, jsonp, log;
+            Promise = require("es6-promise").Promise, log = require("./log"), module.exports = jsonp = {}, 
+            window.__mynaCallbacks = {}, jsonp.request = function(url, params, timeout) {
+                return null == params && (params = {}), null == timeout && (timeout = 0), log.debug("jsonp.request", url, params, timeout), 
+                new Promise(function(resolve, reject) {
+                    var callbackId, onComplete, onTimeout, resolved, timer;
+                    resolved = !1, onTimeout = function() {
+                        log.debug("jsonp.request.onTimeout", callbackId, resolved, timeout), resolved || (resolved = !0, 
+                        jsonp._removeCallback(callbackId), reject(jsonp._createTimeoutError(callbackId)));
+                    }, onComplete = function(response) {
+                        log.debug("jsonp.request.onComplete", callbackId, resolved, response), resolved || (resolved = !0, 
+                        window.clearTimeout(timer), jsonp._removeCallback(callbackId), "problem" === response.typename ? reject(response) : resolve(response));
+                    }, timer = timeout ? window.setTimeout(onTimeout, timeout) : null, callbackId = jsonp._createCallback(url, params, onComplete);
                 });
-            }, d._createCallback = function(a, b, c) {
-                var e, f, g, h;
-                return f = "" + Math.floor(1e4 * Math.random()), h = new Date().getTime(), e = "c" + h + "_" + f, 
-                window.__mynaCallbacks[e] = c, a = d._createUrl(a, b, e), g = d._createScriptElem(a, e), 
-                document.getElementsByTagName("head")[0].appendChild(g), e;
-            }, d._removeCallback = function(a) {
-                var b, c, d;
-                d = document.getElementById(a), c = null != d ? d.readyState : void 0, !window.__mynaCallbacks[a] || c && "complete" !== c && "loaded" !== c || (d.onload = d.onreadystatechange = null, 
-                d.parentNode.removeChild(d));
+            }, jsonp._createCallback = function(url, params, callback) {
+                var callbackId, randSuffix, scriptElem, timeSuffix;
+                return randSuffix = "" + Math.floor(1e4 * Math.random()), timeSuffix = new Date().getTime(), 
+                callbackId = "c" + timeSuffix + "_" + randSuffix, window.__mynaCallbacks[callbackId] = callback, 
+                url = jsonp._createUrl(url, params, callbackId), scriptElem = jsonp._createScriptElem(url, callbackId), 
+                document.getElementsByTagName("head")[0].appendChild(scriptElem), callbackId;
+            }, jsonp._removeCallback = function(callbackId) {
+                var exn, readyState, scriptElem;
+                scriptElem = document.getElementById(callbackId), readyState = null != scriptElem ? scriptElem.readyState : void 0, 
+                !window.__mynaCallbacks[callbackId] || readyState && "complete" !== readyState && "loaded" !== readyState || (scriptElem.onload = scriptElem.onreadystatechange = null, 
+                scriptElem.parentNode.removeChild(scriptElem));
                 try {
-                    window.__mynaCallbacks[a] = null, delete window.__mynaCallbacks[a];
-                } catch (e) {
-                    b = e;
+                    window.__mynaCallbacks[callbackId] = null, delete window.__mynaCallbacks[callbackId];
+                } catch (_error) {
+                    exn = _error;
                 }
-            }, d._createUrl = function(a, b, c) {
-                var d, f, g;
-                null == b && (b = {}), d = a, d += a.indexOf("?") < 0 ? "?" : "&";
-                for (f in b) g = b[f], d += "" + f + "=" + g + "&";
-                return d += "callback=__mynaCallbacks." + c, e.debug("jsonp._createUrl", d), d;
-            }, d._createScriptElem = function(a, b) {
-                var c;
-                return c = document.createElement("script"), c.setAttribute("id", b), c.setAttribute("type", "text/javascript"), 
-                c.setAttribute("async", "true"), c.setAttribute("src", a), c.setAttribute("class", "myna-jsonp"), 
-                c.setAttribute("data-callback", b), c.onload = c.onreadystatechange = function() {
-                    d._removeCallback(b);
-                }, c;
-            }, d._createTimeoutError = function(a) {
+            }, jsonp._createUrl = function(url, params, callbackId) {
+                var ans, key, value;
+                null == params && (params = {}), ans = url, ans += url.indexOf("?") < 0 ? "?" : "&";
+                for (key in params) value = params[key], ans += "" + key + "=" + value + "&";
+                return ans += "callback=__mynaCallbacks." + callbackId, log.debug("jsonp._createUrl", ans), 
+                ans;
+            }, jsonp._createScriptElem = function(url, callbackId) {
+                var scriptElem;
+                return scriptElem = document.createElement("script"), scriptElem.setAttribute("id", callbackId), 
+                scriptElem.setAttribute("type", "text/javascript"), scriptElem.setAttribute("async", "true"), 
+                scriptElem.setAttribute("src", url), scriptElem.setAttribute("class", "myna-jsonp"), 
+                scriptElem.setAttribute("data-callback", callbackId), scriptElem.onload = scriptElem.onreadystatechange = function() {
+                    jsonp._removeCallback(callbackId);
+                }, scriptElem;
+            }, jsonp._createTimeoutError = function(callbackId) {
                 return {
                     typename: "problem",
                     status: 500,
                     messages: [ {
                         typename: "timeout",
                         message: "request timed out after #{timeout}ms",
-                        callback: a
+                        callback: callbackId
                     } ]
                 };
             };
@@ -819,330 +851,340 @@
             "./log": "/Users/dave/dev/projects/myna-js/src/main/common/log.coffee",
             "es6-promise": "/Users/dave/dev/projects/myna-js/node_modules/es6-promise/dist/commonjs/main.js"
         } ],
-        "/Users/dave/dev/projects/myna-js/src/main/common/log.coffee": [ function(a, b) {
-            var c, d, e, f = [].slice;
-            d = !1, c = function() {
-                var a, b;
-                a = 1 <= arguments.length ? f.call(arguments, 0) : [], d && null != (b = window.console) && b.log(a);
-            }, e = function() {
-                var a, b;
-                throw a = 1 <= arguments.length ? f.call(arguments, 0) : [], d && null != (b = window.console) && b.error(a), 
-                a;
-            }, b.exports = {
-                enabled: d,
-                debug: c,
-                error: e
+        "/Users/dave/dev/projects/myna-js/src/main/common/log.coffee": [ function(require, module) {
+            var debug, enabled, error, __slice = [].slice;
+            enabled = !1, debug = function() {
+                var args, _ref;
+                args = 1 <= arguments.length ? __slice.call(arguments, 0) : [], enabled && null != (_ref = window.console) && _ref.log(args);
+            }, error = function() {
+                var args, _ref;
+                throw args = 1 <= arguments.length ? __slice.call(arguments, 0) : [], enabled && null != (_ref = window.console) && _ref.error(args), 
+                args;
+            }, module.exports = {
+                enabled: enabled,
+                debug: debug,
+                error: error
             };
         }, {} ],
-        "/Users/dave/dev/projects/myna-js/src/main/common/settings/index.coffee": [ function(a, b) {
-            var c, d, e, f, g, h, i, j, k, l;
-            j = a("../util"), c = a("./path"), d = function(a) {
-                return k({}, a);
-            }, f = function(a, b, d) {
-                var e;
-                return null == d && (d = void 0), null != (e = new c(b).get(a)) ? e : d;
-            }, h = function(a) {
+        "/Users/dave/dev/projects/myna-js/src/main/common/settings/index.coffee": [ function(require, module) {
+            var Path, create, flatten, get, paths, set, unset, util, _setAll, _setOne;
+            util = require("../util"), Path = require("./path"), create = function(updates) {
+                return _setAll({}, updates);
+            }, get = function(data, path, orElse) {
+                var _ref;
+                return null == orElse && (orElse = void 0), null != (_ref = new Path(path).get(data)) ? _ref : orElse;
+            }, set = function(data) {
                 if (arguments.length < 2) throw [ "settings.set", "not enough arguments", arguments ];
-                return "object" == typeof arguments[1] ? k(a, arguments[1]) : l(a, arguments[1], arguments[2]);
-            }, k = function(a, b) {
-                var c, d;
-                for (c in b) d = b[c], a = l(a, c, d);
-                return a;
-            }, l = function(a, b, d) {
-                return new c(b).set(a, d);
-            }, i = function(a, b) {
-                return new c(b).unset(a);
-            }, e = function() {
-                var a, b, c;
-                return a = [], b = function(a) {
-                    return "." === a[0] ? a.substring(1) : a;
-                }, c = function(d, e) {
-                    var f, g, h, i, k, l, m;
-                    if (null == e && (e = ""), j.isArray(d)) {
-                        for (l = [], h = i = 0, k = d.length; k > i; h = ++i) f = d[h], l.push(c(h, e + "[" + f + "]"));
-                        return l;
+                return "object" == typeof arguments[1] ? _setAll(data, arguments[1]) : _setOne(data, arguments[1], arguments[2]);
+            }, _setAll = function(data, updates) {
+                var path, value;
+                for (path in updates) value = updates[path], data = _setOne(data, path, value);
+                return data;
+            }, _setOne = function(data, path, value) {
+                return new Path(path).set(data, value);
+            }, unset = function(data, path) {
+                return new Path(path).unset(data);
+            }, flatten = function() {
+                var ans, normalize, visit;
+                return ans = [], normalize = function(path) {
+                    return "." === path[0] ? path.substring(1) : path;
+                }, visit = function(value, path) {
+                    var i, k, v, _i, _len, _results, _results1;
+                    if (null == path && (path = ""), util.isArray(value)) {
+                        for (_results = [], v = _i = 0, _len = value.length; _len > _i; v = ++_i) i = value[v], 
+                        _results.push(visit(v, path + "[" + i + "]"));
+                        return _results;
                     }
-                    if (j.isObject(d)) {
-                        m = [];
-                        for (g in d) h = d[g], m.push(c(h, e + "." + g));
-                        return m;
+                    if (util.isObject(value)) {
+                        _results1 = [];
+                        for (k in value) v = value[k], _results1.push(visit(v, path + "." + k));
+                        return _results1;
                     }
-                    return a.push([ b(e), d ]);
-                }, c(this.data), a;
-            }, g = function(a) {
-                return _.map(e(a), function(a) {
-                    return a[0];
+                    return ans.push([ normalize(path), value ]);
+                }, visit(this.data), ans;
+            }, paths = function(data) {
+                return _.map(flatten(data), function(pair) {
+                    return pair[0];
                 }), {
-                    toJSON: function(a) {
-                        return function(b) {
-                            return null == b && (b = {}), a.data;
+                    toJSON: function(_this) {
+                        return function(options) {
+                            return null == options && (options = {}), _this.data;
                         };
                     }(this)
                 };
-            }, b.exports = {
-                Path: c,
-                create: d,
-                get: f,
-                set: h,
-                unset: i,
-                flatten: e,
-                paths: g
+            }, module.exports = {
+                Path: Path,
+                create: create,
+                get: get,
+                set: set,
+                unset: unset,
+                flatten: flatten,
+                paths: paths
             };
         }, {
             "../util": "/Users/dave/dev/projects/myna-js/src/main/common/util.coffee",
             "./path": "/Users/dave/dev/projects/myna-js/src/main/common/settings/path.coffee"
         } ],
-        "/Users/dave/dev/projects/myna-js/src/main/common/settings/path.coffee": [ function(a, b) {
-            var c, d, e = function(a, b) {
+        "/Users/dave/dev/projects/myna-js/src/main/common/settings/path.coffee": [ function(require, module) {
+            var Path, util, __bind = function(fn, me) {
                 return function() {
-                    return a.apply(b, arguments);
+                    return fn.apply(me, arguments);
                 };
-            }, f = [].slice;
-            d = a("../util"), b.exports = c = function() {
-                function a(b) {
-                    this.toString = e(this.toString, this), this.drop = e(this.drop, this), this.take = e(this.take, this), 
-                    this.isPrefixOf = e(this.isPrefixOf, this), this.prefixes = e(this.prefixes, this), 
-                    this.unset = e(this.unset, this), this.set = e(this.set, this), this.get = e(this.get, this), 
-                    this.path = e(this.path, this), this.quote = e(this.quote, this), this.nodes = "string" == typeof b ? a.parse(b) : b;
+            }, __slice = [].slice;
+            util = require("../util"), module.exports = Path = function() {
+                function Path(input) {
+                    this.toString = __bind(this.toString, this), this.drop = __bind(this.drop, this), 
+                    this.take = __bind(this.take, this), this.isPrefixOf = __bind(this.isPrefixOf, this), 
+                    this.prefixes = __bind(this.prefixes, this), this.unset = __bind(this.unset, this), 
+                    this.set = __bind(this.set, this), this.get = __bind(this.get, this), this.path = __bind(this.path, this), 
+                    this.quote = __bind(this.quote, this), this.nodes = "string" == typeof input ? Path.parse(input) : input;
                 }
-                return a.identifierRegex = /^[a-z_$][a-z0-9_$]*/i, a.integerRegex = /^[0-9]+/, a.completeIdentifierRegex = /^[a-z_$][a-z0-9_$]*$/i, 
-                a.permissiveIdentifierRegex = /^[^[.]+/, a.isValid = function(b) {
-                    var c;
+                return Path.identifierRegex = /^[a-z_$][a-z0-9_$]*/i, Path.integerRegex = /^[0-9]+/, 
+                Path.completeIdentifierRegex = /^[a-z_$][a-z0-9_$]*$/i, Path.permissiveIdentifierRegex = /^[^[.]+/, 
+                Path.isValid = function(path) {
+                    var exn;
                     try {
-                        return a.parse(b), !0;
-                    } catch (d) {
-                        return c = d, !1;
+                        return Path.parse(path), !0;
+                    } catch (_error) {
+                        return exn = _error, !1;
                     }
-                }, a.normalize = function(b) {
-                    var c;
+                }, Path.normalize = function(path) {
+                    var exn;
                     try {
-                        return new a(b).toString();
-                    } catch (d) {
-                        return c = d, b;
+                        return new Path(path).toString();
+                    } catch (_error) {
+                        return exn = _error, path;
                     }
-                }, a.parse = function(b) {
-                    var c, e, f, g, h, i, j, k, l;
-                    return g = b, h = function(a) {
-                        if (g.length < a) throw "bad settings path: " + b;
-                        g = g.substring(a);
-                    }, j = function(a) {
-                        var c;
-                        if (g.length < a) throw "bad settings path: " + b;
-                        return c = g.substring(0, a), g = g.substring(a), c;
-                    }, k = function(a) {
-                        return g = g.substring(a.length), a;
-                    }, c = function() {
-                        var c;
-                        if (c = g.match(a.permissiveIdentifierRegex)) return k(c[0]);
-                        throw "bad settings path: " + b;
-                    }, f = function() {
-                        var c;
-                        if (c = g.match(a.integerRegex)) return parseInt(k(c[0]));
-                        throw "bad settings path: " + b;
-                    }, i = function(a) {
-                        var b, c;
-                        for (h(1), b = "", c = !1; !c; ) g[0] === a ? c = !0 : "\\" === g[0] ? (h(1), b += j(1)) : b += j(1);
-                        return h(1), b;
-                    }, e = function() {
-                        var a;
-                        return h(1), a = "'" === g[0] ? i("'") : '"' === g[0] ? i('"') : f(), h(1), a;
-                    }, l = function() {
-                        var a;
-                        for (a = []; g.length > 0; ) "." === g[0] ? (h(1), a.push(c())) : a.push("[" === g[0] ? e() : c());
-                        return a;
-                    }, g = d.trim(g), "" === g ? [] : "." === g[0] || "[" === g[0] ? l() : (g = "." + g, 
-                    l());
-                }, a.prototype.quote = function(a) {
-                    return a.replace(/['\"\\]/g, function(a) {
-                        return "\\" + a;
+                }, Path.parse = function(originalPath) {
+                    var identifier, indexField, number, path, skip, string, take, takeString, topLevel;
+                    return path = originalPath, skip = function(num) {
+                        if (path.length < num) throw "bad settings path: " + originalPath;
+                        path = path.substring(num);
+                    }, take = function(num) {
+                        var ans;
+                        if (path.length < num) throw "bad settings path: " + originalPath;
+                        return ans = path.substring(0, num), path = path.substring(num), ans;
+                    }, takeString = function(str) {
+                        return path = path.substring(str.length), str;
+                    }, identifier = function() {
+                        var match;
+                        if (match = path.match(Path.permissiveIdentifierRegex)) return takeString(match[0]);
+                        throw "bad settings path: " + originalPath;
+                    }, number = function() {
+                        var match;
+                        if (match = path.match(Path.integerRegex)) return parseInt(takeString(match[0]));
+                        throw "bad settings path: " + originalPath;
+                    }, string = function(quote) {
+                        var ans, terminated;
+                        for (skip(1), ans = "", terminated = !1; !terminated; ) path[0] === quote ? terminated = !0 : "\\" === path[0] ? (skip(1), 
+                        ans += take(1)) : ans += take(1);
+                        return skip(1), ans;
+                    }, indexField = function() {
+                        var ans;
+                        return skip(1), ans = "'" === path[0] ? string("'") : '"' === path[0] ? string('"') : number(), 
+                        skip(1), ans;
+                    }, topLevel = function() {
+                        var ans;
+                        for (ans = []; path.length > 0; ) "." === path[0] ? (skip(1), ans.push(identifier())) : ans.push("[" === path[0] ? indexField() : identifier());
+                        return ans;
+                    }, path = util.trim(path), "" === path ? [] : "." === path[0] || "[" === path[0] ? topLevel() : (path = "." + path, 
+                    topLevel());
+                }, Path.prototype.quote = function(str) {
+                    return str.replace(/['\"\\]/g, function(quote) {
+                        return "\\" + quote;
                     });
-                }, a.prototype.path = function(b) {
-                    var c, d, e, f;
-                    for (null == b && (b = this.nodes), c = "", e = 0, f = b.length; f > e; e++) d = b[e], 
-                    c += "number" == typeof d ? "[" + d + "]" : a.completeIdentifierRegex.test(d) ? "." + d : '["' + this.quote(d) + '"]';
-                    return "." === c[0] ? c.substring(1) : c;
-                }, a.prototype.get = function(a) {
-                    var b, c, d, e;
-                    for (e = this.nodes, c = 0, d = e.length; d > c; c++) b = e[c], a = null != a ? a[b] : void 0;
-                    return a;
-                }, a.prototype.set = function(a, b) {
-                    var c, d, e, g, h, i, j, k;
-                    if (null != b) {
-                        if (0 === this.nodes.length) return b;
-                        for (g = a, k = this.nodes, c = 2 <= k.length ? f.call(k, 0, h = k.length - 1) : (h = 0, 
-                        []), d = k[h++], i = 0, j = c.length; j > i; i++) e = c[i], "object" != typeof g[e] && (g[e] = {}), 
-                        g = g[e];
-                        return g[d] = b, a;
+                }, Path.prototype.path = function(nodes) {
+                    var ans, node, _i, _len;
+                    for (null == nodes && (nodes = this.nodes), ans = "", _i = 0, _len = nodes.length; _len > _i; _i++) node = nodes[_i], 
+                    ans += "number" == typeof node ? "[" + node + "]" : Path.completeIdentifierRegex.test(node) ? "." + node : '["' + this.quote(node) + '"]';
+                    return "." === ans[0] ? ans.substring(1) : ans;
+                }, Path.prototype.get = function(data) {
+                    var node, _i, _len, _ref;
+                    for (_ref = this.nodes, _i = 0, _len = _ref.length; _len > _i; _i++) node = _ref[_i], 
+                    data = null != data ? data[node] : void 0;
+                    return data;
+                }, Path.prototype.set = function(data, value) {
+                    var first, last, node, obj, _i, _j, _len, _ref;
+                    if (null != value) {
+                        if (0 === this.nodes.length) return value;
+                        for (obj = data, _ref = this.nodes, first = 2 <= _ref.length ? __slice.call(_ref, 0, _i = _ref.length - 1) : (_i = 0, 
+                        []), last = _ref[_i++], _j = 0, _len = first.length; _len > _j; _j++) node = first[_j], 
+                        "object" != typeof obj[node] && (obj[node] = {}), obj = obj[node];
+                        return obj[last] = value, data;
                     }
-                    return this.unset(a);
-                }, a.prototype.unset = function(a) {
-                    var b, c, d, e, g, h, i, j;
+                    return this.unset(data);
+                }, Path.prototype.unset = function(data) {
+                    var first, last, node, obj, _i, _j, _len, _ref;
                     if (0 === this.nodes.length) return void 0;
-                    for (e = a, j = this.nodes, b = 2 <= j.length ? f.call(j, 0, g = j.length - 1) : (g = 0, 
-                    []), c = j[g++], h = 0, i = b.length; i > h; h++) {
-                        if (d = b[h], null == e[d]) return a;
-                        e = e[d];
+                    for (obj = data, _ref = this.nodes, first = 2 <= _ref.length ? __slice.call(_ref, 0, _i = _ref.length - 1) : (_i = 0, 
+                    []), last = _ref[_i++], _j = 0, _len = first.length; _len > _j; _j++) {
+                        if (node = first[_j], null == obj[node]) return data;
+                        obj = obj[node];
                     }
-                    return delete e[c], a;
-                }, a.prototype.prefixes = function() {
-                    var a, b, c, d, e;
-                    for (c = this.nodes, a = [], b = d = 1, e = c.length; e >= 1 ? e >= d : d >= e; b = e >= 1 ? ++d : --d) a.push(this.path(c.slice(0, b)));
-                    return a;
-                }, a.prototype.isPrefixOf = function(a) {
-                    var b, c, d, e, f;
-                    if (b = this.nodes, c = a.nodes, b.length > c.length) return !1;
-                    for (d = e = 0, f = b.length; f >= 0 ? f > e : e > f; d = f >= 0 ? ++e : --e) if (b[d] !== c[d]) return !1;
+                    return delete obj[last], data;
+                }, Path.prototype.prefixes = function() {
+                    var ans, n, nodes, _i, _ref;
+                    for (nodes = this.nodes, ans = [], n = _i = 1, _ref = nodes.length; _ref >= 1 ? _ref >= _i : _i >= _ref; n = _ref >= 1 ? ++_i : --_i) ans.push(this.path(nodes.slice(0, n)));
+                    return ans;
+                }, Path.prototype.isPrefixOf = function(path) {
+                    var a, b, num, _i, _ref;
+                    if (a = this.nodes, b = path.nodes, a.length > b.length) return !1;
+                    for (num = _i = 0, _ref = a.length; _ref >= 0 ? _ref > _i : _i > _ref; num = _ref >= 0 ? ++_i : --_i) if (a[num] !== b[num]) return !1;
                     return !0;
-                }, a.prototype.take = function(b) {
-                    return new a(_.take(this.nodes, b));
-                }, a.prototype.drop = function(b) {
-                    return new a(_.drop(this.nodes, b));
-                }, a.prototype.toString = function() {
+                }, Path.prototype.take = function(num) {
+                    return new Path(_.take(this.nodes, num));
+                }, Path.prototype.drop = function(num) {
+                    return new Path(_.drop(this.nodes, num));
+                }, Path.prototype.toString = function() {
                     return this.path();
-                }, a;
+                }, Path;
             }();
         }, {
             "../util": "/Users/dave/dev/projects/myna-js/src/main/common/util.coffee"
         } ],
-        "/Users/dave/dev/projects/myna-js/src/main/common/storage/cookie.coffee": [ function(a, b) {
-            var c, d, e, f, g;
-            d = function(a) {
-                return encodeURIComponent(JSON.stringify(a));
-            }, c = function(a) {
-                return JSON.parse(0 === a.indexOf('"') ? decodeURIComponent(a.slice(1, -1).replace(/\\"/g, '"').replace(/\\\\/g, "\\")) : decodeURIComponent(a));
-            }, g = function(a, b, c) {
-                var e, f, g, h;
-                null == c && (c = 365), h = "myna-" + a + "=" + d(b), f = c ? (e = new Date(), e.setTime(e.getTime() + 24 * c * 60 * 60 * 1e3), 
-                "; expires=" + e.toGMTString()) : "", g = "; path=/", document.cookie = "" + h + f + g;
-            }, e = function(a) {
-                var b, d, e, f, g, h, i, j;
-                for (g = "myna-" + a + "=", f = function(a) {
-                    var b;
-                    return b = a.indexOf(g), b >= 0 && a.substring(0, b).match("^\\s*$");
-                }, d = function(a) {
-                    var b;
-                    return b = a.indexOf(g), a.substring(b + g.length, a.length);
-                }, e = document.cookie.split(";"), i = 0, j = e.length; j > i; i++) if (b = e[i], 
-                f(b) && null != (h = d(b))) return c(h);
+        "/Users/dave/dev/projects/myna-js/src/main/common/storage/cookie.coffee": [ function(require, module) {
+            var decodeCookieValue, encodeCookieValue, get, remove, set;
+            encodeCookieValue = function(obj) {
+                return encodeURIComponent(JSON.stringify(obj));
+            }, decodeCookieValue = function(str) {
+                return JSON.parse(0 === str.indexOf('"') ? decodeURIComponent(str.slice(1, -1).replace(/\\"/g, '"').replace(/\\\\/g, "\\")) : decodeURIComponent(str));
+            }, set = function(name, obj, days) {
+                var date, expires, path, value;
+                null == days && (days = 365), value = "myna-" + name + "=" + encodeCookieValue(obj), 
+                expires = days ? (date = new Date(), date.setTime(date.getTime() + 24 * days * 60 * 60 * 1e3), 
+                "; expires=" + date.toGMTString()) : "", path = "; path=/", document.cookie = "" + value + expires + path;
+            }, get = function(name) {
+                var cookie, cookieValue, cookies, isNameEQCookie, nameEQ, str, _i, _len;
+                for (nameEQ = "myna-" + name + "=", isNameEQCookie = function(cookie) {
+                    var i;
+                    return i = cookie.indexOf(nameEQ), i >= 0 && cookie.substring(0, i).match("^\\s*$");
+                }, cookieValue = function(cookie) {
+                    var i;
+                    return i = cookie.indexOf(nameEQ), cookie.substring(i + nameEQ.length, cookie.length);
+                }, cookies = document.cookie.split(";"), _i = 0, _len = cookies.length; _len > _i; _i++) if (cookie = cookies[_i], 
+                isNameEQCookie(cookie) && null != (str = cookieValue(cookie))) return decodeCookieValue(str);
                 return null;
-            }, f = function(a) {
-                g(a, "", -1);
-            }, b.exports = {
-                get: e,
-                set: g,
-                remove: f
+            }, remove = function(name) {
+                set(name, "", -1);
+            }, module.exports = {
+                get: get,
+                set: set,
+                remove: remove
             };
         }, {} ],
-        "/Users/dave/dev/projects/myna-js/src/main/common/storage/index.coffee": [ function(a, b) {
-            var c, d, e, f, g, h;
-            h = {}, c = a("./cookie"), e = a("./local"), d = function() {
-                return function(a) {
-                    return localStorage.supported && localStorage.enabled ? localStorage.get(a) : c.get(a);
+        "/Users/dave/dev/projects/myna-js/src/main/common/storage/index.coffee": [ function(require, module) {
+            var cookie, get, local, remove, set, storage;
+            storage = {}, cookie = require("./cookie"), local = require("./local"), get = function() {
+                return function(key) {
+                    return localStorage.supported && localStorage.enabled ? localStorage.get(key) : cookie.get(key);
                 };
-            }(this), g = function() {
-                return function(a, b) {
-                    localStorage.supported && localStorage.enabled ? localStorage.set(a, b) : c.set(a, b);
+            }(this), set = function() {
+                return function(key, value) {
+                    localStorage.supported && localStorage.enabled ? localStorage.set(key, value) : cookie.set(key, value);
                 };
-            }(this), f = function() {
-                return function(a) {
-                    localStorage.supported && localStorage.enabled ? localStorage.remove(a) : c.remove(a);
+            }(this), remove = function() {
+                return function(key) {
+                    localStorage.supported && localStorage.enabled ? localStorage.remove(key) : cookie.remove(key);
                 };
-            }(this), b.exports = {
-                get: d,
-                set: g,
-                remove: f
+            }(this), module.exports = {
+                get: get,
+                set: set,
+                remove: remove
             };
         }, {
             "./cookie": "/Users/dave/dev/projects/myna-js/src/main/common/storage/cookie.coffee",
             "./local": "/Users/dave/dev/projects/myna-js/src/main/common/storage/local.coffee"
         } ],
-        "/Users/dave/dev/projects/myna-js/src/main/common/storage/local.coffee": [ function(a, b) {
-            var c, d, e, f, g, h;
-            c = !1, h = function() {
+        "/Users/dave/dev/projects/myna-js/src/main/common/storage/local.coffee": [ function(require, module) {
+            var enabled, exn, get, remove, set, supported;
+            enabled = !1, supported = function() {
                 try {
                     return localStorage.setItem("modernizer", "modernizer"), localStorage.removeItem("modernizer"), 
                     !0;
-                } catch (a) {
-                    return d = a, !1;
+                } catch (_error) {
+                    return exn = _error, !1;
                 }
-            }(), e = function(a) {
-                var b;
-                if (b = window.localStorage.getItem("myna-" + a), null == b) return null;
+            }(), get = function(key) {
+                var str;
+                if (str = window.localStorage.getItem("myna-" + key), null == str) return null;
                 try {
-                    return JSON.parse(b);
-                } catch (c) {
-                    return d = c, null;
+                    return JSON.parse(str);
+                } catch (_error) {
+                    return exn = _error, null;
                 }
-            }, g = function(a, b) {
-                null != b ? window.localStorage.setItem("myna-" + a, JSON.stringify(b)) : window.localStorage.removeItem("myna-" + a);
-            }, f = function(a) {
-                window.localStorage.removeItem("myna-" + a);
-            }, b.exports = {
-                enabled: c,
-                supported: h,
-                get: e,
-                set: g,
-                remove: f
+            }, set = function(key, obj) {
+                null != obj ? window.localStorage.setItem("myna-" + key, JSON.stringify(obj)) : window.localStorage.removeItem("myna-" + key);
+            }, remove = function(key) {
+                window.localStorage.removeItem("myna-" + key);
+            }, module.exports = {
+                enabled: enabled,
+                supported: supported,
+                get: get,
+                set: set,
+                remove: remove
             };
         }, {} ],
-        "/Users/dave/dev/projects/myna-js/src/main/common/util.coffee": [ function(a, b) {
-            var c, d, e, f, g, h, i, j, k, l = [].slice;
-            k = function(a) {
-                return null === a ? "" : a.replace(/^\s+|\s+$/g, "");
-            }, f = Array.isArray || function(a) {
-                return "[object Array]" === Object.prototype.toString.call(a);
-            }, h = function(a) {
-                return a === Object(a);
-            }, g = function(a) {
-                var b, c;
-                if (h(a)) {
-                    b = Object.prototype.hasOwnProperty;
-                    for (c in a) if (b.call(a, c)) return !1;
+        "/Users/dave/dev/projects/myna-js/src/main/common/util.coffee": [ function(require, module) {
+            var dateToString, deleteKeys, extend, isArray, isEmptyObject, isObject, problem, redirect, trim, __slice = [].slice;
+            trim = function(str) {
+                return null === str ? "" : str.replace(/^\s+|\s+$/g, "");
+            }, isArray = Array.isArray || function(obj) {
+                return "[object Array]" === Object.prototype.toString.call(obj);
+            }, isObject = function(obj) {
+                return obj === Object(obj);
+            }, isEmptyObject = function(obj) {
+                var hasOwnProperty, key;
+                if (isObject(obj)) {
+                    hasOwnProperty = Object.prototype.hasOwnProperty;
+                    for (key in obj) if (hasOwnProperty.call(obj, key)) return !1;
                     return !0;
                 }
                 return !1;
-            }, e = function() {
-                var a, b, c, d, e, f, g;
-                for (a = arguments[0], c = 2 <= arguments.length ? l.call(arguments, 1) : [], f = 0, 
-                g = c.length; g > f; f++) {
-                    d = c[f];
-                    for (b in d) e = d[b], a[b] = e;
+            }, extend = function() {
+                var des, key, sources, src, value, _i, _len;
+                for (des = arguments[0], sources = 2 <= arguments.length ? __slice.call(arguments, 1) : [], 
+                _i = 0, _len = sources.length; _len > _i; _i++) {
+                    src = sources[_i];
+                    for (key in src) value = src[key], des[key] = value;
                 }
-                return a;
-            }, d = function() {
-                var a, b, c, d, f, g;
-                for (d = arguments[0], c = 2 <= arguments.length ? l.call(arguments, 1) : [], a = e({}, d), 
-                f = 0, g = c.length; g > f; f++) b = c[f], delete a[b];
-                return a;
-            }, c = function(a) {
-                var b, c, d, e, f, g, h, i;
-                return Date.prototype.toISOString ? a.toISOString() : (g = function(a, b) {
-                    var c;
-                    for (c = "" + a; c.length < b; ) c = "0" + c;
-                    return c;
-                }, i = g(a.getUTCFullYear(), 4), f = g(a.getUTCMonth() + 1, 2), b = g(a.getUTCDate(), 2), 
-                c = g(a.getUTCHours(), 2), e = g(a.getUTCMinutes(), 2), h = g(a.getUTCSeconds(), 2), 
-                d = g(a.getUTCMilliseconds(), 2), "" + i + "-" + f + "-" + b + "T" + c + ":" + e + ":" + h + "." + d + "Z");
-            }, i = function(a) {
-                return new Error(a);
-            }, j = function(a) {
-                return window.location.replace(a);
-            }, b.exports = {
-                trim: k,
-                isArray: f,
-                isObject: h,
-                isEmptyObject: g,
-                extend: e,
-                deleteKeys: d,
-                dateToString: c,
-                problem: i,
-                redirect: j
+                return des;
+            }, deleteKeys = function() {
+                var ans, key, keys, obj, _i, _len;
+                for (obj = arguments[0], keys = 2 <= arguments.length ? __slice.call(arguments, 1) : [], 
+                ans = extend({}, obj), _i = 0, _len = keys.length; _len > _i; _i++) key = keys[_i], 
+                delete ans[key];
+                return ans;
+            }, dateToString = function(date) {
+                var day, hour, milli, minute, month, pad, second, year;
+                return Date.prototype.toISOString ? date.toISOString() : (pad = function(num, len) {
+                    var str;
+                    for (str = "" + num; str.length < len; ) str = "0" + str;
+                    return str;
+                }, year = pad(date.getUTCFullYear(), 4), month = pad(date.getUTCMonth() + 1, 2), 
+                day = pad(date.getUTCDate(), 2), hour = pad(date.getUTCHours(), 2), minute = pad(date.getUTCMinutes(), 2), 
+                second = pad(date.getUTCSeconds(), 2), milli = pad(date.getUTCMilliseconds(), 2), 
+                "" + year + "-" + month + "-" + day + "T" + hour + ":" + minute + ":" + second + "." + milli + "Z");
+            }, problem = function(msg) {
+                return new Error(msg);
+            }, redirect = function(url) {
+                return window.location.replace(url);
+            }, module.exports = {
+                trim: trim,
+                isArray: isArray,
+                isObject: isObject,
+                isEmptyObject: isEmptyObject,
+                extend: extend,
+                deleteKeys: deleteKeys,
+                dateToString: dateToString,
+                problem: problem,
+                redirect: redirect
             };
         }, {} ],
-        "/Users/dave/dev/projects/myna-js/src/main/myna.coffee": [ function(a, b) {
-            var c, d;
-            c = a("./client/default"), d = a("./bootstrap"), b.exports = d.create(function(a, b) {
-                return new c(a, b);
+        "/Users/dave/dev/projects/myna-js/src/main/myna.coffee": [ function(require, module) {
+            var DefaultClient, bootstrap;
+            DefaultClient = require("./client/default"), bootstrap = require("./bootstrap"), 
+            module.exports = bootstrap.create(function(experiment, settings) {
+                return new DefaultClient(experiment, settings);
             });
         }, {
             "./bootstrap": "/Users/dave/dev/projects/myna-js/src/main/bootstrap.coffee",
