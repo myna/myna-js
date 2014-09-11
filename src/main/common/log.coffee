@@ -6,8 +6,7 @@ debug = (args...) ->
   return
 
 error = (args...) ->
-  if enabled
-    window.console?.error(args)
+  window.console?.error(args...)
   throw args
 
 module.exports = {

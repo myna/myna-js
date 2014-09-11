@@ -1,6 +1,7 @@
 log   = require './common/log'
 hash  = require './common/hash'
 jsonp = require './common/jsonp'
+util  = require './common/util'
 
 ###
 Bootstrap code
@@ -15,8 +16,8 @@ See `myna.coffee` and `myna-auto.coffee` for implementations of this code.
 # clientConstructor -> { initLocal: localInit, initRemote: remoteInit }
 #
 # where clientConstructor : arrayOf(experiment) settings -> promiseOf(client)
-#       localInit         : deployment -> promiseOf(client)
-#       remoteInit        : string [number] -> promiseOf(client)
+#       localInit         : deployment                   -> promiseOf(client)
+#       remoteInit        : string [number]              -> promiseOf(client)
 create = (createClient) ->
   initLocal  = createLocalInit(createClient)
   initRemote = createRemoteInit(initLocal)
@@ -44,18 +45,22 @@ createLocalInit = (createClient) ->
 
     apiKey      = deployment.apiKey  ? log.error("myna.init", "no apiKey in deployment", deployment)
     apiRoot     = deployment.apiRoot ? "//api.mynaweb.com"
-    settings    = util.extends(deployment.settings, { apiKey, apiRoot })
+    settings    = util.extend({}, deployment.settings, { apiKey, apiRoot })
     client      = createClient(experiments, settings)
 
     # Flush any previously unsubmitted events to the API server
     # before returning the client:
-    client.sync().then(-> client)
+    client.record.sync().then(-> client).catch (error) ->
+      log.error(error)
+      return
 
 # localInit -> remoteInit
 createRemoteInit = (localInit) ->
   (url, timeout = 0) ->
     log.debug("myna.initRemote", url, timeout)
-    jsonp.request(url, {}, timeout).then(localInit)
+    jsonp.request(url, {}, timeout).then(localInit).catch (error) ->
+      log.error(error)
+      return
 
 module.exports = {
   create

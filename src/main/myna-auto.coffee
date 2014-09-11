@@ -12,6 +12,8 @@ It is not intended for direct use by Javascript developers.
 The code in this file behaves the same as in `myna.coffee`, except that it automatically
 boostraps experiments created using the visual experiment editor.
 
+After the call to `initLocal` or `initRemote`, the client is also exposed as `window.Myna.client`.
+
 Adding '#mynaui' to the end of the URL loads Myna UI *instead of* running experiments as usual.
 ###
 
@@ -19,13 +21,19 @@ initLocal = (deployment) ->
   if _mynaUiRequested()
     _loadMynaUi()
   else
-    _initLocal(deployment)
+    _initLocal(deployment).then (client) ->
+      console.log(client)
+      window.Myna?.client = client
+      return client
 
 initRemote = (url, timeout = 0) ->
   if _mynaUiRequested()
     _loadMynaUi()
   else
-    _initRemote(url, timeout)
+    _initRemote(url, timeout).then (client) ->
+      console.log(client)
+      window.Myna?.client = client
+      return client
 
 # Internal implementation of initLocal and initRemote:
 { initLocal: _initLocal, initRemote: _initRemote } =
@@ -37,9 +45,10 @@ _mynaUiRequested = ->
   !!hash.params.mynaui
 
 _loadMynaUi = ->
-  scriptElem = document.createElement(script)
+  scriptElem = document.createElement('script')
   scriptElem.setAttribute('src', 'myna-ui.js')
-  document.appendChild(scriptElem)
+  document.getElementsByTagName('head')[0].appendChild(scriptElem)
+  return
 
 module.exports = {
   initLocal
