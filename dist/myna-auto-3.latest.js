@@ -3469,9 +3469,9 @@
             });
         }, {} ],
         "/Users/dave/dev/projects/myna-js/src/main/bootstrap.coffee": [ function(require, module) {
-            var create, createLocalInit, createRemoteInit, hash, jsonp, log;
+            var create, createLocalInit, createRemoteInit, hash, jsonp, log, util;
             log = require("./common/log"), hash = require("./common/hash"), jsonp = require("./common/jsonp"), 
-            create = function(createClient) {
+            util = require("./common/util"), create = function(createClient) {
                 var initLocal, initRemote;
                 return initLocal = createLocalInit(createClient), initRemote = createRemoteInit(initLocal), 
                 {
@@ -3484,17 +3484,21 @@
                     return null != hash.params.debug && (log.enabled = !0), log.debug("myna.initLocal", deployment), 
                     "deployment" !== deployment.typename && log.error("myna.initLocal", 'Myna needs a deployment to initialise. The given JSON is not a deployment.\nIt has a typename of "' + typename + '". Check you are initialising Myna with the\ncorrect UUID if you are calling initRemote', deployment), 
                     experiments = deployment.experiments, apiKey = null != (_ref = deployment.apiKey) ? _ref : log.error("myna.init", "no apiKey in deployment", deployment), 
-                    apiRoot = null != (_ref1 = deployment.apiRoot) ? _ref1 : "//api.mynaweb.com", settings = util["extends"](deployment.settings, {
+                    apiRoot = null != (_ref1 = deployment.apiRoot) ? _ref1 : "//api.mynaweb.com", settings = util.extend({}, deployment.settings, {
                         apiKey: apiKey,
                         apiRoot: apiRoot
-                    }), client = createClient(experiments, settings), client.sync().then(function() {
+                    }), client = createClient(experiments, settings), client.record.sync().then(function() {
                         return client;
+                    })["catch"](function(error) {
+                        log.error(error);
                     });
                 };
             }, createRemoteInit = function(localInit) {
                 return function(url, timeout) {
                     return null == timeout && (timeout = 0), log.debug("myna.initRemote", url, timeout), 
-                    jsonp.request(url, {}, timeout).then(localInit);
+                    jsonp.request(url, {}, timeout).then(localInit)["catch"](function(error) {
+                        log.error(error);
+                    });
                 };
             }, module.exports = {
                 create: create,
@@ -3504,7 +3508,8 @@
         }, {
             "./common/hash": "/Users/dave/dev/projects/myna-js/src/main/common/hash.coffee",
             "./common/jsonp": "/Users/dave/dev/projects/myna-js/src/main/common/jsonp.coffee",
-            "./common/log": "/Users/dave/dev/projects/myna-js/src/main/common/log.coffee"
+            "./common/log": "/Users/dave/dev/projects/myna-js/src/main/common/log.coffee",
+            "./common/util": "/Users/dave/dev/projects/myna-js/src/main/common/util.coffee"
         } ],
         "/Users/dave/dev/projects/myna-js/src/main/client/api.coffee": [ function(require, module) {
             var ApiRecorder, Promise, SyncResult, jsonp, log, settings, storage, util, __bind = function(fn, me) {
@@ -4044,7 +4049,7 @@
                 args = 1 <= arguments.length ? __slice.call(arguments, 0) : [], enabled && null != (_ref = window.console) && _ref.log(args);
             }, error = function() {
                 var args, _ref;
-                throw args = 1 <= arguments.length ? __slice.call(arguments, 0) : [], enabled && null != (_ref = window.console) && _ref.error(args), 
+                throw args = 1 <= arguments.length ? __slice.call(arguments, 0) : [], null != (_ref = window.console) && _ref.error.apply(_ref, args), 
                 args;
             }, module.exports = {
                 enabled: enabled,
@@ -4262,15 +4267,15 @@
             var cookie, get, local, remove, set, storage;
             storage = {}, cookie = require("./cookie"), local = require("./local"), get = function() {
                 return function(key) {
-                    return localStorage.supported && localStorage.enabled ? localStorage.get(key) : cookie.get(key);
+                    return local.supported && local.enabled ? local.get(key) : cookie.get(key);
                 };
             }(this), set = function() {
                 return function(key, value) {
-                    localStorage.supported && localStorage.enabled ? localStorage.set(key, value) : cookie.set(key, value);
+                    local.supported && local.enabled ? local.set(key, value) : cookie.set(key, value);
                 };
             }(this), remove = function() {
                 return function(key) {
-                    localStorage.supported && localStorage.enabled ? localStorage.remove(key) : cookie.remove(key);
+                    local.supported && local.enabled ? local.remove(key) : cookie.remove(key);
                 };
             }(this), module.exports = {
                 get: get,
@@ -4440,17 +4445,25 @@
             var MynaUiClient, boot, hash, initLocal, initRemote, _initLocal, _initRemote, _loadMynaUi, _mynaUiRequested, _ref;
             hash = require("./common/hash"), MynaUiClient = require("./client/myna-ui"), boot = require("./bootstrap"), 
             initLocal = function(deployment) {
-                return _mynaUiRequested() ? _loadMynaUi() : _initLocal(deployment);
+                return _mynaUiRequested() ? _loadMynaUi() : _initLocal(deployment).then(function(client) {
+                    var _ref;
+                    return console.log(client), null != (_ref = window.Myna) && (_ref.client = client), 
+                    client;
+                });
             }, initRemote = function(url, timeout) {
-                return null == timeout && (timeout = 0), _mynaUiRequested() ? _loadMynaUi() : _initRemote(url, timeout);
+                return null == timeout && (timeout = 0), _mynaUiRequested() ? _loadMynaUi() : _initRemote(url, timeout).then(function(client) {
+                    var _ref;
+                    return console.log(client), null != (_ref = window.Myna) && (_ref.client = client), 
+                    client;
+                });
             }, _ref = boot.create(function(experiment, settings) {
                 return new MynaUiClient(experiment, settings);
             }), _initLocal = _ref.initLocal, _initRemote = _ref.initRemote, _mynaUiRequested = function() {
                 return !!hash.params.mynaui;
             }, _loadMynaUi = function() {
                 var scriptElem;
-                return scriptElem = document.createElement(script), scriptElem.setAttribute("src", "myna-ui.js"), 
-                document.appendChild(scriptElem);
+                scriptElem = document.createElement("script"), scriptElem.setAttribute("src", "myna-ui.js"), 
+                document.getElementsByTagName("head")[0].appendChild(scriptElem);
             }, module.exports = {
                 initLocal: initLocal,
                 initRemote: initRemote
