@@ -1,6 +1,6 @@
-hash           = require './common/hash'
-MynaUiClient   = require './client/myna-ui'
-bootstrap      = require './bootstrap'
+hash         = require './common/hash'
+MynaUiClient = require './client/myna-ui'
+boot         = require './bootstrap'
 
 ###
 Auto-executing Myna client library
@@ -28,8 +28,9 @@ initRemote = (url, timeout = 0) ->
     _initRemote(url, timeout)
 
 # Internal implementation of initLocal and initRemote:
-{ _initLocal, _initRemote } = bootstrap.create (experiment, settings) ->
-  new MynaUiClient(experiment, settings)
+{ initLocal: _initLocal, initRemote: _initRemote } =
+  boot.create (experiment, settings) ->
+    new MynaUiClient(experiment, settings)
 
 # If the user puts ?mynaui on the end of the URL
 _mynaUiRequested = ->

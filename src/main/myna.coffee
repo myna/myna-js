@@ -1,5 +1,5 @@
-DefaultClient  = require './client/default'
-bootstrap      = require './bootstrap'
+DefaultClient = require './client/default'
+boot          = require './bootstrap'
 
 ###
 Myna client library
@@ -63,5 +63,5 @@ Once you have a client, use the following methods to suggest/view/reward experim
     client.clear(experimentId) -> promiseOf(null)
 ###
 
-module.exports = bootstrap.create (experiment, settings) ->
+module.exports = boot.create (experiment, settings) ->
   new DefaultClient(experiment, settings)
