@@ -1,4 +1,4 @@
-enabled = true
+enabled = false
 
 debug = (args...) ->
   if enabled
