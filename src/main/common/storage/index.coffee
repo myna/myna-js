@@ -7,23 +7,23 @@ local  = require './local'
 
 # string -> object
 get = (key) =>
-  if localStorage.supported && localStorage.enabled
-    localStorage.get(key)
+  if local.supported && local.enabled
+    local.get(key)
   else
     cookie.get(key)
 
 # string object -> object
 set = (key, value) =>
-  if localStorage.supported && localStorage.enabled
-    localStorage.set(key, value)
+  if local.supported && local.enabled
+    local.set(key, value)
   else
     cookie.set(key, value)
   return
 
 # string object -> void
 remove = (key) =>
-  if localStorage.supported && localStorage.enabled
-    localStorage.remove(key)
+  if local.supported && local.enabled
+    local.remove(key)
   else
     cookie.remove(key)
   return
