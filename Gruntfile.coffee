@@ -24,7 +24,6 @@ module.exports = (grunt) ->
   grunt.loadNpmTasks 'grunt-contrib-watch'
   grunt.loadNpmTasks 'grunt-karma'
 
-  minify   = grunt.option('minify') ? false
   pkg      = grunt.file.readJSON("package.json")
   name     = pkg.name
   series   = pkg.version.split("\.")[0]
@@ -117,24 +116,28 @@ module.exports = (grunt) ->
         options :
           banner   : banner
           beautify : true
+          mangle   : false
       autoDist:
         src     : [ autoTempMain ]
         dest    : autoDistMain
         options :
           banner   : banner
           beautify : true
+          mangle   : false
       mynaDistMin:
         src     : [ mynaTempMain ]
         dest    : mynaDistMainMin
         options :
           banner   : banner
           beautify : false
+          mangle   : true
       autoDistMin:
         src     : [ autoTempMain ]
         dest    : autoDistMainMin
         options :
           banner   : banner
           beautify : false
+          mangle   : true
 
     copy:
       mynaDistLatest:    { src: [ mynaDistMain    ], dest: mynaDistLatest    }
