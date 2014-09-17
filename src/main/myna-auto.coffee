@@ -17,37 +17,32 @@ After the call to `initLocal` or `initRemote`, the client is also exposed as `wi
 Adding '#mynaui' to the end of the URL loads Myna UI *instead of* running experiments as usual.
 ###
 
+_initLocal = boot.createLocalInit (experiment, settings) ->
+  new MynaUiClient(experiment, settings)
+
 initLocal = (deployment) ->
   if _mynaUiRequested()
-    _loadMynaUi()
+    _loadMynaUi(deployment)
   else
     _initLocal(deployment).then (client) ->
-      console.log(client)
       window.Myna?.client = client
       return client
 
-initRemote = (url, timeout = 0) ->
-  if _mynaUiRequested()
-    _loadMynaUi()
-  else
-    _initRemote(url, timeout).then (client) ->
-      console.log(client)
-      window.Myna?.client = client
-      return client
-
-# Internal implementation of initLocal and initRemote:
-{ initLocal: _initLocal, initRemote: _initRemote } =
-  boot.create (experiment, settings) ->
-    new MynaUiClient(experiment, settings)
+initRemote = boot.createRemoteInit(initLocal)
 
 # If the user puts ?mynaui on the end of the URL
 _mynaUiRequested = ->
   !!hash.params.mynaui
 
-_loadMynaUi = ->
+_loadMynaUi = (deployment) ->
   scriptElem = document.createElement('script')
   scriptElem.setAttribute('src', 'myna-ui.js')
+  scriptElem.onload = scriptElem.onreadystatechange = ->
+    if !scriptElem.readyState || scriptElem.readyState == 'complete'
+      window.MynaUi.init(deployment)
+
   document.getElementsByTagName('head')[0].appendChild(scriptElem)
+
   return
 
 module.exports = {
